@@ -435,6 +435,12 @@ class BootScene extends Phaser.Scene {
             generateAllBunnyAnimations(this);
         }
         
+        // Generate wise owl animations using WiseOwlAnimationGenerator
+        if (typeof generateWiseOwlAnimations === 'function') {
+            console.log('BootScene: Generating wise owl animations...');
+            generateWiseOwlAnimations(this);
+        }
+        
         // Fallback if systems not available
         if (typeof generateAllBunnyTextures === 'undefined') {
             // Fallback: Create simple bunny sprite if BunnyCharacter system not loaded

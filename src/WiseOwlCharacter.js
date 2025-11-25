@@ -1,7 +1,8 @@
 /**
  * WiseOwlCharacter - Cú Thông Thái (Wise Owl)
  * Main NPC character for Level 1 - Counting Forest
- * Soft cartoon style, friendly and wise expression
+ * Friendly, wise white cartoon owl with round glasses
+ * Supports multiple animation states: idle, cheering, encouraging, sad, celebrating
  */
 
 class WiseOwlCharacter {
@@ -14,188 +15,289 @@ class WiseOwlCharacter {
         this.speechBubble = null;
         this.currentDialogue = null;
         this.dialogueTimer = null;
+        this.currentAnimation = 'idle';
+        
+        // Ensure animations are generated
+        this.ensureAnimationsGenerated();
     }
 
     /**
-     * Generate idle animation sprite sheet
+     * Ensure all owl animations are generated
      */
-    generateIdleAnimation() {
-        const frames = 12;
-        const frameWidth = this.size;
-        const frameHeight = this.size;
-        const spriteKey = 'wise_owl_idle_sheet';
-        
-        if (this.scene.textures.exists(spriteKey)) {
-            return spriteKey;
-        }
-
-        const graphics = this.scene.add.graphics();
-        
-        for (let frame = 0; frame < frames; frame++) {
-            const progress = frame / frames;
-            const x = frame * frameWidth + frameWidth / 2;
-            const y = frameHeight / 2;
-            
-            // Blinking cycle (every 3 seconds, 0.2s blink)
-            const blinkProgress = (progress * 3) % 1;
-            const isBlinking = blinkProgress > 0.9;
-            
-            // Head rotation (subtle, slow)
-            const headRotation = Math.sin(progress * Math.PI * 2) * 0.1;
-            
-            // Wing movement (subtle)
-            const wingBob = Math.sin(progress * Math.PI * 4) * 2;
-            
-            this.drawOwlFrame(graphics, x, y + wingBob, {
-                isBlinking: isBlinking,
-                headRotation: headRotation,
-                frame: frame
-            });
+    ensureAnimationsGenerated() {
+        // Check if animations already exist
+        if (this.scene.textures.exists('wise_owl_idle_sheet')) {
+            return; // Already generated
         }
         
-        graphics.generateTexture(spriteKey, frames * frameWidth, frameHeight);
-        graphics.destroy();
-        
-        // Configure sprite sheet
-        if (this.scene.textures.exists(spriteKey)) {
-            try {
-                const texture = this.scene.textures.get(spriteKey);
-                if (texture) {
-                    texture.setFilter(Phaser.Textures.FilterMode.LINEAR);
-                    for (let i = 0; i < frames; i++) {
-                        texture.add(i, 0, i * frameWidth, 0, frameWidth, frameHeight);
-                    }
-                }
-            } catch (error) {
-                console.warn(`Error configuring owl sprite sheet:`, error);
-            }
-        }
-        
-        return spriteKey;
-    }
-
-    /**
-     * Draw owl frame
-     */
-    drawOwlFrame(graphics, centerX, centerY, params) {
-        const { isBlinking, headRotation } = params;
-        const size = this.size;
-        const bodyRadius = size * 0.25;
-        
-        // Body (rounded, brown and golden)
-        graphics.fillStyle(0x8B4513, 1); // Brown
-        graphics.fillCircle(centerX, centerY, bodyRadius);
-        
-        // Golden glow/shimmer
-        graphics.fillStyle(0xFFD700, 0.3);
-        graphics.fillCircle(centerX - bodyRadius * 0.3, centerY - bodyRadius * 0.3, bodyRadius * 0.4);
-        
-        // Head (larger, rounded)
-        const headRadius = bodyRadius * 0.9;
-        const headX = centerX + Math.sin(headRotation) * bodyRadius * 0.2;
-        const headY = centerY - bodyRadius * 0.6;
-        
-        graphics.fillStyle(0x8B4513, 1);
-        graphics.fillCircle(headX, headY, headRadius);
-        
-        // Golden glow on head
-        graphics.fillStyle(0xFFD700, 0.4);
-        graphics.fillCircle(headX - headRadius * 0.3, headY - headRadius * 0.3, headRadius * 0.4);
-        
-        // Eyes (large, expressive)
-        const eyeSize = headRadius * 0.35;
-        const eyeLeftX = headX - headRadius * 0.3;
-        const eyeRightX = headX + headRadius * 0.3;
-        const eyeY = headY;
-        
-        if (isBlinking) {
-            // Closed eyes (simple line)
-            graphics.lineStyle(3, 0x654321, 1);
-            graphics.beginPath();
-            graphics.moveTo(eyeLeftX - eyeSize * 0.5, eyeY);
-            graphics.lineTo(eyeLeftX + eyeSize * 0.5, eyeY);
-            graphics.moveTo(eyeRightX - eyeSize * 0.5, eyeY);
-            graphics.lineTo(eyeRightX + eyeSize * 0.5, eyeY);
-            graphics.strokePath();
+        // Generate all animations using the animation generator
+        if (typeof generateWiseOwlAnimations === 'function') {
+            generateWiseOwlAnimations(this.scene);
         } else {
-            // Open eyes
-            graphics.fillStyle(0xFFFFFF, 1);
-            graphics.fillCircle(eyeLeftX, eyeY, eyeSize);
-            graphics.fillCircle(eyeRightX, eyeY, eyeSize);
-            
-            // Eye color (golden)
-            graphics.fillStyle(0xFFD700, 1);
-            graphics.fillCircle(eyeLeftX, eyeY, eyeSize * 0.7);
-            graphics.fillCircle(eyeRightX, eyeY, eyeSize * 0.7);
-            
-            // Pupils
-            graphics.fillStyle(0x000000, 1);
-            graphics.fillCircle(eyeLeftX, eyeY, eyeSize * 0.4);
-            graphics.fillCircle(eyeRightX, eyeY, eyeSize * 0.4);
-            
-            // Eye highlights
-            graphics.fillStyle(0xFFFFFF, 1);
-            graphics.fillCircle(eyeLeftX - eyeSize * 0.15, eyeY - eyeSize * 0.15, eyeSize * 0.2);
-            graphics.fillCircle(eyeRightX - eyeSize * 0.15, eyeY - eyeSize * 0.15, eyeSize * 0.2);
+            console.warn('WiseOwlAnimationGenerator not loaded. Please include WiseOwlAnimationGenerator.js');
         }
-        
-        // Beak (small triangle)
-        graphics.fillStyle(0xFF8C00, 1);
-        graphics.fillTriangle(
-            headX, headY + headRadius * 0.3,
-            headX - headRadius * 0.15, headY + headRadius * 0.5,
-            headX + headRadius * 0.15, headY + headRadius * 0.5
-        );
-        
-        // Wings (subtle movement)
-        graphics.fillStyle(0x8B4513, 0.8);
-        graphics.fillEllipse(centerX - bodyRadius * 0.6, centerY, bodyRadius * 0.4, bodyRadius * 0.6);
-        graphics.fillEllipse(centerX + bodyRadius * 0.6, centerY, bodyRadius * 0.4, bodyRadius * 0.6);
-        
-        // Feather details
-        graphics.fillStyle(0xFFD700, 0.3);
-        graphics.fillEllipse(centerX - bodyRadius * 0.6, centerY - bodyRadius * 0.2, bodyRadius * 0.3, bodyRadius * 0.4);
-        graphics.fillEllipse(centerX + bodyRadius * 0.6, centerY - bodyRadius * 0.2, bodyRadius * 0.3, bodyRadius * 0.4);
-        
-        // Feet (simple)
-        graphics.fillStyle(0xFF8C00, 1);
-        graphics.fillEllipse(centerX - bodyRadius * 0.3, centerY + bodyRadius * 0.8, bodyRadius * 0.2, bodyRadius * 0.15);
-        graphics.fillEllipse(centerX + bodyRadius * 0.3, centerY + bodyRadius * 0.8, bodyRadius * 0.2, bodyRadius * 0.15);
     }
 
     /**
      * Create owl sprite in scene
      */
     create() {
-        const spriteKey = this.generateIdleAnimation();
+        // Ensure animations are generated
+        this.ensureAnimationsGenerated();
+        
+        // Use idle sprite sheet as default
+        const spriteKey = 'wise_owl_idle_sheet';
+        
+        if (!this.scene.textures.exists(spriteKey)) {
+            console.error('Wise owl sprite sheet not found. Generating animations...');
+            this.ensureAnimationsGenerated();
+        }
         
         this.sprite = this.scene.add.sprite(this.x, this.y, spriteKey, 0);
         this.sprite.setOrigin(0.5);
-        this.sprite.setDepth(100);
+        this.sprite.setDepth(300); // Highest depth to always display above all other objects
         
-        // Create idle animation
-        if (!this.scene.anims.exists('wise_owl_idle')) {
-            this.scene.anims.create({
-                key: 'wise_owl_idle',
-                frames: this.scene.anims.generateFrameNumbers(spriteKey, { start: 0, end: 11 }),
-                frameRate: 8,
-                repeat: -1
-            });
-        }
+        // Store original position for movement animations
+        this.originalX = this.x;
+        this.originalY = this.y;
         
-        this.sprite.play('wise_owl_idle');
+        // Play idle animation by default
+        this.playAnimation('idle');
         
-        // Gentle floating animation
-        this.scene.tweens.add({
-            targets: this.sprite,
-            y: this.sprite.y - 5,
-            duration: 2000,
-            yoyo: true,
-            repeat: -1,
-            ease: 'Sine.easeInOut'
-        });
+        // Start random movement animations
+        this.startRandomMovements();
         
         return this.sprite;
+    }
+
+    /**
+     * Start random movement animations (jumping, flying, floating)
+     */
+    startRandomMovements() {
+        if (!this.sprite) return;
+        
+        const sceneWidth = this.scene.cameras.main.width;
+        const sceneHeight = this.scene.cameras.main.height;
+        
+        // Define movement boundaries - full screen with small margin to prevent clipping
+        const margin = this.size / 2 + 20; // Margin based on owl size to keep it fully visible
+        const minX = margin; // Left edge with margin
+        const maxX = sceneWidth - margin; // Right edge with margin
+        const minY = margin; // Top edge with margin (considering HUD at top)
+        const maxY = sceneHeight - margin; // Bottom edge with margin
+        
+        // Continuous smooth movement - always moving, no teleport, slower speed
+        // Main continuous movement (combines X and Y movement smoothly)
+        const continuousMove = () => {
+            if (!this.sprite) return;
+            
+            // Get current position
+            const currentX = this.sprite.x;
+            const currentY = this.sprite.y;
+            
+            // Calculate new target position (smaller steps for smoother movement)
+            const moveDistanceX = Phaser.Math.Between(-sceneWidth * 0.15, sceneWidth * 0.15);
+            const moveDistanceY = Phaser.Math.Between(-sceneHeight * 0.1, sceneHeight * 0.1);
+            const targetX = Phaser.Math.Clamp(currentX + moveDistanceX, minX, maxX);
+            const targetY = Phaser.Math.Clamp(currentY + moveDistanceY, minY, maxY);
+            
+            // Calculate distance for duration
+            const distance = Math.sqrt(Math.pow(targetX - currentX, 2) + Math.pow(targetY - currentY, 2));
+            // Slower movement: 3-6 seconds for movement, based on distance
+            const baseDuration = 3000;
+            const maxDuration = 6000;
+            const moveDuration = Math.min(maxDuration, baseDuration + (distance / 50)); // Slower: divide by 50 instead of 100
+            
+            // Smooth continuous movement
+            this.scene.tweens.add({
+                targets: this.sprite,
+                x: targetX,
+                y: targetY,
+                duration: moveDuration,
+                ease: 'Sine.easeInOut',
+                onUpdate: () => {
+                    this.updateDialoguePosition();
+                },
+                onComplete: () => {
+                    // Immediately start next movement - no delay for continuous movement
+                    continuousMove();
+                }
+            });
+        };
+        
+        // Start continuous movement immediately
+        continuousMove();
+        
+        // Gentle floating animation (continuous, smooth, slower)
+        const updateFloating = () => {
+            if (!this.sprite) return;
+            const currentY = this.sprite.y;
+            this.scene.tweens.add({
+                targets: this.sprite,
+                y: currentY - 8, // Smaller movement
+                duration: 3000, // Slower: increased from 1800 to 3000
+                yoyo: true,
+                repeat: 0,
+                ease: 'Sine.easeInOut',
+                onUpdate: () => {
+                    this.updateDialoguePosition();
+                },
+                onComplete: () => {
+                    // Continue floating from new position immediately
+                    updateFloating();
+                }
+            });
+        };
+        updateFloating();
+        
+        // Gentle circular movement (continuous, slower, smooth)
+        const circularMove = () => {
+            if (!this.sprite) return;
+            
+            // Use current position as center for smooth transition
+            const centerX = this.sprite.x;
+            const centerY = this.sprite.y;
+            
+            // Smaller radius for gentler movement
+            const maxRadius = Math.min(sceneWidth * 0.15, sceneHeight * 0.15);
+            const radius = Phaser.Math.Between(30, maxRadius);
+            const startAngle = 0;
+            const duration = Phaser.Math.Between(5000, 8000); // Much slower: 5-8 seconds for full circle
+            
+            const circularTween = this.scene.tweens.addCounter({
+                from: 0,
+                to: Math.PI * 2,
+                duration: duration,
+                ease: 'Linear',
+                onUpdate: (tween) => {
+                    if (!this.sprite) return;
+                    const angle = startAngle + (tween.getValue() * 180 / Math.PI);
+                    const rad = Phaser.Math.DegToRad(angle);
+                    const newX = centerX + Math.cos(rad) * radius;
+                    const newY = centerY + Math.sin(rad) * radius;
+                    // Smooth position update
+                    this.sprite.x = Phaser.Math.Clamp(newX, minX, maxX);
+                    this.sprite.y = Phaser.Math.Clamp(newY, minY, maxY);
+                    this.updateDialoguePosition();
+                },
+                onComplete: () => {
+                    // Immediately start next circular movement - continuous
+                    circularMove();
+                }
+            });
+        };
+        
+        // Start circular movement after a short delay
+        this.scene.time.delayedCall(2000, circularMove);
+    }
+
+    /**
+     * Update dialogue position to follow owl
+     */
+    updateDialoguePosition() {
+        if (!this.speechBubble || !this.sprite) return;
+        
+        const sceneWidth = this.scene.cameras.main.width;
+        const sceneHeight = this.scene.cameras.main.height;
+        
+        // Position bubble above owl (not overlapping face)
+        const owlX = this.sprite.x;
+        const owlY = this.sprite.y;
+        
+        // Get bubble dimensions
+        const bubbleWidth = this.speechBubble.width || 300;
+        const bubbleHeight = this.speechBubble.height || 80;
+        
+        // Position above owl with enough clearance
+        let bubbleX = owlX;
+        let bubbleY = owlY - this.size * 0.9; // Closer to owl head, reduced from 1.2
+        
+        // Ensure bubble doesn't go off screen
+        const rightEdge = sceneWidth - 20;
+        if (bubbleX + bubbleWidth / 2 > rightEdge) {
+            bubbleX = rightEdge - bubbleWidth / 2;
+        }
+        
+        const leftEdge = 20;
+        if (bubbleX - bubbleWidth / 2 < leftEdge) {
+            bubbleX = leftEdge + bubbleWidth / 2;
+        }
+        
+        // Ensure bubble doesn't go off top
+        if (bubbleY - bubbleHeight / 2 < 0) {
+            bubbleY = bubbleHeight / 2 + 10;
+        }
+        
+        // Update bubble position directly (smooth following)
+        this.speechBubble.x = bubbleX;
+        this.speechBubble.y = bubbleY;
+    }
+
+    /**
+     * Play a specific animation
+     * @param {string} animationName - 'idle', 'cheering', 'encouraging', 'sad', 'celebrating'
+     */
+    playAnimation(animationName = 'idle') {
+        if (!this.sprite) {
+            console.warn('Owl sprite not created yet. Call create() first.');
+            return;
+        }
+        
+        const animKey = `wise_owl_${animationName}`;
+        const spriteKey = `wise_owl_${animationName}_sheet`;
+        
+        // Check if animation exists
+        if (!this.scene.anims.exists(animKey)) {
+            console.warn(`Animation ${animKey} does not exist. Using idle instead.`);
+            this.playAnimation('idle');
+            return;
+        }
+        
+        // If switching to a different animation, update sprite texture
+        if (this.currentAnimation !== animationName) {
+            if (this.scene.textures.exists(spriteKey)) {
+                this.sprite.setTexture(spriteKey, 0);
+            }
+            this.currentAnimation = animationName;
+        }
+        
+        // Play the animation
+        this.sprite.play(animKey);
+    }
+
+    /**
+     * Play cheering/applauding animation
+     */
+    cheer() {
+        this.playAnimation('cheering');
+    }
+
+    /**
+     * Play encouraging/motivating animation
+     */
+    encourage() {
+        this.playAnimation('encouraging');
+    }
+
+    /**
+     * Play sad/disappointed animation
+     */
+    showSadness() {
+        this.playAnimation('sad');
+    }
+
+    /**
+     * Play celebrating/excited animation
+     */
+    celebrate() {
+        this.playAnimation('celebrating');
+    }
+
+    /**
+     * Return to idle animation
+     */
+    returnToIdle() {
+        this.playAnimation('idle');
     }
 
     /**
@@ -207,36 +309,122 @@ class WiseOwlCharacter {
         
         if (!this.sprite) return;
         
-        const bubbleWidth = Math.min(300, text.length * 8 + 40);
-        const bubbleHeight = 80;
-        const bubbleX = this.sprite.x;
-        const bubbleY = this.sprite.y - this.size * 0.7;
+        const sceneWidth = this.scene.cameras.main.width;
+        const sceneHeight = this.scene.cameras.main.height;
         
-        // Create speech bubble background
-        const bubbleBg = this.scene.add.graphics();
-        bubbleBg.fillStyle(0xFFFFFF, 0.95);
-        bubbleBg.fillRoundedRect(0, 0, bubbleWidth, bubbleHeight, 15);
-        bubbleBg.lineStyle(3, 0x8B4513, 1);
-        bubbleBg.strokeRoundedRect(0, 0, bubbleWidth, bubbleHeight, 15);
-        bubbleBg.generateTexture('speech_bubble', bubbleWidth, bubbleHeight);
-        bubbleBg.destroy();
+        // Calculate optimal bubble width (max 60% of screen width, min 250px)
+        // For Vietnamese text, use more space per character
+        const maxBubbleWidth = sceneWidth * 0.6;
+        const minBubbleWidth = 250;
+        const calculatedWidth = Math.min(maxBubbleWidth, Math.max(minBubbleWidth, text.length * 10 + 60));
+        const bubbleWidth = calculatedWidth;
         
-        this.speechBubble = this.scene.add.container(bubbleX, bubbleY);
-        
-        const bubble = this.scene.add.image(0, 0, 'speech_bubble');
-        this.speechBubble.add(bubble);
-        
-        // Dialogue text
-        const dialogueText = this.scene.add.text(0, 0, text, {
+        // Create temporary text to measure actual height needed
+        const tempText = this.scene.add.text(0, 0, text, {
             fontSize: '18px',
             fill: '#000000',
             fontFamily: 'Comic Sans MS, Arial',
             align: 'center',
-            wordWrap: { width: bubbleWidth - 20 }
+            wordWrap: { width: bubbleWidth - 40 } // More padding for text
+        });
+        tempText.setOrigin(0.5);
+        
+        // Calculate actual text height
+        const textHeight = tempText.height;
+        const minBubbleHeight = 80;
+        const bubbleHeight = Math.max(minBubbleHeight, textHeight + 40); // Add padding
+        
+        // Destroy temp text
+        tempText.destroy();
+        
+        // Position bubble ABOVE owl (not overlapping face)
+        const owlX = this.sprite.x;
+        const owlY = this.sprite.y;
+        
+        // Position above owl with enough clearance to avoid overlapping face
+        let bubbleX = owlX;
+        let bubbleY = owlY - this.size * 0.9; // Closer to owl head, reduced from 1.2
+        
+        // Ensure bubble doesn't go off right edge
+        const rightEdge = sceneWidth - 20;
+        if (bubbleX + bubbleWidth / 2 > rightEdge) {
+            bubbleX = rightEdge - bubbleWidth / 2;
+        }
+        
+        // Ensure bubble doesn't go off left edge
+        const leftEdge = 20;
+        if (bubbleX - bubbleWidth / 2 < leftEdge) {
+            bubbleX = leftEdge + bubbleWidth / 2;
+        }
+        
+        // Ensure bubble doesn't go off top
+        if (bubbleY - bubbleHeight / 2 < 0) {
+            bubbleY = bubbleHeight / 2 + 10;
+        }
+        
+        // Create speech bubble background with elegant transparency
+        // Use unique texture key to avoid overwriting previous textures
+        const textureKey = `speech_bubble_${bubbleWidth}_${bubbleHeight}`;
+        
+        // Only create texture if it doesn't exist (reuse for same size)
+        if (!this.scene.textures.exists(textureKey)) {
+            const bubbleBg = this.scene.add.graphics();
+            
+            // Outer glow/shadow effect (subtle)
+            bubbleBg.fillStyle(0x000000, 0.2);
+            bubbleBg.fillRoundedRect(2, 2, bubbleWidth, bubbleHeight, 25);
+            
+            // Main background - more transparent and elegant
+            bubbleBg.fillStyle(0xFFFFFF, 0.4); // More transparent (reduced from 0.75)
+            bubbleBg.fillRoundedRect(0, 0, bubbleWidth, bubbleHeight, 25); // More rounded (increased from 15)
+            
+            // Subtle inner highlight for depth
+            bubbleBg.fillStyle(0xFFFFFF, 0.2);
+            bubbleBg.fillRoundedRect(5, 5, bubbleWidth - 10, bubbleHeight - 10, 20);
+            
+            // No border - removed as requested
+            // Optional: very subtle border if needed (commented out)
+            // bubbleBg.lineStyle(1, 0xFFFFFF, 0.3);
+            // bubbleBg.strokeRoundedRect(0, 0, bubbleWidth, bubbleHeight, 25);
+            
+            bubbleBg.generateTexture(textureKey, bubbleWidth, bubbleHeight);
+            bubbleBg.destroy();
+        }
+        
+        this.speechBubble = this.scene.add.container(bubbleX, bubbleY);
+        
+        const bubble = this.scene.add.image(0, 0, textureKey);
+        this.speechBubble.add(bubble);
+        
+        // Store dimensions for position updates
+        this.speechBubble.width = bubbleWidth;
+        this.speechBubble.height = bubbleHeight;
+        
+        // Dialogue text with proper word wrapping and clear visibility
+        const dialogueText = this.scene.add.text(0, 0, text, {
+            fontSize: '18px',
+            fill: '#FFFFFF', // White text for better visibility on transparent background
+            fontFamily: 'Comic Sans MS, Arial',
+            align: 'center',
+            fontStyle: 'bold', // Bold for better readability
+            stroke: '#000000', // Black stroke for contrast against transparent background
+            strokeThickness: 3, // Thick stroke to make text stand out
+            shadow: {
+                offsetX: 1,
+                offsetY: 1,
+                color: '#000000',
+                blur: 3,
+                stroke: true,
+                fill: true
+            },
+            wordWrap: { 
+                width: bubbleWidth - 40, // More padding to prevent overflow
+                useAdvancedWrap: true // Better wrapping for Vietnamese
+            }
         }).setOrigin(0.5);
         this.speechBubble.add(dialogueText);
         
-        this.speechBubble.setDepth(200);
+        this.speechBubble.setDepth(301); // Even higher than owl to ensure dialogue is always visible
         
         // Pop-in animation
         this.speechBubble.setScale(0);

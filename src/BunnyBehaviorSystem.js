@@ -16,6 +16,7 @@ class BunnyBehaviorSystem {
         this.behaviorTimer = null;
         this.movementTarget = null;
         this.isMoving = false;
+        this.collisionCooldown = 0; // Cooldown to prevent too frequent collision reactions
         
         // Animation options
         this.availableAnimations = [
@@ -31,18 +32,18 @@ class BunnyBehaviorSystem {
             'walk'
         ];
         
-        // Behavior weights (higher = more likely)
+        // Behavior weights (higher = more likely) - more random distribution
         this.behaviorWeights = {
-            'idle': 30,
-            'runright': 15,
-            'runleft': 15,
-            'jump': 10,
+            'idle': 20,
+            'runright': 18,
+            'runleft': 18,
+            'jump': 15,
             'dance': 12,
             'victory': 8,
             'talk': 8,
-            'sleep': 5,
-            'hit': 3,
-            'walk': 10
+            'sleep': 3,
+            'hit': 2,
+            'walk': 14
         };
         
         // Initialize
@@ -210,49 +211,57 @@ class BunnyBehaviorSystem {
         this.playAnimation('idle');
         this.isMoving = false;
         
-        // Stay idle for 3-6 seconds
-        const duration = Phaser.Math.Between(3000, 6000);
+        // Stay idle for 2-5 seconds (more random, shorter)
+        const duration = Phaser.Math.Between(2000, 5000);
         this.behaviorTimer = this.scene.time.delayedCall(duration, () => {
             this.selectRandomBehavior();
         });
     }
 
     /**
-     * Run behavior - move in direction
+     * Run behavior - move in direction (more random)
      */
     doRun(direction) {
         const isRight = direction === 'runright';
         this.playAnimation(direction);
         this.isMoving = true;
         
-        // Determine movement target
+        // Determine movement target - more random
         const width = this.scene.cameras.main.width;
         const height = this.scene.cameras.main.height;
         const currentX = this.bunny.x;
         const currentY = this.bunny.y;
-        const moveDistance = Phaser.Math.Between(50, 150);
-        const targetX = isRight 
-            ? Math.min(currentX + moveDistance, width - 50)
-            : Math.max(currentX - moveDistance, 50);
         
-        // Keep within garden bounds
+        // More random distance and direction
+        const moveDistance = Phaser.Math.Between(80, 200);
+        const randomDirection = Phaser.Math.Between(0, 1) === 0 ? 1 : -1;
+        const targetX = Phaser.Math.Clamp(
+            currentX + (isRight ? moveDistance : -moveDistance) * randomDirection,
+            50,
+            width - 50
+        );
+        
+        // More random Y movement (allow more area, avoid top 20% for title/buttons)
         const targetY = Phaser.Math.Clamp(
-            currentY + Phaser.Math.Between(-15, 15),
-            height * 0.7,
+            currentY + Phaser.Math.Between(-40, 40),
+            height * 0.25,
             height - 50
         );
+        
+        // Variable speed for more randomness
+        const speed = Phaser.Math.Between(800, 1500);
         
         // Move bunny
         this.scene.tweens.add({
             targets: this.bunny,
             x: targetX,
             y: targetY,
-            duration: 1000 + moveDistance * 2,
-            ease: 'Linear',
+            duration: speed + moveDistance * 1.5,
+            ease: 'Power1',
             onComplete: () => {
                 this.isMoving = false;
-                // After running, go to idle or another behavior
-                this.behaviorTimer = this.scene.time.delayedCall(500, () => {
+                // After running, go to idle or another behavior (shorter delay)
+                this.behaviorTimer = this.scene.time.delayedCall(Phaser.Math.Between(300, 800), () => {
                     this.selectRandomBehavior();
                 });
             }
@@ -260,27 +269,28 @@ class BunnyBehaviorSystem {
     }
 
     /**
-     * Jump behavior - perform a jump
+     * Jump behavior - perform a jump (more random)
      */
     doJump() {
         this.playAnimation('jump');
         this.isMoving = false;
         
-        // Jump animation with movement
-        const jumpDistance = Phaser.Math.Between(30, 80);
-        const jumpHeight = 40;
+        // More random jump distance and direction
+        const jumpDistance = Phaser.Math.Between(40, 120);
+        const jumpDirection = Phaser.Math.Between(0, 1) === 0 ? 1 : -1;
+        const jumpHeight = Phaser.Math.Between(30, 60);
         
-        // Jump up and forward
+        // Jump up and forward/backward randomly
         this.scene.tweens.add({
             targets: this.bunny,
             y: this.bunny.y - jumpHeight,
-            x: this.bunny.x + jumpDistance,
-            duration: 300,
+            x: this.bunny.x + (jumpDistance * jumpDirection),
+            duration: Phaser.Math.Between(250, 400),
             ease: 'Power2',
             yoyo: true,
             onComplete: () => {
-                // After jump, return to idle
-                this.behaviorTimer = this.scene.time.delayedCall(500, () => {
+                // After jump, return to idle (shorter delay)
+                this.behaviorTimer = this.scene.time.delayedCall(Phaser.Math.Between(300, 700), () => {
                     this.selectRandomBehavior();
                 });
             }
@@ -430,7 +440,7 @@ class BunnyBehaviorSystem {
     }
 
     /**
-     * Walk behavior - slow, gentle movement
+     * Walk behavior - slow, gentle movement (more random)
      */
     doWalk() {
         // Use run animation but slower
@@ -439,21 +449,40 @@ class BunnyBehaviorSystem {
         this.isMoving = true;
         
         const width = this.scene.cameras.main.width;
+        const height = this.scene.cameras.main.height;
         const currentX = this.bunny.x;
-        const moveDistance = Phaser.Math.Between(30, 80);
-        const targetX = direction === 'runright'
-            ? Math.min(currentX + moveDistance, width - 50)
-            : Math.max(currentX - moveDistance, 50);
+        const currentY = this.bunny.y;
+        
+        // More random walk distance
+        const moveDistance = Phaser.Math.Between(50, 120);
+        const targetX = Phaser.Math.Clamp(
+            direction === 'runright' 
+                ? currentX + moveDistance 
+                : currentX - moveDistance,
+            50,
+            width - 50
+        );
+        
+        // Random Y movement during walk (allow more area)
+        const targetY = Phaser.Math.Clamp(
+            currentY + Phaser.Math.Between(-25, 25),
+            height * 0.25,
+            height - 50
+        );
+        
+        // Variable speed for walking
+        const walkSpeed = Phaser.Math.Between(1200, 2000);
         
         // Slower movement for walking
         this.scene.tweens.add({
             targets: this.bunny,
             x: targetX,
-            duration: 1500 + moveDistance * 3,
-            ease: 'Linear',
+            y: targetY,
+            duration: walkSpeed + moveDistance * 2,
+            ease: 'Power1',
             onComplete: () => {
                 this.isMoving = false;
-                this.behaviorTimer = this.scene.time.delayedCall(500, () => {
+                this.behaviorTimer = this.scene.time.delayedCall(Phaser.Math.Between(400, 800), () => {
                     this.selectRandomBehavior();
                 });
             }
@@ -478,11 +507,126 @@ class BunnyBehaviorSystem {
     }
 
     /**
-     * Update method (called each frame if needed)
+     * Update method (called each frame for collision detection)
      */
-    update() {
-        // Add any per-frame logic here if needed
-        // For now, behaviors are timer-based
+    update(allBunnies) {
+        // Update collision cooldown
+        if (this.collisionCooldown > 0) {
+            this.collisionCooldown--;
+        }
+        
+        // Collision detection and avoidance - more sensitive
+        if (allBunnies && allBunnies.length > 0) {
+            // More sensitive detection - larger minimum distance
+            const minDistance = 80; // Increased from 60 for earlier detection
+            const warningDistance = 100; // Start adjusting slightly even before collision
+            const avoidForce = 3; // Increased force to move away faster
+            
+            let closestBunny = null;
+            let closestDistance = Infinity;
+            
+            // Find closest bunny
+            allBunnies.forEach(other => {
+                if (other !== this.bunny && other.active && other.visible) {
+                    const distance = Phaser.Math.Distance.Between(
+                        this.bunny.x, this.bunny.y,
+                        other.x, other.y
+                    );
+                    
+                    if (distance < closestDistance) {
+                        closestDistance = distance;
+                        closestBunny = other;
+                    }
+                }
+            });
+            
+            // React to collision or near-collision
+            if (closestBunny && closestDistance < warningDistance) {
+                // If very close (collision), react immediately
+                if (closestDistance < minDistance && this.collisionCooldown === 0) {
+                    // Set shorter cooldown for more responsive reactions
+                    this.collisionCooldown = 15; // ~0.25 seconds at 60fps (reduced from 30)
+                    
+                    // Calculate angle away from other bunny
+                    const angle = Phaser.Math.Angle.Between(
+                        closestBunny.x, closestBunny.y,
+                        this.bunny.x, this.bunny.y
+                    );
+                    
+                    // Calculate avoidance distance - more aggressive
+                    const avoidDistance = (minDistance - closestDistance) * avoidForce;
+                    
+                    // Calculate new position
+                    const newX = this.bunny.x + Math.cos(angle) * avoidDistance;
+                    const newY = this.bunny.y + Math.sin(angle) * avoidDistance;
+                    
+                    // Clamp to screen bounds (allow more area)
+                    const width = this.scene.cameras.main.width;
+                    const height = this.scene.cameras.main.height;
+                    const clampedX = Phaser.Math.Clamp(newX, 50, width - 50);
+                    const clampedY = Phaser.Math.Clamp(newY, 50, height - 50); // Allow full height
+                    
+                    // Cancel any existing movement tweens and move away from collision
+                    this.scene.tweens.killTweensOf(this.bunny);
+                    this.isMoving = false;
+                    
+                    // Cancel behavior timer if exists
+                    if (this.behaviorTimer) {
+                        this.behaviorTimer.remove();
+                    }
+                    
+                    // Move away from collision - faster reaction
+                    this.scene.tweens.add({
+                        targets: this.bunny,
+                        x: clampedX,
+                        y: clampedY,
+                        duration: 200, // Faster reaction (reduced from 300)
+                        ease: 'Power2',
+                        onComplete: () => {
+                            // After avoiding, select new random behavior
+                            this.behaviorTimer = this.scene.time.delayedCall(100, () => {
+                                this.selectRandomBehavior();
+                            });
+                        }
+                    });
+                    
+                    // Play jump animation briefly to show reaction
+                    this.playAnimation('jump');
+                    this.scene.time.delayedCall(200, () => {
+                        this.playAnimation('idle');
+                    });
+                } 
+                // If getting close but not colliding yet, make slight adjustment
+                else if (closestDistance < warningDistance && closestDistance >= minDistance && this.collisionCooldown === 0) {
+                    // Gentle adjustment to avoid future collision
+                    const adjustmentAngle = Phaser.Math.Angle.Between(
+                        closestBunny.x, closestBunny.y,
+                        this.bunny.x, this.bunny.y
+                    );
+                    
+                    // Small adjustment
+                    const adjustmentDistance = (warningDistance - closestDistance) * 0.3;
+                    const adjustX = this.bunny.x + Math.cos(adjustmentAngle) * adjustmentDistance;
+                    const adjustY = this.bunny.y + Math.sin(adjustmentAngle) * adjustmentDistance;
+                    
+                    const width = this.scene.cameras.main.width;
+                    const height = this.scene.cameras.main.height;
+                    const clampedX = Phaser.Math.Clamp(adjustX, 50, width - 50);
+                    const clampedY = Phaser.Math.Clamp(adjustY, 50, height - 50);
+                    
+                    // Only adjust if not currently moving with a tween
+                    if (!this.isMoving) {
+                        this.scene.tweens.add({
+                            targets: this.bunny,
+                            x: clampedX,
+                            y: clampedY,
+                            duration: 150,
+                            ease: 'Power1'
+                        });
+                    }
+                }
+            }
+        }
     }
 
     /**

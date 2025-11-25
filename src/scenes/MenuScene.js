@@ -272,6 +272,57 @@ class MenuScene extends Phaser.Scene {
     }
 
     createBunnies(width, height) {
+        // Random number of bunnies from 4 to 10
+        const bunnyCount = Phaser.Math.Between(4, 10);
+        
+        // Minimum distance between bunnies when spawning
+        const minSpawnDistance = 80;
+        const existingPositions = []; // Track positions to avoid overlap
+        const maxAttempts = 50; // Maximum attempts to find a valid position
+        
+        // Helper function to find a valid position without overlap
+        const findValidPosition = () => {
+            let attempts = 0;
+            let validPosition = null;
+            
+            while (attempts < maxAttempts && !validPosition) {
+                // More diverse positions - spread across entire screen (avoiding top 20% for title/buttons)
+                const startX = Phaser.Math.Between(80, width - 80);
+                const startY = Phaser.Math.Between(height * 0.25, height - 60);
+                
+                // Check if position is far enough from existing bunnies
+                let tooClose = false;
+                for (const existingPos of existingPositions) {
+                    const distance = Phaser.Math.Distance.Between(
+                        startX, startY,
+                        existingPos.x, existingPos.y
+                    );
+                    if (distance < minSpawnDistance) {
+                        tooClose = true;
+                        break;
+                    }
+                }
+                
+                if (!tooClose) {
+                    validPosition = { x: startX, y: startY };
+                    existingPositions.push(validPosition);
+                }
+                
+                attempts++;
+            }
+            
+            // If couldn't find valid position, use a random one anyway (better than nothing)
+            if (!validPosition) {
+                validPosition = {
+                    x: Phaser.Math.Between(80, width - 80),
+                    y: Phaser.Math.Between(height * 0.25, height - 60)
+                };
+                existingPositions.push(validPosition);
+            }
+            
+            return validPosition;
+        };
+        
         // Use the new animated behavior system for menu bunnies
         if (typeof createAnimatedMenuBunny !== 'undefined' && typeof BUNNY_CHARACTERS !== 'undefined') {
             // Ensure animations are generated
@@ -281,35 +332,28 @@ class MenuScene extends Phaser.Scene {
                 }
             }
             
-            // Select 4 different characters for variety
-            const selectedCharacters = [
-                BUNNY_CHARACTERS.milo,    // Milo - energetic orange
-                BUNNY_CHARACTERS.luna,    // Luna - gentle white with flower
-                BUNNY_CHARACTERS.sunny,   // Sunny - optimistic yellow
-                BUNNY_CHARACTERS.pinky    // Pinky - sweet pink with scarf
-            ];
-
-            for (let i = 0; i < selectedCharacters.length; i++) {
-                const charConfig = selectedCharacters[i];
-                const startX = Phaser.Math.Between(100, width - 100);
-                const startY = Phaser.Math.Between(height * 0.7, height - 80);
+            // Get all available characters
+            const allCharacterKeys = Object.keys(BUNNY_CHARACTERS);
+            
+            // Select random characters for variety (can repeat if needed)
+            for (let i = 0; i < bunnyCount; i++) {
+                const randomKey = allCharacterKeys[Phaser.Math.Between(0, allCharacterKeys.length - 1)];
+                const charConfig = BUNNY_CHARACTERS[randomKey];
+                const position = findValidPosition();
                 
                 // Create animated bunny with behavior system
-                const bunny = createAnimatedMenuBunny(this, startX, startY, charConfig);
+                const bunny = createAnimatedMenuBunny(this, position.x, position.y, charConfig);
                 this.bunnies.push(bunny);
             }
         } else if (typeof BunnyCharacter !== 'undefined' && typeof BUNNY_CHARACTERS !== 'undefined') {
             // Fallback: Use BunnyCharacter system without animations
-            const selectedCharacters = [
-                BUNNY_CHARACTERS.milo,
-                BUNNY_CHARACTERS.luna,
-                BUNNY_CHARACTERS.sunny,
-                BUNNY_CHARACTERS.pinky
-            ];
-
-            for (let i = 0; i < selectedCharacters.length; i++) {
-                const charConfig = selectedCharacters[i];
-                const bunny = this.createBunnyCharacter(width, height, charConfig);
+            const allCharacterKeys = Object.keys(BUNNY_CHARACTERS);
+            
+            for (let i = 0; i < bunnyCount; i++) {
+                const randomKey = allCharacterKeys[Phaser.Math.Between(0, allCharacterKeys.length - 1)];
+                const charConfig = BUNNY_CHARACTERS[randomKey];
+                const position = findValidPosition();
+                const bunny = this.createBunnyCharacter(width, height, charConfig, position.x, position.y);
                 this.bunnies.push(bunny);
             }
         } else {
@@ -322,18 +366,21 @@ class MenuScene extends Phaser.Scene {
                 { body: 0xFFD700, ear: 0xFF8C00 }
             ];
 
-            for (let i = 0; i < 4; i++) {
-                const name = bunnyNames[i] || `Thỏ ${i + 1}`;
-                const colors = bunnyColors[i] || bunnyColors[0];
-                const bunny = this.createBunnyCharacterFallback(width, height, name, colors);
+            for (let i = 0; i < bunnyCount; i++) {
+                const nameIndex = i % bunnyNames.length;
+                const name = bunnyNames[nameIndex] || `Thỏ ${i + 1}`;
+                const colors = bunnyColors[nameIndex] || bunnyColors[0];
+                const position = findValidPosition();
+                const bunny = this.createBunnyCharacterFallback(width, height, name, colors, position.x, position.y);
                 this.bunnies.push(bunny);
             }
         }
     }
 
-    createBunnyCharacter(width, height, charConfig) {
-        const startX = Phaser.Math.Between(100, width - 100);
-        const startY = Phaser.Math.Between(height * 0.7, height - 80);
+    createBunnyCharacter(width, height, charConfig, startX = null, startY = null) {
+        // Use provided position or generate random one
+        if (startX === null) startX = Phaser.Math.Between(100, width - 100);
+        if (startY === null) startY = Phaser.Math.Between(height * 0.25, height - 80);
         
         // Create bunny character using new system
         const bunnyChar = new BunnyCharacter(this, { ...charConfig, size: 80 });
@@ -463,10 +510,11 @@ class MenuScene extends Phaser.Scene {
         return bunny;
     }
 
-    createBunnyCharacterFallback(width, height, name, colors) {
+    createBunnyCharacterFallback(width, height, name, colors, startX = null, startY = null) {
         // Fallback method if BunnyCharacter system not available
-        const startX = Phaser.Math.Between(100, width - 100);
-        const startY = Phaser.Math.Between(height * 0.7, height - 80);
+        // Use provided position or generate random one
+        if (startX === null) startX = Phaser.Math.Between(100, width - 100);
+        if (startY === null) startY = Phaser.Math.Between(height * 0.25, height - 80);
         
         const bunny = this.add.graphics();
         bunny.fillStyle(colors.body, 1);
@@ -711,6 +759,17 @@ class MenuScene extends Phaser.Scene {
     }
 
     update() {
+        // Update bunnies (collision detection)
+        if (this.bunnies && this.bunnies.length > 0) {
+            this.bunnies.forEach(bunny => {
+                const behaviorSystem = bunny.getData('behaviorSystem');
+                if (behaviorSystem && typeof behaviorSystem.update === 'function') {
+                    const allBunnies = [...this.bunnies];
+                    behaviorSystem.update(allBunnies);
+                }
+            });
+        }
+        
         // Update fireflies
         if (this.fireflies && this.fireflies.length > 0) {
             this.fireflies.forEach(firefly => {

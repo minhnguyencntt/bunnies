@@ -24,38 +24,66 @@ class UIScene extends Phaser.Scene {
         const width = this.cameras.main.width;
         const height = this.cameras.main.height;
 
-        // HUD background
+        // HUD background with better styling and transparency
         const hudBg = this.add.graphics();
-        hudBg.fillStyle(0x000000, 0.3);
+        // Semi-transparent dark background
+        hudBg.fillStyle(0x2C1810, 0.85); // Dark brown with high opacity
         hudBg.fillRect(0, 0, width, 80);
+        // Border at bottom to separate from content
+        hudBg.lineStyle(3, 0xFFD700, 0.6);
+        hudBg.lineBetween(0, 80, width, 80);
         hudBg.generateTexture('hudBg', width, 80);
         hudBg.destroy();
 
-        this.add.image(width / 2, 40, 'hudBg');
+        const hudImage = this.add.image(width / 2, 40, 'hudBg');
+        hudImage.setDepth(100); // Ensure it's above background but below question panel
 
-        // Level title
+        // Level title with better positioning and styling
         const levelText = this.add.text(120, 40, 'Level 1: Cầu Toán Học', {
             fontSize: '24px',
             fill: '#FFD700',
-            fontFamily: 'Arial',
-            fontStyle: 'bold'
+            fontFamily: 'Comic Sans MS, Arial',
+            fontStyle: 'bold',
+            stroke: '#000000',
+            strokeThickness: 2,
+            shadow: {
+                offsetX: 1,
+                offsetY: 1,
+                color: '#000000',
+                blur: 2,
+                stroke: true,
+                fill: true
+            }
         }).setOrigin(0, 0.5);
+        levelText.setDepth(101);
 
-        // Star counter
+        // Star counter with better styling
         const starIcon = this.add.text(width - 100, 40, '⭐ 0', {
             fontSize: '24px',
             fill: '#FFFFFF',
-            fontFamily: 'Arial',
-            fontStyle: 'bold'
+            fontFamily: 'Comic Sans MS, Arial',
+            fontStyle: 'bold',
+            stroke: '#000000',
+            strokeThickness: 2,
+            shadow: {
+                offsetX: 1,
+                offsetY: 1,
+                color: '#000000',
+                blur: 2,
+                stroke: true,
+                fill: true
+            }
         }).setOrigin(0.5);
+        starIcon.setDepth(101);
     }
 
     createHomeButton() {
         const width = this.cameras.main.width;
 
-        // Home button
+        // Home button with proper depth
         const homeBtn = this.add.circle(50, 40, 24, 0x4A90E2)
             .setInteractive({ useHandCursor: true })
+            .setDepth(101) // Above HUD background
             .on('pointerdown', () => {
                 this.scene.stop();
                 this.scene.start('MenuScene');
@@ -72,6 +100,7 @@ class UIScene extends Phaser.Scene {
         const homeIcon = this.add.text(50, 40, '🏠', {
             fontSize: '20px'
         }).setOrigin(0.5);
+        homeIcon.setDepth(102); // Above button
     }
 }
 

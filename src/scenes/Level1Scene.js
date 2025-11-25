@@ -475,8 +475,9 @@ class Level1Scene extends Phaser.Scene {
         const width = this.cameras.main.width;
         const height = this.cameras.main.height;
         
-        // Position owl near the broken bridge
-        const owlX = width * 0.15;
+        // Position owl further from left edge to prevent dialogue cutoff
+        // Move from 15% to 25% to give more space for dialogue bubble
+        const owlX = width * 0.25;
         const owlY = height * 0.55;
         
         if (typeof WiseOwlCharacter !== 'undefined') {
@@ -585,6 +586,12 @@ class Level1Scene extends Phaser.Scene {
         const height = this.cameras.main.height;
         const question = this.currentQuestion;
         
+        // Position question panel below the HUD (which is 80px high)
+        // Add some margin (20px) below HUD
+        const hudHeight = 80;
+        const margin = 20;
+        const questionPanelY = hudHeight + margin + 60; // 60 is half of panel height (120/2)
+        
         // Question panel
         const panelBg = this.add.graphics();
         panelBg.fillStyle(0x8B4513, 0.9);
@@ -594,11 +601,11 @@ class Level1Scene extends Phaser.Scene {
         panelBg.generateTexture('questionPanel', width * 0.85, 120);
         panelBg.destroy();
         
-        this.questionPanel = this.add.image(width / 2, height * 0.15, 'questionPanel');
+        this.questionPanel = this.add.image(width / 2, questionPanelY, 'questionPanel');
         this.questionPanel.setDepth(150);
         
         // Question text
-        this.questionText = this.add.text(width / 2, height * 0.15, question.question, {
+        this.questionText = this.add.text(width / 2, questionPanelY, question.question, {
             fontSize: '36px',
             fill: '#FFFFFF',
             fontFamily: 'Comic Sans MS, Arial',
@@ -631,7 +638,11 @@ class Level1Scene extends Phaser.Scene {
         const spacing = 15;
         const totalWidth = (cardWidth + spacing) * question.answers.length - spacing;
         const startX = (width - totalWidth) / 2;
-        const cardY = height * 0.32;
+        // Position answer cards below question panel (120px height + 20px margin + cardY offset)
+        const hudHeight = 80;
+        const questionPanelHeight = 120;
+        const margin = 20;
+        const cardY = hudHeight + questionPanelHeight + margin + 70; // 70 is half of card height
         
         // Pastel color palette with glowing edges
         const colorPalettes = [
@@ -850,28 +861,16 @@ class Level1Scene extends Phaser.Scene {
         // Create bunny on the restored plank (randomly positioned)
         this.createBunnyOnPlank(plankIndex);
         
-        // Success feedback
-        const width = this.cameras.main.width;
-        const height = this.cameras.main.height;
-        const successText = this.add.text(width / 2, height * 0.25, 'Xuất sắc! Một tấm ván nữa đã được khôi phục! ⭐', {
-            fontSize: '28px',
-            fill: '#FFD700',
-            fontFamily: 'Comic Sans MS, Arial',
-            fontStyle: 'bold',
-            stroke: '#FFFFFF',
-            strokeThickness: 3
-        }).setOrigin(0.5);
-        successText.setDepth(200);
-        
-        // Wise Owl feedback
+        // Wise Owl feedback (same style as introduction dialogue)
         if (this.wiseOwl) {
-            this.wiseOwl.showDialogue("Làm tốt lắm, Bé Thỏ! Một tấm ván nữa đã được khôi phục. Tiếp tục nhé!", 3000);
+            this.wiseOwl.cheer(); // Play cheering animation
+            this.wiseOwl.showDialogue("Làm tốt lắm, Bé Thỏ! Một tấm ván nữa đã được khôi phục. Tiếp tục nhé!", 4000);
         }
         
-        // Next question after delay
-        this.time.delayedCall(2500, () => {
-            successText.destroy();
+        // Next question after delay (matching introduction dialogue timing)
+        this.time.delayedCall(4500, () => {
             if (this.planksRestored < this.totalPlanks) {
+                this.wiseOwl.returnToIdle(); // Return to idle after speaking
                 this.generateNewQuestion();
             }
         });
@@ -948,26 +947,15 @@ class Level1Scene extends Phaser.Scene {
             this.createDenialSparkles(sparkX, sparkY);
         }
         
-        // Wrong answer feedback
-        const width = this.cameras.main.width;
-        const hintText = this.add.text(width / 2, this.cameras.main.height * 0.25, 'Ồ! Chưa đúng. Hãy đếm cẩn thận và chọn lại nhé! 💡', {
-            fontSize: '24px',
-            fill: '#FF8C00',
-            fontFamily: 'Comic Sans MS, Arial',
-            fontStyle: 'bold',
-            stroke: '#FFFFFF',
-            strokeThickness: 2
-        }).setOrigin(0.5);
-        hintText.setDepth(200);
-        
-        // Wise Owl feedback
+        // Wise Owl feedback (same style as introduction dialogue)
         if (this.wiseOwl) {
-            this.wiseOwl.showDialogue("Ồ! Chưa đúng. Hãy đếm cẩn thận và chọn lại nhé!", 3000);
+            this.wiseOwl.showSadness(); // Play sad animation
+            this.wiseOwl.showDialogue("Ồ! Chưa đúng. Hãy đếm cẩn thận và chọn lại nhé!", 4000);
+            // Return to idle after dialogue
+            this.time.delayedCall(4500, () => {
+                this.wiseOwl.returnToIdle();
+            });
         }
-        
-        this.time.delayedCall(2000, () => {
-            hintText.destroy();
-        });
     }
 
     returnCard(card) {
@@ -1192,18 +1180,6 @@ class Level1Scene extends Phaser.Scene {
         // Hide question UI
         this.clearQuestionUI();
         
-        // Victory celebration
-        const victoryText = this.add.text(width / 2, height / 2, 'Hoàn thành! 🎉\nBạn đã khôi phục tất cả 10 tấm ván!', {
-            fontSize: '40px',
-            fill: '#FFD700',
-            fontFamily: 'Comic Sans MS, Arial',
-            fontStyle: 'bold',
-            align: 'center',
-            stroke: '#FFFFFF',
-            strokeThickness: 4
-        }).setOrigin(0.5);
-        victoryText.setDepth(200);
-        
         // Enhanced magical sparkles everywhere
         for (let i = 0; i < 50; i++) {
             const x = Phaser.Math.Between(0, width);
@@ -1211,9 +1187,8 @@ class Level1Scene extends Phaser.Scene {
             this.createMagicalSparkles(x, y);
         }
         
-        // Show reward: Trang sách số 1
+        // Show reward: Trang sách số 1 (removed duplicate victory text since owl already speaks)
         this.time.delayedCall(2000, () => {
-            victoryText.destroy();
             this.showReward();
         });
     }
@@ -1258,10 +1233,30 @@ class Level1Scene extends Phaser.Scene {
         }).setOrigin(0.5);
         rewardSubtitle.setDepth(252);
         
-        // Decorative star
+        // Decorative star (manually drawn since fillStar doesn't exist)
         const star = this.add.graphics();
         star.fillStyle(0xFFD700, 1);
-        star.fillStar(width / 2, height * 0.55, 30, 5, 0);
+        const starX = width / 2;
+        const starY = height * 0.55;
+        const outerRadius = 30;
+        const innerRadius = 15;
+        const points = 5;
+        
+        // Draw star manually
+        star.beginPath();
+        for (let i = 0; i < points * 2; i++) {
+            const radius = i % 2 === 0 ? outerRadius : innerRadius;
+            const angle = (i * Math.PI) / points - Math.PI / 2;
+            const px = starX + Math.cos(angle) * radius;
+            const py = starY + Math.sin(angle) * radius;
+            if (i === 0) {
+                star.moveTo(px, py);
+            } else {
+                star.lineTo(px, py);
+            }
+        }
+        star.closePath();
+        star.fillPath();
         star.setDepth(252);
         
         // Continue button
@@ -1290,9 +1285,10 @@ class Level1Scene extends Phaser.Scene {
             this.scene.start('MenuScene');
         });
         
-        // Wise Owl final message
+        // Wise Owl final message (same style as introduction dialogue)
         if (this.wiseOwl) {
             this.time.delayedCall(500, () => {
+                this.wiseOwl.celebrate(); // Play celebrating animation
                 this.wiseOwl.showDialogue("Tuyệt vời! Bạn đã học được sức mạnh của những con số!", 4000);
             });
         }

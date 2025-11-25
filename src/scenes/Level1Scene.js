@@ -166,7 +166,8 @@ class Level1Scene extends Phaser.Scene {
             dropZone: null,
             container: null,
             answerText: null,
-            answerValue: null
+            answerValue: null,
+            bunnies: [] // Store bunnies on this plank
         };
         
         // Create container for floating effect
@@ -180,16 +181,16 @@ class Level1Scene extends Phaser.Scene {
         brokenPlank.fillStyle(0x9370DB, 0.1);
         brokenPlank.fillRoundedRect(-width/2 - 2, -height/2 - 2, width + 4, height + 4, 5);
         
-        // Main broken plank (dark, cracked, dimmed)
-        brokenPlank.fillStyle(0x654321, 0.4); // More transparent/dimmed
+        // Main broken plank (dark, cracked, but more visible/bold)
+        brokenPlank.fillStyle(0x654321, 0.85); // Much more visible/bold
         brokenPlank.fillRoundedRect(-width/2, -height/2, width, height, 4);
         
-        // Border (dark, broken appearance, dimmed)
-        brokenPlank.lineStyle(2, 0x4A4A4A, 0.6);
+        // Border (dark, broken appearance, but more visible)
+        brokenPlank.lineStyle(3, 0x4A4A4A, 0.9);
         brokenPlank.strokeRoundedRect(-width/2, -height/2, width, height, 4);
         
-        // Crack lines (multiple for broken effect)
-        brokenPlank.lineStyle(2, 0x2A2A2A, 0.7);
+        // Crack lines (multiple for broken effect, more visible)
+        brokenPlank.lineStyle(2, 0x2A2A2A, 0.9);
         brokenPlank.beginPath();
         brokenPlank.moveTo(-width * 0.3, -height/2);
         brokenPlank.lineTo(width * 0.2, height/2);
@@ -201,7 +202,7 @@ class Level1Scene extends Phaser.Scene {
         
         container.add(brokenPlank);
         brokenPlank.setDepth(10);
-        brokenPlank.setAlpha(0.6); // Make the whole plank dimmed
+        brokenPlank.setAlpha(0.9); // Much more visible - bold for easier interaction
         plank.graphics = brokenPlank;
         
         // Gentle floating animation for broken planks
@@ -257,28 +258,61 @@ class Level1Scene extends Phaser.Scene {
             });
         }
         
-        // Create restored plank (bold, bright, prominent)
+        // Create restored plank (bold, bright, prominent with mathematical symbols)
         const restoredPlank = this.add.graphics();
         
-        // Outer glow (strong magical energy)
+        // Outer glow (strong magical energy - ethereal crystal-like)
         restoredPlank.fillStyle(0xFFD700, 0.5);
         restoredPlank.fillRoundedRect(-plank.width/2 - 4, -plank.height/2 - 4, plank.width + 8, plank.height + 8, 5);
         
-        // Main plank (bold, bright, crystal-like appearance)
+        // Main plank (bold, bright, crystal-like appearance with gradient - very bold)
         restoredPlank.fillGradientStyle(0x9370DB, 0x9370DB, 0x8A2BE2, 0x8A2BE2, 1);
         restoredPlank.fillRoundedRect(-plank.width/2, -plank.height/2, plank.width, plank.height, 4);
         
-        // Strong glowing border (bold)
-        restoredPlank.lineStyle(4, 0xFFD700, 1);
+        // Strong glowing border (bold, golden, thicker)
+        restoredPlank.lineStyle(5, 0xFFD700, 1);
         restoredPlank.strokeRoundedRect(-plank.width/2, -plank.height/2, plank.width, plank.height, 4);
         
-        // Inner highlight (bright)
-        restoredPlank.lineStyle(3, 0xFFFFFF, 0.8);
+        // Inner highlight (bright, crystal-like, more visible)
+        restoredPlank.lineStyle(4, 0xFFFFFF, 1);
         restoredPlank.strokeRoundedRect(-plank.width/2 + 2, -plank.height/2 + 2, plank.width - 4, plank.height - 4, 3);
+        
+        // Intertwined glowing mathematical symbols (ethereal energy)
+        const symbols = ['+', '×', '=', '÷', '±'];
+        const symbolSize = Math.min(plank.width * 0.15, plank.height * 0.4);
+        
+        // Small glowing symbols scattered on plank
+        for (let i = 0; i < 3; i++) {
+            const symbol = symbols[(plankIndex + i) % symbols.length];
+            const offsetX = (i - 1) * plank.width * 0.25;
+            const offsetY = (Math.sin(i) * plank.height * 0.2);
+            
+            // Glowing symbol background
+            restoredPlank.fillStyle(0xFFD700, 0.3);
+            restoredPlank.fillCircle(offsetX, offsetY, symbolSize * 0.6);
+        }
+        
+        // Ethereal energy lines (crystal-like energy flowing)
+        restoredPlank.lineStyle(1, 0xFFD700, 0.6);
+        for (let i = 0; i < 2; i++) {
+            const offset = (i - 0.5) * plank.width * 0.3;
+            restoredPlank.beginPath();
+            restoredPlank.moveTo(offset, -plank.height/2);
+            restoredPlank.lineTo(offset, plank.height/2);
+            restoredPlank.strokePath();
+        }
         
         container.add(restoredPlank);
         restoredPlank.setDepth(11);
         restoredPlank.setAlpha(1); // Full opacity - bold and prominent
+        
+        // Add extra boldness layer for better visibility
+        const boldLayer = this.add.graphics();
+        boldLayer.fillStyle(0x9370DB, 0.3);
+        boldLayer.fillRoundedRect(-plank.width/2, -plank.height/2, plank.width, plank.height, 4);
+        container.add(boldLayer);
+        boldLayer.setDepth(10);
+        
         plank.graphics = restoredPlank;
         
         // Display answer number on the plank (optimized size to match plank dimensions)
@@ -303,7 +337,7 @@ class Level1Scene extends Phaser.Scene {
                 }
             }).setOrigin(0.5);
             container.add(answerText);
-            answerText.setDepth(12);
+            answerText.setDepth(20); // High depth to ensure number is always visible above bunny
             plank.answerText = answerText;
         }
         
@@ -315,13 +349,23 @@ class Level1Scene extends Phaser.Scene {
         glowEffect.setDepth(10);
         plank.glowEffect = glowEffect;
         
-        // Pulsing glow animation
+        // Pulsing glow animation (shimmering effect)
         this.tweens.add({
             targets: glowEffect,
             alpha: 0.2,
-            scaleX: 1.1,
-            scaleY: 1.1,
-            duration: 1500,
+            scaleX: 1.15,
+            scaleY: 1.15,
+            duration: 1200,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
+        });
+        
+        // Shimmering effect on the plank itself
+        this.tweens.add({
+            targets: restoredPlank,
+            alpha: 0.95,
+            duration: 1000,
             yoyo: true,
             repeat: -1,
             ease: 'Sine.easeInOut'
@@ -336,11 +380,11 @@ class Level1Scene extends Phaser.Scene {
             duration: 500,
             ease: 'Back.easeOut',
             onComplete: () => {
-                // Gentle floating animation for restored planks
+                // Gentle floating animation for restored planks (lightweight, floating above)
                 this.tweens.add({
                     targets: container,
-                    y: container.y - 1,
-                    duration: 2500,
+                    y: container.y - 2,
+                    duration: 2000,
                     yoyo: true,
                     repeat: -1,
                     ease: 'Sine.easeInOut'
@@ -355,6 +399,76 @@ class Level1Scene extends Phaser.Scene {
         if (this.planksRestored >= this.totalPlanks) {
             this.completeLevel();
         }
+    }
+
+    createBunnyOnPlank(plankIndex) {
+        const plank = this.bridgePlanks[plankIndex];
+        if (!plank || !plank.container) return;
+        
+        // Position bunny at the center (X = 0) but above the number (negative Y)
+        // Bunny should be on top of the number, centered
+        const bunnyX = 0; // Center of plank, same as number
+        const bunnyY = -plank.height * 0.6; // Above the number (negative Y = up)
+        
+        // Create bunny character
+        let bunny;
+        if (typeof BunnyCharacter !== 'undefined' && typeof BUNNY_CHARACTERS !== 'undefined') {
+            // Use random bunny character
+            const bunnyKeys = Object.keys(BUNNY_CHARACTERS);
+            const randomBunnyKey = bunnyKeys[Phaser.Math.Between(0, bunnyKeys.length - 1)];
+            const bunnyConfig = BUNNY_CHARACTERS[randomBunnyKey];
+            
+            const bunnyChar = new BunnyCharacter(this, { ...bunnyConfig, size: Math.min(plank.width * 0.7, 35) });
+            const jumpingTexture = bunnyChar.generateTexture('jumping');
+            bunny = this.add.image(bunnyX, bunnyY, jumpingTexture);
+        } else {
+            // Fallback: simple bunny graphic
+            bunny = this.add.graphics();
+            bunny.fillStyle(0xFFFFFF, 1);
+            bunny.fillCircle(0, 0, 12);
+            bunny.fillStyle(0xFFB6C1, 1);
+            bunny.fillEllipse(-6, -10, 5, 10);
+            bunny.fillEllipse(6, -10, 5, 10);
+            bunny.fillStyle(0x4A90E2, 1);
+            bunny.fillCircle(-4, -2, 3);
+            bunny.fillCircle(4, -2, 3);
+            bunny.fillStyle(0xFF69B4, 1);
+            bunny.fillTriangle(0, 1, -2, 5, 2, 5);
+            bunny.generateTexture('simple_bunny', 25, 25);
+            bunny.destroy();
+            bunny = this.add.image(bunnyX, bunnyY, 'simple_bunny');
+        }
+        
+        bunny.setOrigin(0.5);
+        bunny.setDepth(14); // Below answer text (which is depth 20) so number is always visible
+        plank.container.add(bunny);
+        
+        // Store bunny reference
+        if (!plank.bunnies) {
+            plank.bunnies = [];
+        }
+        plank.bunnies.push(bunny);
+        
+        // Random jumping animation (jump up and down randomly)
+        const jump = () => {
+            const jumpHeight = Phaser.Math.Between(8, 15);
+            const jumpDuration = Phaser.Math.Between(300, 600);
+            const delay = Phaser.Math.Between(500, 1500);
+            
+            this.tweens.add({
+                targets: bunny,
+                y: bunny.y - jumpHeight,
+                duration: jumpDuration,
+                ease: 'Power2',
+                yoyo: true,
+                onComplete: () => {
+                    this.time.delayedCall(delay, jump);
+                }
+            });
+        };
+        
+        // Start jumping after a short delay
+        this.time.delayedCall(Phaser.Math.Between(200, 500), jump);
     }
 
     createWiseOwl() {
@@ -573,19 +687,20 @@ class Level1Scene extends Phaser.Scene {
             const card = this.add.image(0, 0, `card_${index}`);
             cardContainer.add(card);
             
-            // Answer text (larger, more readable)
+            // Answer text (optimized size to fit better in card)
+            const fontSize = Math.min(cardWidth * 0.4, cardHeight * 0.5, 42); // Smaller, fits better
             const answerText = this.add.text(0, 0, answer, {
-                fontSize: '52px',
+                fontSize: fontSize + 'px',
                 fill: '#FFFFFF',
                 fontFamily: 'Comic Sans MS, Arial',
                 fontStyle: 'bold',
                 stroke: '#000000',
-                strokeThickness: 4,
+                strokeThickness: Math.max(2, fontSize * 0.08),
                 shadow: {
-                    offsetX: 2,
-                    offsetY: 2,
+                    offsetX: 1,
+                    offsetY: 1,
                     color: '#000000',
-                    blur: 4,
+                    blur: 3,
                     stroke: true,
                     fill: true
                 }
@@ -731,6 +846,9 @@ class Level1Scene extends Phaser.Scene {
         // Restore plank with answer value displayed
         const answerValue = parseInt(card.getData('answerText'));
         this.restorePlank(plankIndex, answerValue);
+        
+        // Create bunny on the restored plank (randomly positioned)
+        this.createBunnyOnPlank(plankIndex);
         
         // Success feedback
         const width = this.cameras.main.width;
@@ -994,34 +1112,43 @@ class Level1Scene extends Phaser.Scene {
         const width = this.cameras.main.width;
         const height = this.cameras.main.height;
         
-        // Generate butterflies
+        // Generate butterflies (soft fluttering around bridge)
         if (typeof generateButterflies === 'function' && typeof createMenuButterfly === 'function') {
-            const butterflyDataList = generateButterflies(this, 4);
+            const butterflyDataList = generateButterflies(this, 5);
             butterflyDataList.forEach(data => {
                 const butterfly = createMenuButterfly(this, data);
                 if (butterfly) {
+                    // Position butterflies around bridge area
+                    butterfly.x = Phaser.Math.Between(width * 0.1, width * 0.9);
+                    butterfly.y = Phaser.Math.Between(height * 0.3, height * 0.7);
                     this.butterflies.push(butterfly);
                 }
             });
         }
         
-        // Generate fireflies
+        // Generate fireflies (glowing around bridge and tiles)
         if (typeof generateFireflies === 'function' && typeof createMenuFirefly === 'function') {
-            const fireflyDataList = generateFireflies(this, 5);
+            const fireflyDataList = generateFireflies(this, 6);
             fireflyDataList.forEach(data => {
                 const firefly = createMenuFirefly(this, data);
                 if (firefly) {
+                    // Position fireflies around bridge and answer tiles area
+                    firefly.x = Phaser.Math.Between(width * 0.1, width * 0.9);
+                    firefly.y = Phaser.Math.Between(height * 0.2, height * 0.6);
                     this.fireflies.push(firefly);
                 }
             });
         }
         
-        // Generate magic particles
+        // Generate magic particles (drifting around bridge and tiles)
         if (typeof generateMagicParticles === 'function' && typeof createMenuMagicParticle === 'function') {
-            const particleDataList = generateMagicParticles(this, 6);
+            const particleDataList = generateMagicParticles(this, 8);
             particleDataList.forEach(data => {
                 const particle = createMenuMagicParticle(this, data);
                 if (particle) {
+                    // Position particles around bridge area
+                    particle.x = Phaser.Math.Between(width * 0.15, width * 0.85);
+                    particle.y = Phaser.Math.Between(height * 0.3, height * 0.7);
                     this.magicParticles.push(particle);
                 }
             });

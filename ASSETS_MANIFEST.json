@@ -1,0 +1,404 @@
+{
+  "version": "1.0.0",
+  "game": "Bé Thỏ và Rừng Tri Thức",
+  "description": "Assets manifest for educational adventure game",
+  "assets": {
+    "backgrounds": [
+      {
+        "key": "bg_forest_level1",
+        "file": "assets/backgrounds/forest_level1.png",
+        "format": "PNG",
+        "resolution": "1920x1080",
+        "notes": "Rừng phép thuật với cây xanh, nấm phát sáng, cầu gãy ở giữa. Pastel colors, soft shadows."
+      },
+      {
+        "key": "bg_forest_level2",
+        "file": "assets/backgrounds/forest_level2.png",
+        "format": "PNG",
+        "resolution": "1920x1080",
+        "notes": "Vườn chữ cái với cây có chữ cái treo, màu sắc tươi sáng."
+      },
+      {
+        "key": "bg_forest_level3",
+        "file": "assets/backgrounds/forest_level3.png",
+        "format": "PNG",
+        "resolution": "1920x1080",
+        "notes": "Hồ màu sắc với nước trong xanh, hoa nhiều màu xung quanh."
+      },
+      {
+        "key": "bg_forest_level4",
+        "file": "assets/backgrounds/forest_level4.png",
+        "format": "PNG",
+        "resolution": "1920x1080",
+        "notes": "Lâu đài tri thức với cổng lớn, pháo hoa, màu sắc rực rỡ."
+      },
+      {
+        "key": "bg_menu",
+        "file": "assets/backgrounds/menu_bg.png",
+        "format": "PNG",
+        "resolution": "1920x1080",
+        "notes": "Rừng phép thuật tổng quan, có Bé Thỏ ở giữa, ánh sáng vàng."
+      }
+    ],
+    "characters": [
+      {
+        "key": "bunny_idle",
+        "file": "assets/characters/bunny_idle.png",
+        "format": "PNG",
+        "resolution": "6144x512",
+        "frameWidth": 512,
+        "frameHeight": 512,
+        "frames": 12,
+        "notes": "Bé Thỏ idle animation - đứng yên, tai vẫy, mắt nháy. Cartoon style, white fur, pink inner ears."
+      },
+      {
+        "key": "bunny_walk",
+        "file": "assets/characters/bunny_walk.png",
+        "format": "PNG",
+        "resolution": "4096x512",
+        "frameWidth": 512,
+        "frameHeight": 512,
+        "frames": 8,
+        "notes": "Bé Thỏ đi bộ - tay vẫy, tai lắc. Smooth animation."
+      },
+      {
+        "key": "bunny_celebrate",
+        "file": "assets/characters/bunny_celebrate.png",
+        "format": "PNG",
+        "resolution": "5120x512",
+        "frameWidth": 512,
+        "frameHeight": 512,
+        "frames": 10,
+        "notes": "Bé Thỏ nhảy cẫng vui mừng - tay giơ lên, mắt sáng, có sparkles."
+      },
+      {
+        "key": "bunny_sad",
+        "file": "assets/characters/bunny_sad.png",
+        "format": "PNG",
+        "resolution": "4096x512",
+        "frameWidth": 512,
+        "frameHeight": 512,
+        "frames": 8,
+        "notes": "Bé Thỏ buồn - cúi đầu, tai cụp, mắt hơi ướt."
+      },
+      {
+        "key": "bunny_talk",
+        "file": "assets/characters/bunny_talk.png",
+        "format": "PNG",
+        "resolution": "4096x512",
+        "frameWidth": 512,
+        "frameHeight": 512,
+        "frames": 8,
+        "notes": "Bé Thỏ nói chuyện - miệng mở đóng, tay chỉ."
+      },
+      {
+        "key": "owl_idle",
+        "file": "assets/characters/owl_idle.png",
+        "format": "PNG",
+        "resolution": "5120x512",
+        "frameWidth": 512,
+        "frameHeight": 512,
+        "frames": 10,
+        "notes": "Cú Thông Thái đậu trên cành - mắt nháy, đầu lắc nhẹ, đeo kính."
+      },
+      {
+        "key": "owl_fly",
+        "file": "assets/characters/owl_fly.png",
+        "format": "PNG",
+        "resolution": "4096x512",
+        "frameWidth": 512,
+        "frameHeight": 512,
+        "frames": 8,
+        "notes": "Cú Thông Thái bay - vỗ cánh, có glow effect."
+      },
+      {
+        "key": "owl_talk",
+        "file": "assets/characters/owl_talk.png",
+        "format": "PNG",
+        "resolution": "4096x512",
+        "frameWidth": 512,
+        "frameHeight": 512,
+        "frames": 8,
+        "notes": "Cú Thông Thái nói - mỏ mở đóng, cánh vỗ nhẹ."
+      },
+      {
+        "key": "squirrel_idle",
+        "file": "assets/characters/squirrel_idle.png",
+        "format": "PNG",
+        "resolution": "5120x512",
+        "frameWidth": 512,
+        "frameHeight": 512,
+        "frames": 10,
+        "notes": "Sóc Nâu đứng yên - đuôi vẫy, mắt nháy."
+      },
+      {
+        "key": "squirrel_jump",
+        "file": "assets/characters/squirrel_jump.png",
+        "format": "PNG",
+        "resolution": "4096x512",
+        "frameWidth": 512,
+        "frameHeight": 512,
+        "frames": 8,
+        "notes": "Sóc Nâu nhảy - đuôi xù, tay giơ."
+      },
+      {
+        "key": "bear_idle",
+        "file": "assets/characters/bear_idle.png",
+        "format": "PNG",
+        "resolution": "5120x512",
+        "frameWidth": 512,
+        "frameHeight": 512,
+        "frames": 10,
+        "notes": "Gấu Mật Ong đứng yên - tay cầm lọ mật, mắt nháy."
+      },
+      {
+        "key": "bear_happy",
+        "file": "assets/characters/bear_happy.png",
+        "format": "PNG",
+        "resolution": "5120x512",
+        "frameWidth": 512,
+        "frameHeight": 512,
+        "frames": 10,
+        "notes": "Gấu Mật Ong vui mừng - nhảy lên, tay giơ lọ mật."
+      }
+    ],
+    "ui": [
+      {
+        "key": "btn_primary",
+        "file": "assets/ui/button_primary.png",
+        "format": "PNG",
+        "resolution": "320x90",
+        "notes": "Button chính - gradient vàng cam, bo tròn, có glow, border trắng."
+      },
+      {
+        "key": "btn_secondary",
+        "file": "assets/ui/button_secondary.png",
+        "format": "PNG",
+        "resolution": "320x90",
+        "notes": "Button phụ - gradient xanh lá xanh dương, bo tròn."
+      },
+      {
+        "key": "btn_home",
+        "file": "assets/ui/button_home.png",
+        "format": "PNG",
+        "resolution": "48x48",
+        "notes": "Icon home - tròn, gradient pastel, icon nhà màu trắng."
+      },
+      {
+        "key": "panel_question",
+        "file": "assets/ui/panel_question.png",
+        "format": "PNG",
+        "resolution": "800x200",
+        "notes": "Panel câu hỏi - texture gỗ phép thuật, viền lá, bo tròn."
+      },
+      {
+        "key": "panel_info",
+        "file": "assets/ui/panel_info.png",
+        "format": "PNG",
+        "resolution": "600x150",
+        "notes": "Panel thông tin - gradient xanh lá xanh dương, border vàng glow."
+      },
+      {
+        "key": "card_answer",
+        "file": "assets/ui/card_answer.png",
+        "format": "PNG",
+        "resolution": "150x150",
+        "notes": "Thẻ đáp án - gradient pastel, bo tròn, border trắng glow, có shadow."
+      },
+      {
+        "key": "drop_zone",
+        "file": "assets/ui/drop_zone.png",
+        "format": "PNG",
+        "resolution": "200x200",
+        "notes": "Vùng thả đáp án - gradient xanh dương nhạt, border dashed vàng, có glow pulse."
+      },
+      {
+        "key": "icon_star",
+        "file": "assets/ui/icon_star.png",
+        "format": "PNG",
+        "resolution": "32x32",
+        "notes": "Icon sao - vàng, có glow, cartoon style."
+      },
+      {
+        "key": "icon_heart",
+        "file": "assets/ui/icon_heart.png",
+        "format": "PNG",
+        "resolution": "32x32",
+        "notes": "Icon tim - hồng, có glow, cartoon style."
+      },
+      {
+        "key": "icon_carrot",
+        "file": "assets/ui/icon_carrot.png",
+        "format": "PNG",
+        "resolution": "32x32",
+        "notes": "Icon cà rốt - cam, cartoon style."
+      }
+    ],
+    "gameplay": [
+      {
+        "key": "bridge_broken",
+        "file": "assets/gameplay/bridge_broken.png",
+        "format": "PNG",
+        "resolution": "800x400",
+        "notes": "Cầu gãy - gỗ phép thuật, có phần gãy ở giữa, màu nâu pastel."
+      },
+      {
+        "key": "bridge_fixed",
+        "file": "assets/gameplay/bridge_fixed.png",
+        "format": "PNG",
+        "resolution": "800x400",
+        "notes": "Cầu đã sửa - hoàn chỉnh, có glow vàng, sparkles."
+      },
+      {
+        "key": "bridge_repair_particle",
+        "file": "assets/gameplay/bridge_repair_particle.png",
+        "format": "PNG",
+        "resolution": "64x64",
+        "notes": "Particle sửa cầu - sparkle vàng, dùng cho animation sửa cầu."
+      }
+    ],
+    "particles": [
+      {
+        "key": "particle_sparkle",
+        "file": "assets/particles/sparkle.png",
+        "format": "PNG",
+        "resolution": "32x32",
+        "notes": "Sparkle particle - vàng, có glow, dùng cho success effects."
+      },
+      {
+        "key": "particle_star",
+        "file": "assets/particles/star.png",
+        "format": "PNG",
+        "resolution": "32x32",
+        "notes": "Star particle - vàng, có glow, dùng cho celebrate effects."
+      },
+      {
+        "key": "particle_leaf",
+        "file": "assets/particles/leaf.png",
+        "format": "PNG",
+        "resolution": "32x32",
+        "notes": "Leaf particle - xanh lá, dùng cho background effects."
+      },
+      {
+        "key": "particle_glow",
+        "file": "assets/particles/glow.png",
+        "format": "PNG",
+        "resolution": "64x64",
+        "notes": "Glow particle - trắng, opacity gradient, dùng cho magic effects."
+      }
+    ],
+    "audio": {
+      "music": [
+        {
+          "key": "music_menu",
+          "file": "assets/audio/music_menu.mp3",
+          "format": "MP3",
+          "duration": "30-60s",
+          "loop": true,
+          "notes": "Nhạc menu - cheerful, magical forest theme, light percussion, bells, chimes. Loop 30-60s."
+        },
+        {
+          "key": "music_level1",
+          "file": "assets/audio/music_level1.mp3",
+          "format": "MP3",
+          "duration": "30-60s",
+          "loop": true,
+          "notes": "Nhạc level 1 - playful, educational, upbeat. Loop 30-60s."
+        },
+        {
+          "key": "music_victory",
+          "file": "assets/audio/music_victory.mp3",
+          "format": "MP3",
+          "duration": "10-15s",
+          "loop": false,
+          "notes": "Nhạc chiến thắng - celebratory, fanfare, short. One-shot."
+        }
+      ],
+      "sfx": [
+        {
+          "key": "sfx_correct",
+          "file": "assets/audio/sfx_correct.mp3",
+          "format": "MP3",
+          "duration": "1-2s",
+          "notes": "SFX đáp án đúng - sparkle chime, magical, cheerful."
+        },
+        {
+          "key": "sfx_wrong",
+          "file": "assets/audio/sfx_wrong.mp3",
+          "format": "MP3",
+          "duration": "1s",
+          "notes": "SFX đáp án sai - soft 'boing', gentle, không harsh."
+        },
+        {
+          "key": "sfx_button_click",
+          "file": "assets/audio/sfx_button_click.mp3",
+          "format": "MP3",
+          "duration": "0.3s",
+          "notes": "SFX click button - soft pop, friendly."
+        },
+        {
+          "key": "sfx_drag_start",
+          "file": "assets/audio/sfx_drag_start.mp3",
+          "format": "MP3",
+          "duration": "0.2s",
+          "notes": "SFX bắt đầu kéo - gentle swoosh."
+        },
+        {
+          "key": "sfx_drag_drop",
+          "file": "assets/audio/sfx_drag_drop.mp3",
+          "format": "MP3",
+          "duration": "0.3s",
+          "notes": "SFX thả thẻ - soft thud, gentle."
+        },
+        {
+          "key": "sfx_bridge_repair",
+          "file": "assets/audio/sfx_bridge_repair.mp3",
+          "format": "MP3",
+          "duration": "2s",
+          "notes": "SFX sửa cầu - magical sparkle, building up."
+        }
+      ],
+      "voice": [
+        {
+          "key": "voice_bunny_hello",
+          "file": "assets/audio/voice/bunny_hello.mp3",
+          "format": "MP3",
+          "duration": "2s",
+          "notes": "Voice Bé Thỏ chào - 'Chào bạn!', cute, child-friendly voice."
+        },
+        {
+          "key": "voice_bunny_correct",
+          "file": "assets/audio/voice/bunny_correct.mp3",
+          "format": "MP3",
+          "duration": "2s",
+          "notes": "Voice Bé Thỏ đúng - 'Đúng rồi!', excited, happy."
+        },
+        {
+          "key": "voice_owl_hint",
+          "file": "assets/audio/voice/owl_hint.mp3",
+          "format": "MP3",
+          "duration": "3s",
+          "notes": "Voice Cú Thông Thái gợi ý - 'Hãy thử lại nhé!', gentle, encouraging."
+        }
+      ]
+    },
+    "fonts": [
+      {
+        "key": "font_main",
+        "file": "assets/fonts/font_main.woff2",
+        "format": "WOFF2",
+        "notes": "Font chính - rounded, friendly, dễ đọc cho trẻ em. Size 24-32px."
+      }
+    ]
+  },
+  "notes": {
+    "art_style": "Cartoon style - cute, friendly, vibrant, suitable for children 4-10 years old. All assets must have soft outlines, pastel colors, smooth gradients, soft shadows, fantasy lighting.",
+    "format_preferences": "PNG for images (with transparency), MP3 for audio, WOFF2 for fonts. Use WebP for backgrounds if possible for better compression.",
+    "resolution_guidelines": "All assets should be created at 2x resolution for retina displays, then scaled down. Character sprites: 512x512px per frame. UI elements: scalable vectors preferred (SVG) or high-res PNG.",
+    "color_palette": "Primary: Yellow (#FFD700), Orange (#FF8C00), Green (#90EE90), Blue (#4A90E2), Pink (#FF69B4). All in pastel variants. No dark colors, no black outlines (use dark gray #333333).",
+    "animation_notes": "All animations should be smooth, 60 FPS. Use squash & stretch, easing, bounce effects. Character animations: 8-12 frames per animation. Loop animations for idle, one-shot for actions.",
+    "placeholder_assets": "For development, use colored rectangles with text labels. Replace with actual cartoon assets later. All placeholder assets should still follow color palette and size specifications."
+  }
+}
+
+

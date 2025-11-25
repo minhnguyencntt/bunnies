@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="Bé Thỏ và Rừng Tri Thức - Game giáo dục cho trẻ em">
+    <title>Bé Thỏ và Rừng Tri Thức</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Comic Sans MS', 'Arial Rounded MT Bold', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        #game-container {
+            width: 100%;
+            max-width: 800px;
+            height: 100vh;
+            max-height: 600px;
+            position: relative;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Loading screen */
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 24px;
+            text-align: center;
+            z-index: 1000;
+        }
+
+        #loading.hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="loading">Đang tải game...</div>
+    <div id="game-container"></div>
+
+    <!-- Phaser 3 Library -->
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
+    
+    <!-- Game Scenes -->
+    <script src="scenes/BootScene.js"></script>
+    <script src="scenes/MenuScene.js"></script>
+    <script src="scenes/Level1Scene.js"></script>
+    <script src="scenes/UIScene.js"></script>
+    
+    <!-- Main Game Configuration -->
+    <script src="game.js"></script>
+    
+    <!-- Error handling and loading screen -->
+    <script>
+        window.addEventListener('load', function() {
+            // Hide loading div after a short delay
+            setTimeout(function() {
+                const loadingDiv = document.getElementById('loading');
+                if (loadingDiv) {
+                    loadingDiv.classList.add('hidden');
+                }
+            }, 500);
+        });
+        
+        // Global error handler
+        window.addEventListener('error', function(e) {
+            console.error('Game error:', e.error);
+            const loadingDiv = document.getElementById('loading');
+            if (loadingDiv) {
+                loadingDiv.textContent = 'Lỗi: ' + (e.error ? e.error.message : 'Unknown error');
+                loadingDiv.classList.remove('hidden');
+                loadingDiv.style.color = '#ff0000';
+            }
+        });
+    </script>
+</body>
+</html>
+
+

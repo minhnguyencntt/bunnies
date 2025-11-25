@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Test Game</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: #f0f0f0;
+        }
+        #status {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        .error { color: red; }
+        .success { color: green; }
+        .info { color: blue; }
+    </style>
+</head>
+<body>
+    <h1>Game Debug Test</h1>
+    <div id="status">
+        <h2>Status:</h2>
+        <div id="messages"></div>
+    </div>
+    
+    <div id="game-container" style="width: 800px; height: 600px; margin: 0 auto; background: #87CEEB; border: 2px solid #000;"></div>
+
+    <script>
+        const messages = document.getElementById('messages');
+        
+        function addMessage(text, type = 'info') {
+            const div = document.createElement('div');
+            div.className = type;
+            div.textContent = text;
+            messages.appendChild(div);
+            console.log(`[${type.toUpperCase()}] ${text}`);
+        }
+        
+        // Test Phaser loading
+        addMessage('Testing Phaser library...', 'info');
+        
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js';
+        script.onload = function() {
+            addMessage('✓ Phaser library loaded', 'success');
+            
+            if (typeof Phaser === 'undefined') {
+                addMessage('✗ Phaser is undefined!', 'error');
+                return;
+            }
+            
+            addMessage(`Phaser version: ${Phaser.VERSION}`, 'success');
+            
+            // Test scene files
+            const scenes = ['BootScene.js', 'MenuScene.js', 'Level1Scene.js', 'UIScene.js'];
+            let loadedScenes = 0;
+            
+            scenes.forEach((sceneFile, index) => {
+                const sceneScript = document.createElement('script');
+                sceneScript.src = `scenes/${sceneFile}`;
+                sceneScript.onload = function() {
+                    loadedScenes++;
+                    addMessage(`✓ Loaded ${sceneFile}`, 'success');
+                    
+                    if (loadedScenes === scenes.length) {
+                        // All scenes loaded, test game.js
+                        addMessage('All scenes loaded, testing game.js...', 'info');
+                        
+                        const gameScript = document.createElement('script');
+                        gameScript.src = 'game.js';
+                        gameScript.onload = function() {
+                            addMessage('✓ game.js loaded', 'success');
+                            
+                            // Check if game initialized
+                            setTimeout(function() {
+                                if (window.game && window.game.isRunning) {
+                                    addMessage('✓ Game is running!', 'success');
+                                } else {
+                                    addMessage('? Game may not have started yet', 'info');
+                                }
+                            }, 1000);
+                        };
+                        gameScript.onerror = function() {
+                            addMessage(`✗ Failed to load game.js`, 'error');
+                        };
+                        document.body.appendChild(gameScript);
+                    }
+                };
+                sceneScript.onerror = function() {
+                    addMessage(`✗ Failed to load ${sceneFile}`, 'error');
+                };
+                document.body.appendChild(sceneScript);
+            });
+        };
+        script.onerror = function() {
+            addMessage('✗ Failed to load Phaser library from CDN', 'error');
+        };
+        document.body.appendChild(script);
+        
+        // Global error handler
+        window.addEventListener('error', function(e) {
+            addMessage(`✗ Error: ${e.message} at ${e.filename}:${e.lineno}`, 'error');
+        });
+    </script>
+</body>
+</html>
+

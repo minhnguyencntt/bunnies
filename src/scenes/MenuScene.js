@@ -11,6 +11,14 @@ class MenuScene extends Phaser.Scene {
         this.magicParticles = [];
     }
 
+    preload() {
+        // Load background image if not already loaded
+        if (!this.textures.exists('garden_bg')) {
+            this.load.image('garden_bg', 'assets/backgrounds/garden_bg_1.png');
+            console.log('MenuScene: Loading background image');
+        }
+    }
+
     create() {
         console.log('MenuScene: create() called');
         const width = this.cameras.main.width;
@@ -24,8 +32,16 @@ class MenuScene extends Phaser.Scene {
             }
         }
 
-        // Create magical fairy-tale garden background
-        this.createMagicalGarden(width, height);
+        // Use background image
+        if (this.textures.exists('garden_bg')) {
+            const bg = this.add.image(width / 2, height / 2, 'garden_bg');
+            bg.setDisplaySize(width, height);
+            bg.setDepth(0);
+        } else {
+            // Fallback: simple background color
+            this.cameras.main.setBackgroundColor(0x87CEEB);
+            console.warn('Background image not found, using fallback color');
+        }
 
         // Generate and create ambient creatures (fireflies, birds, magic particles)
         this.createAmbientCreatures(width, height);
@@ -43,65 +59,6 @@ class MenuScene extends Phaser.Scene {
         this.startSparkleParticles(width, height);
     }
 
-    createMagicalGarden(width, height) {
-        // Sky gradient (magical sky)
-        const sky = this.add.graphics();
-        sky.fillGradientStyle(0x87CEEB, 0x87CEEB, 0xFFB6C1, 0xFFB6C1, 1);
-        sky.fillRect(0, 0, width, height * 0.65);
-
-        // Ground (lush grass)
-        const ground = this.add.graphics();
-        ground.fillGradientStyle(0x90EE90, 0x90EE90, 0x7ACC7A, 0x7ACC7A, 1);
-        ground.fillRect(0, height * 0.65, width, height * 0.35);
-
-        // Trees (lush trees)
-        for (let i = 0; i < 8; i++) {
-            const x = (width / 9) * (i + 1);
-            const treeY = height * 0.55;
-            
-            // Tree crown (multiple layers for lush look)
-            const tree = this.add.graphics();
-            // Outer layer
-            tree.fillStyle(0x228B22, 1);
-            tree.fillCircle(x, treeY, 50);
-            // Middle layer
-            tree.fillStyle(0x32CD32, 0.8);
-            tree.fillCircle(x - 20, treeY - 10, 35);
-            tree.fillCircle(x + 20, treeY - 10, 35);
-            // Inner highlights
-            tree.fillStyle(0x90EE90, 0.6);
-            tree.fillCircle(x - 15, treeY - 15, 20);
-            tree.fillCircle(x + 15, treeY - 15, 20);
-            // Tree trunk
-            tree.fillStyle(0x8B4513, 1);
-            tree.fillRect(x - 10, treeY, 20, 60);
-        }
-
-        // Flowers (colorful flowers)
-        const flowerColors = [0xFF69B4, 0xFFD700, 0xFF8C00, 0xFF1493, 0xFFB6C1];
-        for (let i = 0; i < 15; i++) {
-            const x = Phaser.Math.Between(50, width - 50);
-            const y = Phaser.Math.Between(height * 0.7, height - 30);
-            const color = flowerColors[Phaser.Math.Between(0, flowerColors.length - 1)];
-            
-            const flower = this.add.graphics();
-            // Petals
-            for (let p = 0; p < 6; p++) {
-                const angle = (p * 60) * Math.PI / 180;
-                const petalX = x + Math.cos(angle) * 8;
-                const petalY = y + Math.sin(angle) * 8;
-                flower.fillStyle(color, 1);
-                flower.fillCircle(petalX, petalY, 6);
-            }
-            // Center
-            flower.fillStyle(0xFFD700, 1);
-            flower.fillCircle(x, y, 4);
-            // Stem
-            flower.fillStyle(0x228B22, 1);
-            flower.fillRect(x - 1, y + 4, 2, 15);
-        }
-
-    }
 
     createEnhancedTitle(width, height) {
         // Title text with magical styling
@@ -197,20 +154,21 @@ class MenuScene extends Phaser.Scene {
         const btnX = 0;
         const btnY = 0;
         
-        // Shadow
-        startBtnBg.fillStyle(0x000000, 0.3);
+        // Glass-like transparent button
+        // Shadow - very subtle
+        startBtnBg.fillStyle(0x000000, 0.15);
         startBtnBg.fillRoundedRect(btnX - 5, btnY - 5, btnWidth + 10, btnHeight + 10, 25);
-        // Outer glow
-        startBtnBg.fillStyle(0xFFD700, 0.3);
+        // Main button - semi-transparent white with slight tint
+        startBtnBg.fillStyle(0xFFFFFF, 0.3);
         startBtnBg.fillRoundedRect(btnX, btnY, btnWidth, btnHeight, 20);
-        // Main button gradient
-        startBtnBg.fillGradientStyle(0xFFD700, 0xFFD700, 0xFF8C00, 0xFF8C00, 1);
+        // Subtle gradient overlay
+        startBtnBg.fillGradientStyle(0xFFD700, 0xFFD700, 0xFF8C00, 0xFF8C00, 0.4);
         startBtnBg.fillRoundedRect(btnX, btnY, btnWidth, btnHeight, 20);
-        // Magical border
-        startBtnBg.lineStyle(5, 0xFFFFFF, 1);
+        // Border - white, semi-transparent
+        startBtnBg.lineStyle(4, 0xFFFFFF, 0.7);
         startBtnBg.strokeRoundedRect(btnX, btnY, btnWidth, btnHeight, 20);
-        // Inner glow
-        startBtnBg.lineStyle(3, 0xFFD700, 0.8);
+        // Inner highlight
+        startBtnBg.lineStyle(2, 0xFFFFFF, 0.5);
         startBtnBg.strokeRoundedRect(btnX + 5, btnY + 5, btnWidth - 10, btnHeight - 10, 15);
         startBtnBg.generateTexture('btn_start_magical', btnWidth + 10, btnHeight + 10);
         startBtnBg.destroy();
@@ -282,94 +240,6 @@ class MenuScene extends Phaser.Scene {
             ease: 'Sine.easeInOut'
         });
 
-        // Help/Instructions Button
-        const helpBtnContainer = this.add.container(width / 2, height / 2 + 130);
-        
-        const helpBtnBg = this.add.graphics();
-        const helpBtnWidth = 320;
-        const helpBtnHeight = 90;
-        const helpBtnX = 0;
-        const helpBtnY = 0;
-        
-        // Shadow
-        helpBtnBg.fillStyle(0x000000, 0.3);
-        helpBtnBg.fillRoundedRect(helpBtnX - 5, helpBtnY - 5, helpBtnWidth + 10, helpBtnHeight + 10, 25);
-        // Outer glow
-        helpBtnBg.fillStyle(0x4A90E2, 0.3);
-        helpBtnBg.fillRoundedRect(helpBtnX, helpBtnY, helpBtnWidth, helpBtnHeight, 20);
-        // Main button gradient
-        helpBtnBg.fillGradientStyle(0x4A90E2, 0x4A90E2, 0x87CEEB, 0x87CEEB, 1);
-        helpBtnBg.fillRoundedRect(helpBtnX, helpBtnY, helpBtnWidth, helpBtnHeight, 20);
-        // Magical border
-        helpBtnBg.lineStyle(5, 0xFFFFFF, 1);
-        helpBtnBg.strokeRoundedRect(helpBtnX, helpBtnY, helpBtnWidth, helpBtnHeight, 20);
-        // Inner glow
-        helpBtnBg.lineStyle(3, 0x87CEEB, 0.8);
-        helpBtnBg.strokeRoundedRect(helpBtnX + 5, helpBtnY + 5, helpBtnWidth - 10, helpBtnHeight - 10, 15);
-        helpBtnBg.generateTexture('btn_help_magical', helpBtnWidth + 10, helpBtnHeight + 10);
-        helpBtnBg.destroy();
-        
-        const helpBtn = this.add.image(0, 0, 'btn_help_magical')
-            .setOrigin(0.5)
-            .setInteractive({ useHandCursor: true });
-        helpBtnContainer.add(helpBtn);
-
-        // Blinking lights for help button
-        for (let i = 0; i < 8; i++) {
-            const angle = (i * 45) * Math.PI / 180;
-            const lightX = Math.cos(angle) * 180;
-            const lightY = Math.sin(angle) * 80;
-            const light = this.add.graphics();
-            light.fillStyle(0x87CEEB, 1);
-            light.fillCircle(lightX, lightY, 6);
-            light.fillStyle(0xFFFFFF, 0.8);
-            light.fillCircle(lightX, lightY, 3);
-            helpBtnContainer.add(light);
-            
-            this.tweens.add({
-                targets: light,
-                alpha: 0.3,
-                scale: 0.5,
-                duration: 500 + Math.random() * 500,
-                yoyo: true,
-                repeat: -1,
-                ease: 'Sine.easeInOut',
-                delay: i * 100
-            });
-        }
-
-        this.startFloatingParticles(helpBtnContainer, 0, 0);
-
-        const helpText = this.add.text(0, 0, '📚 HƯỚNG DẪN', {
-            fontSize: '36px',
-            fill: '#FFFFFF',
-            fontFamily: 'Comic Sans MS, Arial Rounded MT Bold, Arial',
-            fontStyle: 'bold',
-            stroke: '#000000',
-            strokeThickness: 4
-        }).setOrigin(0.5);
-        helpBtnContainer.add(helpText);
-
-        helpBtn.on('pointerdown', () => {
-            this.showHelp();
-        })
-        .on('pointerover', () => {
-            helpBtnContainer.setScale(1.1);
-            helpBtn.setTint(0xFFFFFF);
-        })
-        .on('pointerout', () => {
-            helpBtnContainer.setScale(1);
-            helpBtn.clearTint();
-        });
-
-        this.tweens.add({
-            targets: helpBtnContainer,
-            y: height / 2 + 130 - 5,
-            duration: 1500,
-            yoyo: true,
-            repeat: -1,
-            ease: 'Sine.easeInOut'
-        });
     }
 
     startFloatingParticles(container, x, y) {
@@ -875,10 +745,6 @@ class MenuScene extends Phaser.Scene {
         }
     }
 
-    showHelp() {
-        // Hiển thị hướng dẫn (có thể tạo scene riêng hoặc overlay)
-        alert('Hướng dẫn:\n\n1. Kéo thẻ đáp án vào ô trả lời\n2. Trả lời đúng để sửa cầu\n3. Hoàn thành tất cả câu hỏi để vượt qua level!');
-    }
 
     shutdown() {
         // Cleanup behavior systems when scene is destroyed

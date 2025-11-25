@@ -9,6 +9,26 @@ class BootScene extends Phaser.Scene {
         this.runningBunny = null;
     }
 
+    preload() {
+        // Load background image
+        // Path is relative to where index.html is served from
+        this.load.image('garden_bg', 'assets/backgrounds/garden_bg_1.png');
+        
+        // Add load event handlers for debugging
+        this.load.on('filecomplete-image-garden_bg', () => {
+            console.log('✓ Background image loaded successfully');
+        });
+        
+        this.load.on('loaderror', (file) => {
+            if (file.key === 'garden_bg') {
+                console.error('✗ Failed to load background image from:', file.src);
+                console.error('Trying alternative path...');
+                // Try alternative path
+                this.load.image('garden_bg', 'src/assets/backgrounds/garden_bg_1.png');
+            }
+        });
+    }
+
     create() {
         console.log('BootScene: create() called');
         
@@ -16,8 +36,17 @@ class BootScene extends Phaser.Scene {
         const width = this.cameras.main.width;
         const height = this.cameras.main.height;
         
-        // Create magical fairy-tale garden background (same as MenuScene)
-        this.createMagicalGardenBackground(width, height);
+        // Use background image
+        if (this.textures.exists('garden_bg')) {
+            const bg = this.add.image(width / 2, height / 2, 'garden_bg');
+            bg.setDisplaySize(width, height);
+            bg.setDepth(0);
+            console.log('Background image displayed');
+        } else {
+            // Fallback: simple background color
+            this.cameras.main.setBackgroundColor(0x87CEEB);
+            console.warn('Background image not found, using fallback color');
+        }
         
         // Loading text with magical styling
         const loadingText = this.add.text(width / 2, height / 2 - 80, 'Đang tải game...', {
@@ -74,85 +103,6 @@ class BootScene extends Phaser.Scene {
         this.updateLoadingProgress();
     }
 
-    createMagicalGardenBackground(width, height) {
-        // Sky gradient (magical sky)
-        const sky = this.add.graphics();
-        sky.fillGradientStyle(0x87CEEB, 0x87CEEB, 0xFFB6C1, 0xFFB6C1, 1);
-        sky.fillRect(0, 0, width, height * 0.65);
-
-        // Ground (lush grass)
-        const ground = this.add.graphics();
-        ground.fillGradientStyle(0x90EE90, 0x90EE90, 0x7ACC7A, 0x7ACC7A, 1);
-        ground.fillRect(0, height * 0.65, width, height * 0.35);
-
-        // Trees (lush trees)
-        for (let i = 0; i < 8; i++) {
-            const x = (width / 9) * (i + 1);
-            const treeY = height * 0.55;
-            
-            const tree = this.add.graphics();
-            tree.fillStyle(0x228B22, 1);
-            tree.fillCircle(x, treeY, 50);
-            tree.fillStyle(0x32CD32, 0.8);
-            tree.fillCircle(x - 20, treeY - 10, 35);
-            tree.fillCircle(x + 20, treeY - 10, 35);
-            tree.fillStyle(0x90EE90, 0.6);
-            tree.fillCircle(x - 15, treeY - 15, 20);
-            tree.fillCircle(x + 15, treeY - 15, 20);
-            tree.fillStyle(0x8B4513, 1);
-            tree.fillRect(x - 10, treeY, 20, 60);
-        }
-
-        // Flowers
-        const flowerColors = [0xFF69B4, 0xFFD700, 0xFF8C00, 0xFF1493, 0xFFB6C1];
-        for (let i = 0; i < 12; i++) {
-            const x = Phaser.Math.Between(50, width - 50);
-            const y = Phaser.Math.Between(height * 0.7, height - 30);
-            const color = flowerColors[Phaser.Math.Between(0, flowerColors.length - 1)];
-            
-            const flower = this.add.graphics();
-            for (let p = 0; p < 6; p++) {
-                const angle = (p * 60) * Math.PI / 180;
-                const petalX = x + Math.cos(angle) * 8;
-                const petalY = y + Math.sin(angle) * 8;
-                flower.fillStyle(color, 1);
-                flower.fillCircle(petalX, petalY, 6);
-            }
-            flower.fillStyle(0xFFD700, 1);
-            flower.fillCircle(x, y, 4);
-            flower.fillStyle(0x228B22, 1);
-            flower.fillRect(x - 1, y + 4, 2, 15);
-        }
-
-        // Glowing plants
-        for (let i = 0; i < 4; i++) {
-            const x = Phaser.Math.Between(100, width - 100);
-            const y = Phaser.Math.Between(height * 0.7, height - 20);
-            
-            const mushroom = this.add.graphics();
-            mushroom.fillStyle(0xFF69B4, 0.8);
-            mushroom.fillCircle(x, y, 12);
-            mushroom.fillStyle(0xFFB6C1, 0.6);
-            mushroom.fillCircle(x, y - 3, 8);
-            mushroom.fillStyle(0xFFFFFF, 1);
-            mushroom.fillCircle(x - 5, y - 2, 2);
-            mushroom.fillCircle(x + 5, y - 1, 2);
-            mushroom.fillStyle(0xFFFFFF, 0.9);
-            mushroom.fillRect(x - 3, y, 6, 10);
-            
-            this.tweens.add({
-                targets: mushroom,
-                alpha: 0.6,
-                duration: 1500 + Math.random() * 1000,
-                yoyo: true,
-                repeat: -1,
-                ease: 'Sine.easeInOut'
-            });
-        }
-
-        // Sparkle particles
-        this.startLoadingSparkles(width, height);
-    }
 
     startLoadingSparkles(width, height) {
         const createSparkle = () => {
@@ -196,47 +146,32 @@ class BootScene extends Phaser.Scene {
         // Create magical wooden frame container
         const container = this.add.container(barX, barY);
         
-        // Outer glow
+        // Outer glow - transparent
         const outerGlow = this.add.graphics();
-        outerGlow.fillStyle(0xFFD700, 0.2);
+        outerGlow.fillStyle(0xFFD700, 0.1);
         outerGlow.fillRoundedRect(-barWidth/2 - 15, -barHeight/2 - 15, barWidth + 30, barHeight + 30, 10);
         container.add(outerGlow);
 
-        // Wooden frame (magical carved wood)
+        // Transparent frame with glass effect
         const frame = this.add.graphics();
-        // Shadow
-        frame.fillStyle(0x000000, 0.3);
+        // Shadow - very subtle
+        frame.fillStyle(0x000000, 0.15);
         frame.fillRoundedRect(-barWidth/2 - 10 + 2, -barHeight/2 - 10 + 2, barWidth + 20, barHeight + 20, 8);
-        // Wood texture
-        frame.fillStyle(0x8B4513, 1);
+        // Glass-like background - semi-transparent white
+        frame.fillStyle(0xFFFFFF, 0.25);
         frame.fillRoundedRect(-barWidth/2 - 10, -barHeight/2 - 10, barWidth + 20, barHeight + 20, 8);
-        // Wood grain lines
-        frame.lineStyle(2, 0x654321, 0.5);
-        for (let i = 0; i < 5; i++) {
-            const y = -barHeight/2 - 10 + (barHeight + 20) / 5 * i;
-            frame.beginPath();
-            frame.moveTo(-barWidth/2 - 10, y);
-            frame.lineTo(barWidth/2 + 10, y);
-            frame.strokePath();
-        }
-        // Magical border
-        frame.lineStyle(4, 0xFFD700, 1);
+        // Border - subtle
+        frame.lineStyle(3, 0xFFFFFF, 0.6);
         frame.strokeRoundedRect(-barWidth/2 - 10, -barHeight/2 - 10, barWidth + 20, barHeight + 20, 8);
         // Inner highlight
-        frame.lineStyle(2, 0xFFFFFF, 0.5);
+        frame.lineStyle(2, 0xFFFFFF, 0.3);
         frame.strokeRoundedRect(-barWidth/2 - 8, -barHeight/2 - 8, barWidth + 16, barHeight + 16, 6);
         container.add(frame);
 
-        // Loading bar background (inside frame)
+        // Loading bar background - transparent
         const barBg = this.add.graphics();
-        barBg.fillStyle(0x2F4F2F, 0.8);
+        barBg.fillStyle(0xFFFFFF, 0.2);
         barBg.fillRoundedRect(-barWidth/2, -barHeight/2, barWidth, barHeight, 5);
-        // Animated background texture
-        barBg.fillStyle(0x228B22, 0.3);
-        for (let i = 0; i < 10; i++) {
-            const x = -barWidth/2 + (barWidth / 10) * i;
-            barBg.fillRect(x, -barHeight/2, 2, barHeight);
-        }
         container.add(barBg);
 
         // Animated sparkles on frame
@@ -263,15 +198,18 @@ class BootScene extends Phaser.Scene {
             });
         }
 
-        // Pulsing glow effect
+        // Pulsing glow effect - subtle
         this.tweens.add({
             targets: outerGlow,
-            alpha: 0.4,
+            alpha: 0.2,
             duration: 1000,
             yoyo: true,
             repeat: -1,
             ease: 'Sine.easeInOut'
         });
+        
+        // Make container slightly transparent
+        container.setAlpha(0.85);
 
         // Store container reference and dimensions
         this.loadingBarContainer = container;

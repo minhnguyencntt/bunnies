@@ -101,105 +101,6 @@ class MenuScene extends Phaser.Scene {
             flower.fillRect(x - 1, y + 4, 2, 15);
         }
 
-        // Glowing plants (magical glowing mushrooms and plants)
-        for (let i = 0; i < 5; i++) {
-            const x = Phaser.Math.Between(100, width - 100);
-            const y = Phaser.Math.Between(height * 0.7, height - 20);
-            
-            const mushroom = this.add.graphics();
-            // Cap (glowing)
-            mushroom.fillStyle(0xFF69B4, 0.8);
-            mushroom.fillCircle(x, y, 12);
-            mushroom.fillStyle(0xFFB6C1, 0.6);
-            mushroom.fillCircle(x, y - 3, 8);
-            // Spots
-            mushroom.fillStyle(0xFFFFFF, 1);
-            mushroom.fillCircle(x - 5, y - 2, 2);
-            mushroom.fillCircle(x + 5, y - 1, 2);
-            // Stem
-            mushroom.fillStyle(0xFFFFFF, 0.9);
-            mushroom.fillRect(x - 3, y, 6, 10);
-            
-            // Glow animation
-            this.tweens.add({
-                targets: mushroom,
-                alpha: 0.6,
-                duration: 1500 + Math.random() * 1000,
-                yoyo: true,
-                repeat: -1,
-                ease: 'Sine.easeInOut'
-            });
-        }
-
-
-        // Small forest animals (squirrels, birds)
-        for (let i = 0; i < 3; i++) {
-            this.createForestAnimal(width, height);
-        }
-    }
-
-
-    createForestAnimal(width, height) {
-        const x = Phaser.Math.Between(100, width - 100);
-        const y = Phaser.Math.Between(height * 0.7, height - 50);
-        const type = Phaser.Math.Between(0, 1); // 0 = squirrel, 1 = bird
-        
-        if (type === 0) {
-            // Squirrel
-            const squirrel = this.add.graphics();
-            // Body
-            squirrel.fillStyle(0x8B4513, 1);
-            squirrel.fillEllipse(x, y, 20, 15);
-            // Head
-            squirrel.fillCircle(x - 8, y - 5, 10);
-            // Tail
-            squirrel.fillEllipse(x + 12, y - 5, 15, 8);
-            // Ears
-            squirrel.fillStyle(0xFFB6C1, 1);
-            squirrel.fillTriangle(x - 12, y - 10, x - 15, y - 15, x - 9, y - 12);
-            squirrel.fillTriangle(x - 4, y - 10, x - 7, y - 15, x - 1, y - 12);
-            // Eye
-            squirrel.fillStyle(0x000000, 1);
-            squirrel.fillCircle(x - 10, y - 6, 2);
-            
-            // Idle animation
-            this.tweens.add({
-                targets: squirrel,
-                y: y - 5,
-                duration: 2000,
-                yoyo: true,
-                repeat: -1,
-                ease: 'Sine.easeInOut'
-            });
-        } else {
-            // Bird
-            const bird = this.add.graphics();
-            // Body
-            bird.fillStyle(0xFFD700, 1);
-            bird.fillEllipse(x, y, 12, 8);
-            // Head
-            bird.fillCircle(x - 5, y, 6);
-            // Beak
-            bird.fillStyle(0xFF8C00, 1);
-            bird.fillTriangle(x - 8, y, x - 12, y - 2, x - 12, y + 2);
-            // Wing
-            bird.fillStyle(0xFF8C00, 0.8);
-            bird.fillEllipse(x - 2, y - 3, 8, 5);
-            // Eye
-            bird.fillStyle(0x000000, 1);
-            bird.fillCircle(x - 6, y - 1, 1.5);
-            
-            // Flying animation
-            this.tweens.add({
-                targets: bird,
-                x: x + Phaser.Math.Between(-100, 100),
-                y: y + Phaser.Math.Between(-30, 30),
-                duration: 2000,
-                yoyo: true,
-                repeat: -1,
-                ease: 'Sine.easeInOut'
-            });
-        }
     }
 
     createEnhancedTitle(width, height) {
@@ -291,25 +192,31 @@ class MenuScene extends Phaser.Scene {
         
         // Button background with magical frame
         const startBtnBg = this.add.graphics();
+        const btnWidth = 320;
+        const btnHeight = 90;
+        const btnX = 0;
+        const btnY = 0;
+        
         // Shadow
         startBtnBg.fillStyle(0x000000, 0.3);
-        startBtnBg.fillRoundedRect(-165, -50, 330, 100, 25);
+        startBtnBg.fillRoundedRect(btnX - 5, btnY - 5, btnWidth + 10, btnHeight + 10, 25);
         // Outer glow
         startBtnBg.fillStyle(0xFFD700, 0.3);
-        startBtnBg.fillRoundedRect(-160, -45, 320, 90, 20);
+        startBtnBg.fillRoundedRect(btnX, btnY, btnWidth, btnHeight, 20);
         // Main button gradient
         startBtnBg.fillGradientStyle(0xFFD700, 0xFFD700, 0xFF8C00, 0xFF8C00, 1);
-        startBtnBg.fillRoundedRect(-160, -45, 320, 90, 20);
+        startBtnBg.fillRoundedRect(btnX, btnY, btnWidth, btnHeight, 20);
         // Magical border
         startBtnBg.lineStyle(5, 0xFFFFFF, 1);
-        startBtnBg.strokeRoundedRect(-160, -45, 320, 90, 20);
+        startBtnBg.strokeRoundedRect(btnX, btnY, btnWidth, btnHeight, 20);
         // Inner glow
         startBtnBg.lineStyle(3, 0xFFD700, 0.8);
-        startBtnBg.strokeRoundedRect(-155, -40, 310, 80, 15);
-        startBtnBg.generateTexture('btn_start_magical', 320, 90);
+        startBtnBg.strokeRoundedRect(btnX + 5, btnY + 5, btnWidth - 10, btnHeight - 10, 15);
+        startBtnBg.generateTexture('btn_start_magical', btnWidth + 10, btnHeight + 10);
         startBtnBg.destroy();
         
         const startBtn = this.add.image(0, 0, 'btn_start_magical')
+            .setOrigin(0.5)
             .setInteractive({ useHandCursor: true });
         startBtnContainer.add(startBtn);
 
@@ -379,20 +286,31 @@ class MenuScene extends Phaser.Scene {
         const helpBtnContainer = this.add.container(width / 2, height / 2 + 130);
         
         const helpBtnBg = this.add.graphics();
+        const helpBtnWidth = 320;
+        const helpBtnHeight = 90;
+        const helpBtnX = 0;
+        const helpBtnY = 0;
+        
+        // Shadow
         helpBtnBg.fillStyle(0x000000, 0.3);
-        helpBtnBg.fillRoundedRect(-165, -50, 330, 100, 25);
+        helpBtnBg.fillRoundedRect(helpBtnX - 5, helpBtnY - 5, helpBtnWidth + 10, helpBtnHeight + 10, 25);
+        // Outer glow
         helpBtnBg.fillStyle(0x4A90E2, 0.3);
-        helpBtnBg.fillRoundedRect(-160, -45, 320, 90, 20);
+        helpBtnBg.fillRoundedRect(helpBtnX, helpBtnY, helpBtnWidth, helpBtnHeight, 20);
+        // Main button gradient
         helpBtnBg.fillGradientStyle(0x4A90E2, 0x4A90E2, 0x87CEEB, 0x87CEEB, 1);
-        helpBtnBg.fillRoundedRect(-160, -45, 320, 90, 20);
+        helpBtnBg.fillRoundedRect(helpBtnX, helpBtnY, helpBtnWidth, helpBtnHeight, 20);
+        // Magical border
         helpBtnBg.lineStyle(5, 0xFFFFFF, 1);
-        helpBtnBg.strokeRoundedRect(-160, -45, 320, 90, 20);
+        helpBtnBg.strokeRoundedRect(helpBtnX, helpBtnY, helpBtnWidth, helpBtnHeight, 20);
+        // Inner glow
         helpBtnBg.lineStyle(3, 0x87CEEB, 0.8);
-        helpBtnBg.strokeRoundedRect(-155, -40, 310, 80, 15);
-        helpBtnBg.generateTexture('btn_help_magical', 320, 90);
+        helpBtnBg.strokeRoundedRect(helpBtnX + 5, helpBtnY + 5, helpBtnWidth - 10, helpBtnHeight - 10, 15);
+        helpBtnBg.generateTexture('btn_help_magical', helpBtnWidth + 10, helpBtnHeight + 10);
         helpBtnBg.destroy();
         
         const helpBtn = this.add.image(0, 0, 'btn_help_magical')
+            .setOrigin(0.5)
             .setInteractive({ useHandCursor: true });
         helpBtnContainer.add(helpBtn);
 
@@ -792,10 +710,6 @@ class MenuScene extends Phaser.Scene {
         return bunny;
     }
 
-    createFirework(x, y) {
-        const x = Phaser.Math.Between(80, width - 80);
-        const y = Phaser.Math.Between(100, height * 0.6);
-        
     createFirework(x, y) {
         const colors = [0xFFD700, 0xFF69B4, 0x87CEEB, 0x90EE90, 0xFF8C00];
         for (let i = 0; i < 20; i++) {

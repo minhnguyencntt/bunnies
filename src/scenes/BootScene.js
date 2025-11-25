@@ -10,21 +10,32 @@ class BootScene extends Phaser.Scene {
     }
 
     preload() {
-        // Load background image
+        // Load background images
         // Path is relative to where index.html is served from
         this.load.image('garden_bg', 'assets/backgrounds/garden_bg_1.png');
+        this.load.image('level1_bg', 'assets/backgrounds/l1_bg_1.png');
         
         // Add load event handlers for debugging
         this.load.on('filecomplete-image-garden_bg', () => {
-            console.log('✓ Background image loaded successfully');
+            console.log('✓ Garden background image loaded successfully');
+        });
+        
+        this.load.on('filecomplete-image-level1_bg', () => {
+            console.log('✓ Level 1 background image loaded successfully');
         });
         
         this.load.on('loaderror', (file) => {
             if (file.key === 'garden_bg') {
-                console.error('✗ Failed to load background image from:', file.src);
+                console.error('✗ Failed to load garden background image from:', file.src);
                 console.error('Trying alternative path...');
                 // Try alternative path
                 this.load.image('garden_bg', 'src/assets/backgrounds/garden_bg_1.png');
+            }
+            if (file.key === 'level1_bg') {
+                console.error('✗ Failed to load Level 1 background image from:', file.src);
+                console.error('Trying alternative path...');
+                // Try alternative path
+                this.load.image('level1_bg', 'src/assets/backgrounds/l1_bg_1.png');
             }
         });
     }

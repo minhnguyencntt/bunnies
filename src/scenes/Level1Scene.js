@@ -1,23 +1,22 @@
 /**
- * Level1Scene - Level 1: Cầu Toán Học
- * Gameplay: Kéo thẻ đáp án vào ô trả lời
+ * Level1Scene - Màn 1: Khu Rừng Đếm Số (Counting Forest)
+ * Gameplay: Solve addition problems to rebuild broken bridge (10 planks)
  */
 class Level1Scene extends Phaser.Scene {
     constructor() {
         super({ key: 'Level1Scene' });
-        this.currentQuestion = 0;
-        this.questions = [
-            { question: '2 + 3 = ?', answers: ['4', '5', '6'], correct: 1 },
-            { question: '5 - 2 = ?', answers: ['2', '3', '4'], correct: 1 },
-            { question: '1 + 4 = ?', answers: ['4', '5', '6'], correct: 1 }
-        ];
+        this.planksRestored = 0;
+        this.totalPlanks = 10;
+        this.currentQuestion = null;
         this.draggedCard = null;
         this.checkingAnswer = false;
-        this.dropZone = null;
-        this.dropZoneX = undefined;
-        this.dropZoneY = undefined;
-        this.dropZoneSize = undefined;
-        this.dropZoneCorrectIndex = undefined;
+        this.wiseOwl = null;
+        this.bridgePlanks = [];
+        this.answerCards = [];
+        this.butterflies = [];
+        this.fireflies = [];
+        this.magicParticles = [];
+        this.dialogueIndex = 0;
     }
 
     create() {
@@ -25,136 +24,434 @@ class Level1Scene extends Phaser.Scene {
         const width = this.cameras.main.width;
         const height = this.cameras.main.height;
 
-        // Background
-        this.createBackground();
+        // Create magical forest background
+        this.createForestBackground();
+
+        // Create ambient creatures
+        this.createAmbientCreatures();
+
+        // Create broken bridge with 10 planks
+        this.createBridge();
+
+        // Create Wise Owl (Cú Thông Thái)
+        this.createWiseOwl();
 
         // UI Scene overlay
         this.scene.launch('UIScene');
 
-        // Bé Thỏ (placeholder - sẽ thay bằng sprite thật)
-        this.createBunny();
+        // Show introduction dialogue
+        this.time.delayedCall(500, () => {
+            this.showIntroductionDialogue();
+        });
 
-        // Cầu gãy
-        this.createBridge();
-
-        // Load câu hỏi đầu tiên
-        this.loadQuestion(0);
         console.log('Level1Scene: Initialized successfully');
     }
 
-    createBackground() {
+    createForestBackground() {
         const width = this.cameras.main.width;
         const height = this.cameras.main.height;
 
-        // Sky gradient
-        const sky = this.add.graphics();
-        sky.fillGradientStyle(0x87CEEB, 0x87CEEB, 0xFFB6C1, 0xFFB6C1, 1);
-        sky.fillRect(0, 0, width, height * 0.6);
-
-        // Ground
-        const ground = this.add.graphics();
-        ground.fillStyle(0x90EE90, 1);
-        ground.fillRect(0, height * 0.6, width, height * 0.4);
-
-        // Decorative trees (simple shapes)
-        for (let i = 0; i < 5; i++) {
-            const x = (width / 6) * (i + 1);
-            const tree = this.add.graphics();
-            tree.fillStyle(0x228B22, 1);
-            tree.fillCircle(x, height * 0.5, 30);
-            tree.fillStyle(0x8B4513, 1);
-            tree.fillRect(x - 5, height * 0.5, 10, 40);
-        }
-    }
-
-    createBunny() {
-        const width = this.cameras.main.width;
-        const height = this.cameras.main.height;
-
-        // Sử dụng bunny sprite từ BootScene
-        if (this.textures.exists('bunny_sprite')) {
-            this.bunny = this.add.image(width * 0.2, height * 0.7, 'bunny_sprite');
+        // Use Level 1 background image if available
+        if (this.textures.exists('level1_bg')) {
+            const bg = this.add.image(width / 2, height / 2, 'level1_bg');
+            bg.setDisplaySize(width, height);
+            bg.setDepth(0);
+            console.log('Level 1 background image displayed');
         } else {
-            // Fallback nếu chưa có sprite
-            this.bunny = this.add.graphics();
-            this.bunny.fillStyle(0xFFFFFF, 1);
-            this.bunny.fillCircle(0, 0, 30);
-            this.bunny.fillStyle(0xFFB6C1, 1);
-            this.bunny.fillEllipse(-15, -10, 10, 20);
-            this.bunny.fillEllipse(15, -10, 10, 20);
-            this.bunny.fillStyle(0x4A90E2, 1);
-            this.bunny.fillCircle(-8, 5, 5);
-            this.bunny.fillCircle(8, 5, 5);
-            this.bunny.fillStyle(0xFF69B4, 1);
-            this.bunny.fillTriangle(0, 10, -3, 15, 3, 15);
-            this.bunny.x = width * 0.2;
-            this.bunny.y = height * 0.7;
-        }
+            // Fallback: Create programmatic background if image not loaded
+            console.warn('Level 1 background image not found, using fallback graphics');
+            
+            // Sky gradient (soft sunlight)
+            const sky = this.add.graphics();
+            sky.fillGradientStyle(0x87CEEB, 0x87CEEB, 0xFFE4B5, 0xFFE4B5, 1);
+            sky.fillRect(0, 0, width, height * 0.65);
+            sky.setDepth(0);
 
-        // Idle animation (bounce)
-        this.tweens.add({
-            targets: this.bunny,
-            y: height * 0.7 - 10,
-            duration: 1000,
-            yoyo: true,
-            repeat: -1,
-            ease: 'Sine.easeInOut'
-        });
+            // Ground (forest floor with moss)
+            const ground = this.add.graphics();
+            ground.fillStyle(0x228B22, 1);
+            ground.fillRect(0, height * 0.65, width, height * 0.35);
+            ground.setDepth(0);
+
+            // Mossy rocks (decorative)
+            for (let i = 0; i < 3; i++) {
+                const rockX = (width / 4) * (i + 1);
+                const rockY = height * 0.7;
+                const rock = this.add.graphics();
+                rock.fillStyle(0x696969, 1);
+                rock.fillCircle(rockX, rockY, 25);
+                rock.fillStyle(0x90EE90, 0.6);
+                rock.fillCircle(rockX - 5, rockY - 5, 15);
+                rock.setDepth(1);
+            }
+
+            // Colorful flowers
+            const flowerColors = [0xFF69B4, 0xFFD700, 0xFF8C00, 0x9370DB];
+            for (let i = 0; i < 8; i++) {
+                const flowerX = Phaser.Math.Between(50, width - 50);
+                const flowerY = height * 0.7 + Phaser.Math.Between(-10, 10);
+                const flower = this.add.graphics();
+                const color = flowerColors[Phaser.Math.Between(0, flowerColors.length - 1)];
+                
+                // Petals
+                for (let j = 0; j < 5; j++) {
+                    const angle = (j * 72) * Math.PI / 180;
+                    const petalX = flowerX + Math.cos(angle) * 8;
+                    const petalY = flowerY + Math.sin(angle) * 8;
+                    flower.fillStyle(color, 1);
+                    flower.fillCircle(petalX, petalY, 5);
+                }
+                // Center
+                flower.fillStyle(0xFFD700, 1);
+                flower.fillCircle(flowerX, flowerY, 4);
+                flower.setDepth(1);
+            }
+
+            // Trees (dense green)
+            for (let i = 0; i < 6; i++) {
+                const treeX = (width / 7) * (i + 1);
+                const treeY = height * 0.6;
+                const tree = this.add.graphics();
+                
+                // Trunk
+                tree.fillStyle(0x8B4513, 1);
+                tree.fillRect(treeX - 8, treeY, 16, 40);
+                
+                // Foliage (layers)
+                tree.fillStyle(0x228B22, 1);
+                tree.fillCircle(treeX, treeY - 10, 35);
+                tree.fillStyle(0x32CD32, 0.8);
+                tree.fillCircle(treeX - 10, treeY - 15, 25);
+                tree.fillCircle(treeX + 10, treeY - 15, 25);
+                tree.setDepth(1);
+            }
+
+            // Mist effect removed as requested
+        }
     }
 
     createBridge() {
         const width = this.cameras.main.width;
         const height = this.cameras.main.height;
-
-        // Cầu gãy với thiết kế đẹp hơn
-        this.bridge = this.add.graphics();
-        const bridgeX = width * 0.3;
-        const bridgeY = height * 0.65;
-        const bridgeWidth = width * 0.4;
-        const bridgeHeight = 25;
         
-        // Shadow
-        this.bridge.fillStyle(0x000000, 0.3);
-        this.bridge.fillRoundedRect(bridgeX + 3, bridgeY + 3, bridgeWidth, bridgeHeight, 5);
+        const bridgeX = width * 0.15;
+        const bridgeY = height * 0.68;
+        const bridgeWidth = width * 0.7;
+        const plankWidth = (bridgeWidth / this.totalPlanks) * 0.9; // 90% width for spacing
+        const plankSpacing = (bridgeWidth / this.totalPlanks) * 0.1; // 10% spacing
+        const plankHeight = 28;
         
-        // Main bridge (brown wood)
-        this.bridge.fillStyle(0x8B4513, 1);
-        this.bridge.fillRoundedRect(bridgeX, bridgeY, bridgeWidth, bridgeHeight, 5);
+        // Stream removed as requested - no blue water area under bridge
+        // Bridge supports removed as requested - no blue rectangular bars at bridge ends
         
-        // Wood planks
-        this.bridge.lineStyle(2, 0x654321, 1);
-        for (let i = 0; i < 5; i++) {
-            const plankX = bridgeX + (bridgeWidth / 5) * i;
-            this.bridge.beginPath();
-            this.bridge.moveTo(plankX, bridgeY);
-            this.bridge.lineTo(plankX, bridgeY + bridgeHeight);
-            this.bridge.strokePath();
+        // Create 10 individual planks (all broken initially, clearly separated)
+        this.bridgePlanks = [];
+        for (let i = 0; i < this.totalPlanks; i++) {
+            const plankX = bridgeX + i * (plankWidth + plankSpacing) + plankSpacing / 2;
+            const plank = this.createPlank(plankX, bridgeY, plankWidth, plankHeight, i);
+            this.bridgePlanks.push(plank);
         }
-        
-        // Gap in the middle (broken part)
-        const gapX = bridgeX + bridgeWidth * 0.48;
-        const gapWidth = bridgeWidth * 0.04;
-        this.bridge.fillStyle(0x000000, 0.7);
-        this.bridge.fillRect(gapX, bridgeY - 5, gapWidth, bridgeHeight + 10);
-        
-        // Bridge supports
-        this.bridge.fillStyle(0x654321, 1);
-        this.bridge.fillRect(bridgeX - 5, bridgeY + bridgeHeight, 10, 30);
-        this.bridge.fillRect(bridgeX + bridgeWidth - 5, bridgeY + bridgeHeight, 10, 30);
-
-        this.bridgeFixed = false;
     }
 
-    loadQuestion(questionIndex) {
-        if (questionIndex >= this.questions.length) {
+    createPlank(x, y, width, height, index) {
+        const plank = {
+            x: x,
+            y: y,
+            width: width,
+            height: height,
+            index: index,
+            isRestored: false,
+            graphics: null,
+            glowEffect: null,
+            dropZone: null,
+            container: null,
+            answerText: null,
+            answerValue: null
+        };
+        
+        // Create container for floating effect
+        const container = this.add.container(x + width / 2, y + height / 2);
+        plank.container = container;
+        
+        // Create broken plank visual (cracked, dark, dimmed, with X mark)
+        const brokenPlank = this.add.graphics();
+        
+        // Outer glow (very subtle, indicating it's interactive)
+        brokenPlank.fillStyle(0x9370DB, 0.1);
+        brokenPlank.fillRoundedRect(-width/2 - 2, -height/2 - 2, width + 4, height + 4, 5);
+        
+        // Main broken plank (dark, cracked, dimmed)
+        brokenPlank.fillStyle(0x654321, 0.4); // More transparent/dimmed
+        brokenPlank.fillRoundedRect(-width/2, -height/2, width, height, 4);
+        
+        // Border (dark, broken appearance, dimmed)
+        brokenPlank.lineStyle(2, 0x4A4A4A, 0.6);
+        brokenPlank.strokeRoundedRect(-width/2, -height/2, width, height, 4);
+        
+        // Crack lines (multiple for broken effect)
+        brokenPlank.lineStyle(2, 0x2A2A2A, 0.7);
+        brokenPlank.beginPath();
+        brokenPlank.moveTo(-width * 0.3, -height/2);
+        brokenPlank.lineTo(width * 0.2, height/2);
+        brokenPlank.moveTo(width * 0.3, -height/2);
+        brokenPlank.lineTo(-width * 0.2, height/2);
+        brokenPlank.strokePath();
+        
+        // X mark removed as requested
+        
+        container.add(brokenPlank);
+        brokenPlank.setDepth(10);
+        brokenPlank.setAlpha(0.6); // Make the whole plank dimmed
+        plank.graphics = brokenPlank;
+        
+        // Gentle floating animation for broken planks
+        this.tweens.add({
+            targets: container,
+            y: container.y - 2,
+            duration: 2000 + index * 100,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut',
+            delay: index * 50
+        });
+        
+        // Create drop zone (slightly larger for easier interaction)
+        const dropZone = this.add.zone(x + width / 2, y + height / 2, width * 1.2, height * 1.5);
+        dropZone.setData('plankIndex', index);
+        dropZone.setData('isDropZone', true);
+        plank.dropZone = dropZone;
+        
+        return plank;
+    }
+
+    restorePlank(plankIndex, answerValue = null) {
+        if (plankIndex < 0 || plankIndex >= this.bridgePlanks.length) return;
+        
+        const plank = this.bridgePlanks[plankIndex];
+        if (plank.isRestored) return;
+        
+        plank.isRestored = true;
+        this.planksRestored++;
+        
+        // Store answer value for display
+        if (answerValue !== null) {
+            plank.answerValue = answerValue;
+        }
+        
+        const container = plank.container;
+        const centerX = 0;
+        const centerY = 0;
+        
+        // Remove broken plank graphics
+        if (plank.graphics) {
+            this.tweens.add({
+                targets: plank.graphics,
+                alpha: 0,
+                scaleX: 0.8,
+                scaleY: 0.8,
+                duration: 200,
+                onComplete: () => {
+                    plank.graphics.destroy();
+                    plank.graphics = null;
+                }
+            });
+        }
+        
+        // Create restored plank (bold, bright, prominent)
+        const restoredPlank = this.add.graphics();
+        
+        // Outer glow (strong magical energy)
+        restoredPlank.fillStyle(0xFFD700, 0.5);
+        restoredPlank.fillRoundedRect(-plank.width/2 - 4, -plank.height/2 - 4, plank.width + 8, plank.height + 8, 5);
+        
+        // Main plank (bold, bright, crystal-like appearance)
+        restoredPlank.fillGradientStyle(0x9370DB, 0x9370DB, 0x8A2BE2, 0x8A2BE2, 1);
+        restoredPlank.fillRoundedRect(-plank.width/2, -plank.height/2, plank.width, plank.height, 4);
+        
+        // Strong glowing border (bold)
+        restoredPlank.lineStyle(4, 0xFFD700, 1);
+        restoredPlank.strokeRoundedRect(-plank.width/2, -plank.height/2, plank.width, plank.height, 4);
+        
+        // Inner highlight (bright)
+        restoredPlank.lineStyle(3, 0xFFFFFF, 0.8);
+        restoredPlank.strokeRoundedRect(-plank.width/2 + 2, -plank.height/2 + 2, plank.width - 4, plank.height - 4, 3);
+        
+        container.add(restoredPlank);
+        restoredPlank.setDepth(11);
+        restoredPlank.setAlpha(1); // Full opacity - bold and prominent
+        plank.graphics = restoredPlank;
+        
+        // Display answer number on the plank (optimized size to match plank dimensions)
+        if (plank.answerValue !== null) {
+            // Calculate font size based on plank dimensions - ensure it fits nicely
+            // Use smaller percentage to make number proportional to plank size
+            const fontSize = Math.min(Math.max(plank.width * 0.35, plank.height * 0.6), 24);
+            const answerText = this.add.text(0, 0, plank.answerValue.toString(), {
+                fontSize: fontSize + 'px',
+                fill: '#FFD700',
+                fontFamily: 'Comic Sans MS, Arial',
+                fontStyle: 'bold',
+                stroke: '#000000',
+                strokeThickness: Math.max(1, fontSize * 0.1),
+                shadow: {
+                    offsetX: 1,
+                    offsetY: 1,
+                    color: '#000000',
+                    blur: 2,
+                    stroke: true,
+                    fill: true
+                }
+            }).setOrigin(0.5);
+            container.add(answerText);
+            answerText.setDepth(12);
+            plank.answerText = answerText;
+        }
+        
+        // Create continuous glow effect
+        const glowEffect = this.add.graphics();
+        glowEffect.fillStyle(0xFFD700, 0.4);
+        glowEffect.fillRoundedRect(-plank.width/2 - 5, -plank.height/2 - 5, plank.width + 10, plank.height + 10, 6);
+        container.add(glowEffect);
+        glowEffect.setDepth(10);
+        plank.glowEffect = glowEffect;
+        
+        // Pulsing glow animation
+        this.tweens.add({
+            targets: glowEffect,
+            alpha: 0.2,
+            scaleX: 1.1,
+            scaleY: 1.1,
+            duration: 1500,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
+        });
+        
+        // Pop-in animation with magical effect
+        container.setScale(0);
+        this.tweens.add({
+            targets: container,
+            scaleX: 1,
+            scaleY: 1,
+            duration: 500,
+            ease: 'Back.easeOut',
+            onComplete: () => {
+                // Gentle floating animation for restored planks
+                this.tweens.add({
+                    targets: container,
+                    y: container.y - 1,
+                    duration: 2500,
+                    yoyo: true,
+                    repeat: -1,
+                    ease: 'Sine.easeInOut'
+                });
+            }
+        });
+        
+        // Enhanced sparkle effect
+        this.createMagicalSparkles(plank.x + plank.width / 2, plank.y + plank.height / 2);
+        
+        // Check if all planks are restored
+        if (this.planksRestored >= this.totalPlanks) {
             this.completeLevel();
+        }
+    }
+
+    createWiseOwl() {
+        const width = this.cameras.main.width;
+        const height = this.cameras.main.height;
+        
+        // Position owl near the broken bridge
+        const owlX = width * 0.15;
+        const owlY = height * 0.55;
+        
+        if (typeof WiseOwlCharacter !== 'undefined') {
+            this.wiseOwl = new WiseOwlCharacter(this, {
+                x: owlX,
+                y: owlY,
+                size: 100
+            });
+            this.wiseOwl.create();
+        } else {
+            // Fallback: simple owl graphic
+            const owl = this.add.graphics();
+            owl.fillStyle(0x8B4513, 1);
+            owl.fillCircle(0, 0, 40);
+            owl.fillStyle(0xFFD700, 0.3);
+            owl.fillCircle(-10, -10, 20);
+            owl.x = owlX;
+            owl.y = owlY;
+            owl.setDepth(100);
+        }
+    }
+
+    showIntroductionDialogue() {
+        const dialogues = [
+            "Chào mừng đến Khu Rừng Đếm Số, Bé Thỏ! Con đường ma thuật này đầy những con số đang chờ bạn khám phá.",
+            "Ồ không! Cây cầu gỗ bị gãy, và bạn không thể băng qua dòng suối. Nhưng đừng lo, mỗi câu trả lời đúng sẽ giúp khôi phục một tấm ván.",
+            "Giải các bài toán cộng bằng cách chọn số đúng. Kéo nó vào chỗ trống trên cầu. Mỗi câu trả lời đúng sẽ khôi phục một tấm ván. Hãy xem bạn có thể khôi phục cả 10 tấm ván không!"
+        ];
+        
+        this.showDialogueSequence(dialogues, () => {
+            // Start first question after dialogues
+            this.generateNewQuestion();
+        });
+    }
+
+    showDialogueSequence(dialogues, onComplete) {
+        if (this.dialogueIndex >= dialogues.length) {
+            this.dialogueIndex = 0;
+            if (onComplete) onComplete();
             return;
         }
+        
+        const text = dialogues[this.dialogueIndex];
+        if (this.wiseOwl) {
+            this.wiseOwl.showDialogue(text, 4000);
+        }
+        
+        this.dialogueIndex++;
+        this.time.delayedCall(4500, () => {
+            this.showDialogueSequence(dialogues, onComplete);
+        });
+    }
 
-        this.currentQuestion = questionIndex;
-        const question = this.questions[questionIndex];
+    generateNewQuestion() {
+        // Generate random addition problem (ages 4-10)
+        // Simple: 1-10 + 1-10, result up to 20
+        const num1 = Phaser.Math.Between(1, 10);
+        const num2 = Phaser.Math.Between(1, 10);
+        const correctAnswer = num1 + num2;
+        
+        // Generate wrong answers (within reasonable range)
+        const wrongAnswers = [];
+        while (wrongAnswers.length < 2) {
+            const wrong = Phaser.Math.Between(Math.max(1, correctAnswer - 5), correctAnswer + 5);
+            if (wrong !== correctAnswer && !wrongAnswers.includes(wrong)) {
+                wrongAnswers.push(wrong);
+            }
+        }
+        
+        // Shuffle answers
+        const allAnswers = [correctAnswer, ...wrongAnswers];
+        Phaser.Utils.Array.Shuffle(allAnswers);
+        const correctIndex = allAnswers.indexOf(correctAnswer);
+        
+        this.currentQuestion = {
+            question: `${num1} + ${num2} = ?`,
+            answers: allAnswers.map(a => a.toString()),
+            correct: correctIndex,
+            correctAnswer: correctAnswer
+        };
+        
+        // Clear previous question UI
+        this.clearQuestionUI();
+        
+        // Create new question UI
+        this.createQuestionUI();
+    }
 
-        // Clear previous question elements
+    clearQuestionUI() {
         if (this.questionPanel) {
             this.questionPanel.destroy();
             this.questionPanel = null;
@@ -163,111 +460,162 @@ class Level1Scene extends Phaser.Scene {
             this.questionText.destroy();
             this.questionText = null;
         }
-        if (this.answerCards) {
-            this.answerCards.forEach(card => {
-                if (card && !card.destroyed) card.destroy();
-            });
-            this.answerCards = [];
-        }
-        if (this.dropZone) {
-            this.dropZone.destroy();
-            this.dropZone = null;
-        }
-
-        // Question Panel
-        this.createQuestionPanel(question.question);
-
-        // Answer Cards
-        this.createAnswerCards(question.answers);
-
-        // Drop Zone
-        this.createDropZone(question.correct);
-    }
-
-    createQuestionPanel(questionText) {
-        const width = this.cameras.main.width;
-        const height = this.cameras.main.height;
-
-        // Panel background
-        const panelBg = this.add.graphics();
-        panelBg.fillStyle(0x8B4513, 0.8);
-        panelBg.fillRoundedRect(0, 0, width * 0.9, 150, 20);
-        panelBg.lineStyle(5, 0xFFD700, 1);
-        panelBg.strokeRoundedRect(0, 0, width * 0.9, 150, 20);
-        panelBg.generateTexture('questionPanel', width * 0.9, 150);
-        panelBg.destroy();
-
-        this.questionPanel = this.add.image(width / 2, height * 0.15, 'questionPanel');
-
-        // Question text
-        this.questionText = this.add.text(width / 2, height * 0.15, `Câu hỏi: ${questionText}`, {
-            fontSize: '32px',
-            fill: '#FFFFFF',
-            fontFamily: 'Arial',
-            fontStyle: 'bold',
-            align: 'center',
-            stroke: '#000000',
-            strokeThickness: 2
-        }).setOrigin(0.5);
-    }
-
-    createAnswerCards(answers) {
-        const width = this.cameras.main.width;
-        const height = this.cameras.main.height;
+        this.answerCards.forEach(card => {
+            if (card && !card.destroyed) card.destroy();
+        });
         this.answerCards = [];
+    }
 
-        const cardWidth = 120;
-        const cardHeight = 120;
-        const spacing = 20;
-        const totalWidth = (cardWidth + spacing) * answers.length - spacing;
+    createQuestionUI() {
+        const width = this.cameras.main.width;
+        const height = this.cameras.main.height;
+        const question = this.currentQuestion;
+        
+        // Question panel
+        const panelBg = this.add.graphics();
+        panelBg.fillStyle(0x8B4513, 0.9);
+        panelBg.fillRoundedRect(0, 0, width * 0.85, 120, 20);
+        panelBg.lineStyle(4, 0xFFD700, 1);
+        panelBg.strokeRoundedRect(0, 0, width * 0.85, 120, 20);
+        panelBg.generateTexture('questionPanel', width * 0.85, 120);
+        panelBg.destroy();
+        
+        this.questionPanel = this.add.image(width / 2, height * 0.15, 'questionPanel');
+        this.questionPanel.setDepth(150);
+        
+        // Question text
+        this.questionText = this.add.text(width / 2, height * 0.15, question.question, {
+            fontSize: '36px',
+            fill: '#FFFFFF',
+            fontFamily: 'Comic Sans MS, Arial',
+            fontStyle: 'bold',
+            stroke: '#000000',
+            strokeThickness: 3
+        }).setOrigin(0.5);
+        this.questionText.setDepth(151);
+        
+        // Answer cards
+        this.createAnswerCards();
+    }
+
+    createAnswerCards() {
+        const width = this.cameras.main.width;
+        const height = this.cameras.main.height;
+        const question = this.currentQuestion;
+        
+        // Calculate card size to match bridge plank proportions
+        // Bridge plank: width = (width * 0.7 / 10) * 0.9, height = 28
+        const bridgeWidth = width * 0.7;
+        const plankWidth = (bridgeWidth / this.totalPlanks) * 0.9;
+        const plankHeight = 28;
+        
+        // Cards should be slightly larger than planks for easy interaction
+        // but maintain similar proportions
+        const cardWidth = Math.max(plankWidth * 1.3, 50); // At least 50px, or 1.3x plank width
+        const cardHeight = Math.max(plankHeight * 2.5, 70); // At least 70px, or 2.5x plank height
+        
+        const spacing = 15;
+        const totalWidth = (cardWidth + spacing) * question.answers.length - spacing;
         const startX = (width - totalWidth) / 2;
-
-        answers.forEach((answer, index) => {
-            // Card background với shadow và gradient
+        const cardY = height * 0.32;
+        
+        // Pastel color palette with glowing edges
+        const colorPalettes = [
+            { main: 0xFFB6C1, dark: 0xFF91A4, glow: 0xFF69B4 }, // Pink
+            { main: 0x90EE90, dark: 0x7ACC7A, glow: 0x32CD32 }, // Green
+            { main: 0x87CEEB, dark: 0x6BB6E2, glow: 0x4682B4 }, // Sky Blue
+            { main: 0xFFD700, dark: 0xFFA500, glow: 0xFF8C00 }, // Gold
+            { main: 0xDDA0DD, dark: 0xDA70D6, glow: 0x9370DB }, // Plum
+            { main: 0xFFE4B5, dark: 0xFFDAB9, glow: 0xFFA500 }  // Peach
+        ];
+        
+        question.answers.forEach((answer, index) => {
+            const palette = colorPalettes[index % colorPalettes.length];
+            
+            // Create card with glowing edges
             const cardBg = this.add.graphics();
-            const colors = [0xFFB6C1, 0x90EE90, 0x87CEEB];
-            const darkColors = [0xFF91A4, 0x7ACC7A, 0x6BB6E2];
+            
+            // Outer glow (magical effect)
+            cardBg.fillStyle(palette.glow, 0.4);
+            cardBg.fillRoundedRect(-3, -3, cardWidth + 6, cardHeight + 6, 18);
             
             // Shadow
-            cardBg.fillStyle(0x000000, 0.3);
-            cardBg.fillRoundedRect(3, 3, cardWidth, cardHeight, 15);
+            cardBg.fillStyle(0x000000, 0.25);
+            cardBg.fillRoundedRect(2, 2, cardWidth, cardHeight, 15);
             
-            // Card gradient
-            cardBg.fillGradientStyle(colors[index], colors[index], darkColors[index], darkColors[index], 1);
+            // Card gradient (soft pastel)
+            cardBg.fillGradientStyle(palette.main, palette.main, palette.dark, palette.dark, 1);
             cardBg.fillRoundedRect(0, 0, cardWidth, cardHeight, 15);
             
-            // Border
-            cardBg.lineStyle(4, 0xFFFFFF, 1);
+            // Glowing border (bright, magical)
+            cardBg.lineStyle(4, palette.glow, 1);
             cardBg.strokeRoundedRect(0, 0, cardWidth, cardHeight, 15);
             
             // Inner highlight
-            cardBg.lineStyle(2, 0xFFFFFF, 0.5);
-            cardBg.strokeRoundedRect(5, 5, cardWidth - 10, cardHeight - 10, 10);
+            cardBg.lineStyle(2, 0xFFFFFF, 0.7);
+            cardBg.strokeRoundedRect(3, 3, cardWidth - 6, cardHeight - 6, 12);
             
-            cardBg.generateTexture(`card_${index}`, cardWidth, cardHeight);
+            cardBg.generateTexture(`card_${index}`, cardWidth + 6, cardHeight + 6);
             cardBg.destroy();
-
-            const cardX = startX + index * (cardWidth + spacing) + cardWidth / 2;
-            const cardY = height * 0.4;
             
-            // Create container để text di chuyển cùng card
+            const cardX = startX + index * (cardWidth + spacing) + cardWidth / 2;
+            
+            // Create container with glow effect
             const cardContainer = this.add.container(cardX, cardY);
             
+            // Glow effect (continuous pulsing)
+            const glow = this.add.graphics();
+            glow.fillStyle(palette.glow, 0.3);
+            glow.fillRoundedRect(-cardWidth/2 - 2, -cardHeight/2 - 2, cardWidth + 4, cardHeight + 4, 17);
+            cardContainer.add(glow);
+            
+            // Card image
             const card = this.add.image(0, 0, `card_${index}`);
             cardContainer.add(card);
-
-            // Answer text
+            
+            // Answer text (larger, more readable)
             const answerText = this.add.text(0, 0, answer, {
-                fontSize: '48px',
+                fontSize: '52px',
                 fill: '#FFFFFF',
-                fontFamily: 'Arial',
+                fontFamily: 'Comic Sans MS, Arial',
                 fontStyle: 'bold',
                 stroke: '#000000',
-                strokeThickness: 3
+                strokeThickness: 4,
+                shadow: {
+                    offsetX: 2,
+                    offsetY: 2,
+                    color: '#000000',
+                    blur: 4,
+                    stroke: true,
+                    fill: true
+                }
             }).setOrigin(0.5);
             cardContainer.add(answerText);
-
-            // Make container draggable
+            
+            // Pulsing glow animation
+            this.tweens.add({
+                targets: glow,
+                alpha: 0.5,
+                scaleX: 1.05,
+                scaleY: 1.05,
+                duration: 1200,
+                yoyo: true,
+                repeat: -1,
+                ease: 'Sine.easeInOut'
+            });
+            
+            // Gentle floating animation
+            this.tweens.add({
+                targets: cardContainer,
+                y: cardY - 3,
+                duration: 2000 + index * 100,
+                yoyo: true,
+                repeat: -1,
+                ease: 'Sine.easeInOut',
+                delay: index * 150
+            });
+            
+            // Make draggable
             cardContainer.setSize(cardWidth, cardHeight);
             cardContainer.setInteractive({ 
                 draggable: true,
@@ -278,279 +626,331 @@ class Level1Scene extends Phaser.Scene {
             cardContainer.setData('answerText', answer);
             cardContainer.setData('originalX', cardX);
             cardContainer.setData('originalY', cardY);
-
-            cardContainer.on('dragstart', (pointer, dragX, dragY) => {
+            cardContainer.setData('palette', palette);
+            cardContainer.setDepth(150);
+            
+            // Drag events
+            cardContainer.on('dragstart', (pointer) => {
                 this.draggedCard = cardContainer;
-                card.setTint(0xCCCCCC);
-                cardContainer.setScale(1.2);
-                cardContainer.setDepth(1000); // Bring to front
+                // Stop floating animation
+                this.tweens.killTweensOf(cardContainer);
+                // Enhance glow when dragging
+                this.tweens.add({
+                    targets: glow,
+                    alpha: 0.8,
+                    scaleX: 1.2,
+                    scaleY: 1.2,
+                    duration: 200
+                });
+                cardContainer.setScale(1.15);
+                cardContainer.setDepth(200);
             });
-
+            
             cardContainer.on('drag', (pointer, dragX, dragY) => {
                 cardContainer.x = dragX;
                 cardContainer.y = dragY;
             });
-
+            
             cardContainer.on('dragend', () => {
-                // Check if drop zone exists
-                if (!this.dropZone || typeof this.dropZoneX === 'undefined') {
-                    // Drop zone not ready, return card
-                    const originalX = cardContainer.getData('originalX');
-                    const originalY = cardContainer.getData('originalY');
-                    this.tweens.add({
-                        targets: cardContainer,
-                        x: originalX,
-                        y: originalY,
-                        duration: 300,
-                        ease: 'Back.easeOut',
-                        onComplete: () => {
-                            card.clearTint();
-                            cardContainer.setScale(1);
-                            cardContainer.setDepth(0);
-                            this.draggedCard = null;
-                        }
-                    });
-                    return;
-                }
-                
-                // Check if card is over drop zone
-                const cardX = cardContainer.x;
-                const cardY = cardContainer.y;
-                const distanceX = Math.abs(cardX - this.dropZoneX);
-                const distanceY = Math.abs(cardY - this.dropZoneY);
-                
-                if (distanceX < this.dropZoneSize/2 && distanceY < this.dropZoneSize/2) {
-                    // Card is over drop zone - check answer
-                    this.checkAnswer(cardContainer, this.dropZoneCorrectIndex);
-                } else {
-                    // Card was not dropped on drop zone, return to position
-                    const originalX = cardContainer.getData('originalX');
-                    const originalY = cardContainer.getData('originalY');
-                    this.tweens.add({
-                        targets: cardContainer,
-                        x: originalX,
-                        y: originalY,
-                        duration: 300,
-                        ease: 'Back.easeOut',
-                        onComplete: () => {
-                            card.clearTint();
-                            cardContainer.setScale(1);
-                            cardContainer.setDepth(0);
-                            this.draggedCard = null;
-                        }
-                    });
-                }
+                this.handleCardDrop(cardContainer);
             });
-
+            
             this.answerCards.push(cardContainer);
         });
     }
 
-    createDropZone(correctIndex) {
-        const width = this.cameras.main.width;
-        const height = this.cameras.main.height;
-
-        // Drop zone background đẹp hơn
-        const dropBg = this.add.graphics();
-        const dropSize = 200;
+    handleCardDrop(card) {
+        if (this.checkingAnswer) return;
         
-        // Outer glow
-        dropBg.fillStyle(0x4A90E2, 0.3);
-        dropBg.fillCircle(dropSize/2, dropSize/2, dropSize/2 + 10);
+        const cardX = card.x;
+        const cardY = card.y;
         
-        // Main zone
-        dropBg.fillStyle(0x4A90E2, 0.5);
-        dropBg.fillRoundedRect(0, 0, dropSize, dropSize, 20);
-        
-        // Dashed border
-        dropBg.lineStyle(5, 0xFFD700, 1);
-        // Draw dashed border manually
-        const dashLength = 10;
-        const gapLength = 5;
-        for (let i = 0; i < dropSize * 4; i += dashLength + gapLength) {
-            const pos = i % (dropSize * 4);
-            if (pos < dropSize) {
-                dropBg.moveTo(pos, 0);
-                dropBg.lineTo(Math.min(pos + dashLength, dropSize), 0);
-            } else if (pos < dropSize * 2) {
-                const p = pos - dropSize;
-                dropBg.moveTo(dropSize, p);
-                dropBg.lineTo(dropSize, Math.min(p + dashLength, dropSize));
-            } else if (pos < dropSize * 3) {
-                const p = pos - dropSize * 2;
-                dropBg.moveTo(dropSize - p, dropSize);
-                dropBg.lineTo(Math.max(dropSize - p - dashLength, 0), dropSize);
-            } else {
-                const p = pos - dropSize * 3;
-                dropBg.moveTo(0, dropSize - p);
-                dropBg.lineTo(0, Math.max(dropSize - p - dashLength, 0));
+        // Check if dropped on any plank drop zone
+        let droppedOnPlank = false;
+        for (let i = 0; i < this.bridgePlanks.length; i++) {
+            const plank = this.bridgePlanks[i];
+            if (plank.isRestored) continue;
+            
+            const dropZone = plank.dropZone;
+            const zoneX = dropZone.x;
+            const zoneY = dropZone.y;
+            const zoneWidth = dropZone.width;
+            const zoneHeight = dropZone.height;
+            
+            if (cardX >= zoneX - zoneWidth / 2 && cardX <= zoneX + zoneWidth / 2 &&
+                cardY >= zoneY - zoneHeight / 2 && cardY <= zoneY + zoneHeight / 2) {
+                
+                droppedOnPlank = true;
+                this.checkAnswer(card, plank.index);
+                break;
             }
         }
-        dropBg.strokePath();
         
-        dropBg.generateTexture('dropZone', dropSize, dropSize);
-        dropBg.destroy();
-
-        this.dropZone = this.add.image(width / 2, height * 0.7, 'dropZone')
-            .setInteractive({ useHandCursor: false });
-
-        // Glow animation
-        this.tweens.add({
-            targets: this.dropZone,
-            alpha: 0.7,
-            scale: 1.1,
-            duration: 800,
-            yoyo: true,
-            repeat: -1,
-            ease: 'Sine.easeInOut'
-        });
-
-        // Drop event
-        this.dropZone.setData('correctIndex', correctIndex);
-        this.dropZone.setData('isDropZone', true);
-
-        // Store drop zone position and size for manual checking
-        this.dropZoneX = width / 2;
-        this.dropZoneY = height * 0.7;
-        this.dropZoneSize = 200;
-        this.dropZoneCorrectIndex = correctIndex;
+        if (!droppedOnPlank) {
+            // Return card to original position
+            this.returnCard(card);
+        }
     }
 
-    checkAnswer(card, correctIndex) {
-        // Prevent multiple checks
+    checkAnswer(card, plankIndex) {
         if (this.checkingAnswer) return;
         this.checkingAnswer = true;
         
         const answerIndex = card.getData('answerIndex');
-
-        if (answerIndex === correctIndex) {
-            // Correct answer - mark as checked
-            this.draggedCard = null;
-            this.handleCorrectAnswer();
+        const isCorrect = answerIndex === this.currentQuestion.correct;
+        
+        if (isCorrect) {
+            this.handleCorrectAnswer(card, plankIndex);
         } else {
-            // Wrong answer
-            this.draggedCard = null;
             this.handleWrongAnswer(card);
         }
         
-        // Reset checking flag after a delay
         this.time.delayedCall(100, () => {
             this.checkingAnswer = false;
         });
     }
 
-    handleCorrectAnswer() {
-        // Hide dragged card
-        if (this.draggedCard) {
-            // Remove from answerCards array
-            const index = this.answerCards.indexOf(this.draggedCard);
-            if (index > -1) {
-                this.answerCards.splice(index, 1);
+    handleCorrectAnswer(card, plankIndex) {
+        // Hide card
+        this.tweens.add({
+            targets: card,
+            alpha: 0,
+            scale: 0,
+            duration: 300,
+            onComplete: () => {
+                card.destroy();
             }
-            
-            this.tweens.add({
-                targets: this.draggedCard,
-                alpha: 0,
-                scale: 0,
-                duration: 300,
-                onComplete: () => {
-                    this.draggedCard.destroy();
-                    this.draggedCard = null;
-                }
-            });
+        });
+        
+        // Remove from array
+        const index = this.answerCards.indexOf(card);
+        if (index > -1) {
+            this.answerCards.splice(index, 1);
         }
-
-        // Success message
+        
+        // Restore plank with answer value displayed
+        const answerValue = parseInt(card.getData('answerText'));
+        this.restorePlank(plankIndex, answerValue);
+        
+        // Success feedback
         const width = this.cameras.main.width;
         const height = this.cameras.main.height;
-        const successText = this.add.text(width / 2, height / 2, 'Xuất sắc! Con giỏi quá! ⭐', {
-            fontSize: '36px',
+        const successText = this.add.text(width / 2, height * 0.25, 'Xuất sắc! Một tấm ván nữa đã được khôi phục! ⭐', {
+            fontSize: '28px',
             fill: '#FFD700',
-            fontFamily: 'Arial',
+            fontFamily: 'Comic Sans MS, Arial',
             fontStyle: 'bold',
             stroke: '#FFFFFF',
-            strokeThickness: 4
+            strokeThickness: 3
         }).setOrigin(0.5);
-
-        // Sparkle particles
-        if (this.dropZone) {
-            this.createSparkles(this.dropZone.x, this.dropZone.y);
-        } else {
-            // Fallback to drop zone position
-            const width = this.cameras.main.width;
-            const height = this.cameras.main.height;
-            this.createSparkles(width / 2, height * 0.7);
+        successText.setDepth(200);
+        
+        // Wise Owl feedback
+        if (this.wiseOwl) {
+            this.wiseOwl.showDialogue("Làm tốt lắm, Bé Thỏ! Một tấm ván nữa đã được khôi phục. Tiếp tục nhé!", 3000);
         }
-
-        // Bé Thỏ celebrate
-        this.celebrateBunny();
-
-        // Repair bridge
-        this.repairBridge();
-
+        
         // Next question after delay
-        this.time.delayedCall(2000, () => {
+        this.time.delayedCall(2500, () => {
             successText.destroy();
-            this.loadQuestion(this.currentQuestion + 1);
+            if (this.planksRestored < this.totalPlanks) {
+                this.generateNewQuestion();
+            }
         });
     }
 
     handleWrongAnswer(card) {
-        // Shake animation
-        const originalX = card.getData('originalX') || card.x;
-        const originalY = card.getData('originalY') || card.y;
+        // Find the plank that was targeted (if any)
+        const cardX = card.x;
+        const cardY = card.y;
+        let targetPlank = null;
+        
+        for (let i = 0; i < this.bridgePlanks.length; i++) {
+            const plank = this.bridgePlanks[i];
+            if (plank.isRestored) continue;
+            
+            const dropZone = plank.dropZone;
+            const zoneX = dropZone.x;
+            const zoneY = dropZone.y;
+            const zoneWidth = dropZone.width;
+            const zoneHeight = dropZone.height;
+            
+            if (cardX >= zoneX - zoneWidth / 2 && cardX <= zoneX + zoneWidth / 2 &&
+                cardY >= zoneY - zoneHeight / 2 && cardY <= zoneY + zoneHeight / 2) {
+                targetPlank = plank;
+                break;
+            }
+        }
+        
+        // Shake the targeted plank (subtle denial effect)
+        if (targetPlank && targetPlank.container) {
+            const originalY = targetPlank.container.y;
+            this.tweens.add({
+                targets: targetPlank.container,
+                x: targetPlank.container.x - 3,
+                duration: 50,
+                yoyo: true,
+                repeat: 3,
+                onComplete: () => {
+                    targetPlank.container.x = targetPlank.x + targetPlank.width / 2;
+                }
+            });
+            
+            // Dim effect on plank
+            if (targetPlank.graphics) {
+                this.tweens.add({
+                    targets: targetPlank.graphics,
+                    alpha: 0.4,
+                    duration: 300,
+                    yoyo: true,
+                    repeat: 1
+                });
+            }
+        }
+        
+        // Shake card animation
+        const originalX = card.getData('originalX');
+        const originalY = card.getData('originalY');
         
         this.tweens.add({
             targets: card,
-            x: card.x - 10,
+            x: card.x - 8,
             duration: 50,
             yoyo: true,
-            repeat: 5,
+            repeat: 4,
             onComplete: () => {
-                // Return card to original position
-                this.tweens.add({
-                    targets: card,
-                    x: originalX,
-                    y: originalY,
-                    duration: 300,
-                    ease: 'Back.easeOut'
-                });
+                this.returnCard(card);
             }
         });
-
-        // Hint message
+        
+        // Gentle sparkle denial effect
+        if (targetPlank) {
+            const sparkX = targetPlank.x + targetPlank.width / 2;
+            const sparkY = targetPlank.y + targetPlank.height / 2;
+            this.createDenialSparkles(sparkX, sparkY);
+        }
+        
+        // Wrong answer feedback
         const width = this.cameras.main.width;
-        const hintText = this.add.text(width / 2, this.cameras.main.height * 0.25, 'Hãy thử lại nhé! 💡', {
-            fontSize: '28px',
+        const hintText = this.add.text(width / 2, this.cameras.main.height * 0.25, 'Ồ! Chưa đúng. Hãy đếm cẩn thận và chọn lại nhé! 💡', {
+            fontSize: '24px',
             fill: '#FF8C00',
-            fontFamily: 'Arial',
-            fontStyle: 'bold'
+            fontFamily: 'Comic Sans MS, Arial',
+            fontStyle: 'bold',
+            stroke: '#FFFFFF',
+            strokeThickness: 2
         }).setOrigin(0.5);
-
+        hintText.setDepth(200);
+        
+        // Wise Owl feedback
+        if (this.wiseOwl) {
+            this.wiseOwl.showDialogue("Ồ! Chưa đúng. Hãy đếm cẩn thận và chọn lại nhé!", 3000);
+        }
+        
         this.time.delayedCall(2000, () => {
             hintText.destroy();
         });
     }
 
+    returnCard(card) {
+        const originalX = card.getData('originalX');
+        const originalY = card.getData('originalY');
+        const glow = card.list[0]; // Glow is first in container
+        
+        // Reset glow
+        this.tweens.add({
+            targets: glow,
+            alpha: 0.3,
+            scaleX: 1,
+            scaleY: 1,
+            duration: 300
+        });
+        
+        // Return card to position
+        this.tweens.add({
+            targets: card,
+            x: originalX,
+            y: originalY,
+            scaleX: 1,
+            scaleY: 1,
+            duration: 400,
+            ease: 'Back.easeOut',
+            onComplete: () => {
+                card.setDepth(150);
+                this.draggedCard = null;
+                
+                // Restart floating animation
+                this.tweens.add({
+                    targets: card,
+                    y: originalY - 3,
+                    duration: 2000,
+                    yoyo: true,
+                    repeat: -1,
+                    ease: 'Sine.easeInOut'
+                });
+            }
+        });
+    }
+
     createSparkles(x, y) {
-        for (let i = 0; i < 20; i++) {
+        for (let i = 0; i < 15; i++) {
             const sparkle = this.add.graphics();
             sparkle.fillStyle(0xFFD700, 1);
-            sparkle.fillCircle(0, 0, 5);
+            sparkle.fillCircle(0, 0, 4);
             sparkle.x = x;
             sparkle.y = y;
-
+            sparkle.setDepth(200);
+            
             const angle = Phaser.Math.Between(0, 360);
-            const distance = Phaser.Math.Between(50, 150);
+            const distance = Phaser.Math.Between(30, 80);
             const targetX = x + Math.cos(Phaser.Math.DegToRad(angle)) * distance;
             const targetY = y + Math.sin(Phaser.Math.DegToRad(angle)) * distance;
-
+            
             this.tweens.add({
                 targets: sparkle,
                 x: targetX,
                 y: targetY,
                 alpha: 0,
                 scale: 0,
+                duration: 600,
+                ease: 'Power2',
+                onComplete: () => {
+                    sparkle.destroy();
+                }
+            });
+        }
+    }
+
+    createMagicalSparkles(x, y) {
+        // Enhanced sparkle effect for correct answers
+        const colors = [0xFFD700, 0xFF69B4, 0x87CEEB, 0x90EE90, 0x9370DB];
+        for (let i = 0; i < 25; i++) {
+            const sparkle = this.add.graphics();
+            const color = colors[Phaser.Math.Between(0, colors.length - 1)];
+            
+            // Outer glow
+            sparkle.fillStyle(color, 0.6);
+            sparkle.fillCircle(0, 0, 6);
+            // Inner bright
+            sparkle.fillStyle(0xFFFFFF, 1);
+            sparkle.fillCircle(0, 0, 3);
+            
+            sparkle.x = x;
+            sparkle.y = y;
+            sparkle.setDepth(200);
+            
+            const angle = Phaser.Math.Between(0, 360);
+            const distance = Phaser.Math.Between(40, 100);
+            const targetX = x + Math.cos(Phaser.Math.DegToRad(angle)) * distance;
+            const targetY = y + Math.sin(Phaser.Math.DegToRad(angle)) * distance;
+            
+            this.tweens.add({
+                targets: sparkle,
+                x: targetX,
+                y: targetY,
+                alpha: 0,
+                scale: 0,
+                rotation: 360,
                 duration: 800,
                 ease: 'Power2',
                 onComplete: () => {
@@ -560,107 +960,244 @@ class Level1Scene extends Phaser.Scene {
         }
     }
 
-    celebrateBunny() {
-        // Bé Thỏ nhảy cẫng
-        this.tweens.add({
-            targets: this.bunny,
-            y: this.bunny.y - 50,
-            duration: 300,
-            yoyo: true,
-            repeat: 2,
-            ease: 'Bounce.easeOut'
-        });
-
-        // Scale animation
-        this.tweens.add({
-            targets: this.bunny,
-            scaleX: 1.3,
-            scaleY: 1.3,
-            duration: 200,
-            yoyo: true,
-            ease: 'Back.easeOut'
-        });
+    createDenialSparkles(x, y) {
+        // Subtle denial effect for wrong answers
+        for (let i = 0; i < 8; i++) {
+            const sparkle = this.add.graphics();
+            sparkle.fillStyle(0xFF8C00, 0.7);
+            sparkle.fillCircle(0, 0, 3);
+            sparkle.x = x;
+            sparkle.y = y;
+            sparkle.setDepth(200);
+            
+            const angle = Phaser.Math.Between(0, 360);
+            const distance = Phaser.Math.Between(20, 40);
+            const targetX = x + Math.cos(Phaser.Math.DegToRad(angle)) * distance;
+            const targetY = y + Math.sin(Phaser.Math.DegToRad(angle)) * distance;
+            
+            this.tweens.add({
+                targets: sparkle,
+                x: targetX,
+                y: targetY,
+                alpha: 0,
+                scale: 0,
+                duration: 400,
+                ease: 'Power2',
+                onComplete: () => {
+                    sparkle.destroy();
+                }
+            });
+        }
     }
 
-    repairBridge() {
-        if (this.bridgeFixed) return;
-
+    createAmbientCreatures() {
         const width = this.cameras.main.width;
         const height = this.cameras.main.height;
-
-        // Sửa phần gãy với animation
-        const bridgeX = width * 0.3;
-        const bridgeY = height * 0.65;
-        const bridgeWidth = width * 0.4;
-        const bridgeHeight = 25;
         
-        // Clear và vẽ lại cầu hoàn chỉnh
-        this.bridge.clear();
-        
-        // Shadow
-        this.bridge.fillStyle(0x000000, 0.3);
-        this.bridge.fillRoundedRect(bridgeX + 3, bridgeY + 3, bridgeWidth, bridgeHeight, 5);
-        
-        // Main bridge (brown wood)
-        this.bridge.fillStyle(0x8B4513, 1);
-        this.bridge.fillRoundedRect(bridgeX, bridgeY, bridgeWidth, bridgeHeight, 5);
-        
-        // Wood planks
-        this.bridge.lineStyle(2, 0x654321, 1);
-        for (let i = 0; i < 5; i++) {
-            const plankX = bridgeX + (bridgeWidth / 5) * i;
-            this.bridge.beginPath();
-            this.bridge.moveTo(plankX, bridgeY);
-            this.bridge.lineTo(plankX, bridgeY + bridgeHeight);
-            this.bridge.strokePath();
+        // Generate butterflies
+        if (typeof generateButterflies === 'function' && typeof createMenuButterfly === 'function') {
+            const butterflyDataList = generateButterflies(this, 4);
+            butterflyDataList.forEach(data => {
+                const butterfly = createMenuButterfly(this, data);
+                if (butterfly) {
+                    this.butterflies.push(butterfly);
+                }
+            });
         }
         
-        // Glow effect (golden magic)
-        this.bridge.fillStyle(0xFFD700, 0.3);
-        this.bridge.fillRoundedRect(bridgeX, bridgeY, bridgeWidth, bridgeHeight, 5);
+        // Generate fireflies
+        if (typeof generateFireflies === 'function' && typeof createMenuFirefly === 'function') {
+            const fireflyDataList = generateFireflies(this, 5);
+            fireflyDataList.forEach(data => {
+                const firefly = createMenuFirefly(this, data);
+                if (firefly) {
+                    this.fireflies.push(firefly);
+                }
+            });
+        }
         
-        // Bridge supports
-        this.bridge.fillStyle(0x654321, 1);
-        this.bridge.fillRect(bridgeX - 5, bridgeY + bridgeHeight, 10, 30);
-        this.bridge.fillRect(bridgeX + bridgeWidth - 5, bridgeY + bridgeHeight, 10, 30);
+        // Generate magic particles
+        if (typeof generateMagicParticles === 'function' && typeof createMenuMagicParticle === 'function') {
+            const particleDataList = generateMagicParticles(this, 6);
+            particleDataList.forEach(data => {
+                const particle = createMenuMagicParticle(this, data);
+                if (particle) {
+                    this.magicParticles.push(particle);
+                }
+            });
+        }
+    }
 
-        this.bridgeFixed = true;
-
-        // Sparkle effect trên cầu
-        for (let i = 0; i < 30; i++) {
-            const x = Phaser.Math.Between(bridgeX, bridgeX + bridgeWidth);
-            const y = bridgeY;
-            this.createSparkles(x, y);
+    update() {
+        // Update ambient creatures
+        if (this.butterflies && this.butterflies.length > 0) {
+            this.butterflies.forEach(butterfly => {
+                const behaviorSystem = butterfly.getData('behaviorSystem');
+                if (behaviorSystem && typeof behaviorSystem.update === 'function') {
+                    behaviorSystem.update(this.butterflies);
+                }
+            });
+        }
+        
+        if (this.fireflies && this.fireflies.length > 0) {
+            this.fireflies.forEach(firefly => {
+                const behaviorSystem = firefly.getData('behaviorSystem');
+                if (behaviorSystem && typeof behaviorSystem.update === 'function') {
+                    behaviorSystem.update(this.fireflies);
+                }
+            });
+        }
+        
+        if (this.magicParticles && this.magicParticles.length > 0) {
+            this.magicParticles.forEach(particle => {
+                const behaviorSystem = particle.getData('behaviorSystem');
+                if (behaviorSystem && typeof behaviorSystem.update === 'function') {
+                    behaviorSystem.update(this.magicParticles);
+                }
+            });
         }
     }
 
     completeLevel() {
         const width = this.cameras.main.width;
         const height = this.cameras.main.height;
-
-        // Victory message
-        const victoryText = this.add.text(width / 2, height / 2, 'Hoàn thành Level 1! 🎉\nCon đã sửa xong cầu rồi!', {
+        
+        // Hide question UI
+        this.clearQuestionUI();
+        
+        // Victory celebration
+        const victoryText = this.add.text(width / 2, height / 2, 'Hoàn thành! 🎉\nBạn đã khôi phục tất cả 10 tấm ván!', {
             fontSize: '40px',
             fill: '#FFD700',
-            fontFamily: 'Arial',
+            fontFamily: 'Comic Sans MS, Arial',
             fontStyle: 'bold',
             align: 'center',
             stroke: '#FFFFFF',
             strokeThickness: 4
         }).setOrigin(0.5);
-
-        // More sparkles
+        victoryText.setDepth(200);
+        
+        // Enhanced magical sparkles everywhere
         for (let i = 0; i < 50; i++) {
             const x = Phaser.Math.Between(0, width);
             const y = Phaser.Math.Between(0, height);
-            this.createSparkles(x, y);
+            this.createMagicalSparkles(x, y);
         }
+        
+        // Show reward: Trang sách số 1
+        this.time.delayedCall(2000, () => {
+            victoryText.destroy();
+            this.showReward();
+        });
+    }
 
-        // Return to menu after delay
-        this.time.delayedCall(3000, () => {
+    showReward() {
+        const width = this.cameras.main.width;
+        const height = this.cameras.main.height;
+        
+        // Reward panel
+        const rewardBg = this.add.graphics();
+        rewardBg.fillStyle(0x000000, 0.7);
+        rewardBg.fillRect(0, 0, width, height);
+        rewardBg.setDepth(250);
+        
+        const panelBg = this.add.graphics();
+        panelBg.fillStyle(0xFFD700, 0.95);
+        panelBg.fillRoundedRect(0, 0, width * 0.7, height * 0.5, 20);
+        panelBg.lineStyle(5, 0xFFFFFF, 1);
+        panelBg.strokeRoundedRect(0, 0, width * 0.7, height * 0.5, 20);
+        panelBg.generateTexture('rewardPanel', width * 0.7, height * 0.5);
+        panelBg.destroy();
+        
+        const panel = this.add.image(width / 2, height / 2, 'rewardPanel');
+        panel.setDepth(251);
+        
+        // Reward text
+        const rewardTitle = this.add.text(width / 2, height * 0.35, 'Trang sách số 1', {
+            fontSize: '48px',
+            fill: '#8B4513',
+            fontFamily: 'Comic Sans MS, Arial',
+            fontStyle: 'bold',
+            stroke: '#FFFFFF',
+            strokeThickness: 3
+        }).setOrigin(0.5);
+        rewardTitle.setDepth(252);
+        
+        const rewardSubtitle = this.add.text(width / 2, height * 0.45, 'Sức Mạnh Của Những Con Số', {
+            fontSize: '32px',
+            fill: '#8B4513',
+            fontFamily: 'Comic Sans MS, Arial',
+            fontStyle: 'bold'
+        }).setOrigin(0.5);
+        rewardSubtitle.setDepth(252);
+        
+        // Decorative star
+        const star = this.add.graphics();
+        star.fillStyle(0xFFD700, 1);
+        star.fillStar(width / 2, height * 0.55, 30, 5, 0);
+        star.setDepth(252);
+        
+        // Continue button
+        const continueBtn = this.add.graphics();
+        continueBtn.fillStyle(0x8B4513, 1);
+        continueBtn.fillRoundedRect(0, 0, 200, 60, 10);
+        continueBtn.lineStyle(3, 0xFFD700, 1);
+        continueBtn.strokeRoundedRect(0, 0, 200, 60, 10);
+        continueBtn.generateTexture('continueBtn', 200, 60);
+        continueBtn.destroy();
+        
+        const btn = this.add.image(width / 2, height * 0.7, 'continueBtn')
+            .setInteractive({ useHandCursor: true })
+            .setDepth(252);
+        
+        const btnText = this.add.text(width / 2, height * 0.7, 'Tiếp tục', {
+            fontSize: '24px',
+            fill: '#FFFFFF',
+            fontFamily: 'Comic Sans MS, Arial',
+            fontStyle: 'bold'
+        }).setOrigin(0.5);
+        btnText.setDepth(253);
+        
+        btn.on('pointerdown', () => {
             this.scene.stop('UIScene');
             this.scene.start('MenuScene');
         });
+        
+        // Wise Owl final message
+        if (this.wiseOwl) {
+            this.time.delayedCall(500, () => {
+                this.wiseOwl.showDialogue("Tuyệt vời! Bạn đã học được sức mạnh của những con số!", 4000);
+            });
+        }
+    }
+
+    shutdown() {
+        // Cleanup
+        if (this.wiseOwl) {
+            this.wiseOwl.destroy();
+        }
+        
+        this.butterflies.forEach(butterfly => {
+            const behaviorSystem = butterfly.getData('behaviorSystem');
+            if (behaviorSystem && typeof behaviorSystem.destroy === 'function') {
+                behaviorSystem.destroy();
+            }
+        });
+        
+        this.fireflies.forEach(firefly => {
+            const behaviorSystem = firefly.getData('behaviorSystem');
+            if (behaviorSystem && typeof behaviorSystem.destroy === 'function') {
+                behaviorSystem.destroy();
+            }
+        });
+        
+        this.magicParticles.forEach(particle => {
+            const behaviorSystem = particle.getData('behaviorSystem');
+            if (behaviorSystem && typeof behaviorSystem.destroy === 'function') {
+                behaviorSystem.destroy();
+            }
+        });
+        
+        this.clearQuestionUI();
     }
 }
-

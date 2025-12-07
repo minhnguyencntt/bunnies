@@ -533,9 +533,9 @@ class Level1Scene extends Phaser.Scene {
 
     generateNewQuestion() {
         // Generate random addition problem (ages 4-10)
-        // Simple: 1-10 + 1-10, result up to 20
-        const num1 = Phaser.Math.Between(1, 10);
-        const num2 = Phaser.Math.Between(1, 10);
+        // Simple: result up to 10 only
+        const num1 = Phaser.Math.Between(1, 9);
+        const num2 = Phaser.Math.Between(1, 10 - num1);
         const correctAnswer = num1 + num2;
         
         // Generate wrong answers (within reasonable range)

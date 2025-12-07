@@ -14,21 +14,25 @@
         return;
     }
     
-    // Check if all scenes are defined
-    if (typeof BootScene === 'undefined') {
-        console.error('BootScene not defined!');
+    // Check if all screens are defined
+    if (typeof BootScreen === 'undefined') {
+        console.error('BootScreen not defined!');
         return;
     }
-    if (typeof MenuScene === 'undefined') {
-        console.error('MenuScene not defined!');
+    if (typeof MenuScreen === 'undefined') {
+        console.error('MenuScreen not defined!');
         return;
     }
-    if (typeof Level1Scene === 'undefined') {
-        console.error('Level1Scene not defined!');
+    if (typeof CountingForestScreen === 'undefined') {
+        console.error('CountingForestScreen not defined!');
         return;
     }
-    if (typeof UIScene === 'undefined') {
-        console.error('UIScene not defined!');
+    if (typeof MirrorCityScreen === 'undefined') {
+        console.error('MirrorCityScreen not defined!');
+        return;
+    }
+    if (typeof UIScreen === 'undefined') {
+        console.error('UIScreen not defined!');
         return;
     }
     
@@ -59,10 +63,11 @@
             }
         },
         scene: [
-            BootScene,
-            MenuScene,
-            Level1Scene,
-            UIScene
+            BootScreen,
+            MenuScreen,
+            CountingForestScreen,
+            MirrorCityScreen,
+            UIScreen
         ],
         input: {
             activePointers: 3 // Support multiple touch points
@@ -82,6 +87,11 @@
             soundEnabled: true,
             musicEnabled: true
         };
+        
+        // Log GameFlowConfig if available
+        if (typeof GameFlowConfig !== 'undefined') {
+            GameFlowConfig.logConfig();
+        }
     } catch (error) {
         console.error('Error initializing game:', error);
         alert('Lỗi khởi tạo game: ' + error.message);

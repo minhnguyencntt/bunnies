@@ -63,30 +63,38 @@
     <!-- Phaser 3 Library -->
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
     
-    <!-- Bunny Character System -->
-    <script src="BunnyCharacter.js"></script>
-    <script src="BunnyAnimationGenerator.js"></script>
-    <script src="BunnyBehaviorSystem.js"></script>
+    <!-- Core Character Systems -->
+    <script src="core/characters/bunny/BunnyCharacter.js"></script>
+    <script src="core/characters/bunny/BunnyAnimationGenerator.js"></script>
+    <script src="core/characters/bunny/BunnyBehaviorSystem.js"></script>
     
     <!-- Wise Owl Character -->
-    <script src="WiseOwlAnimationGenerator.js"></script>
-    <script src="WiseOwlCharacter.js"></script>
+    <script src="core/characters/wise_owl/WiseOwlAnimationGenerator.js"></script>
+    <script src="core/characters/wise_owl/WiseOwlCharacter.js"></script>
     
     <!-- Butterfly System -->
-    <script src="ButterflyGenerator.js"></script>
-    <script src="ButterflyBehaviorSystem.js"></script>
+    <script src="core/characters/butterfly/ButterflyGenerator.js"></script>
+    <script src="core/characters/butterfly/ButterflyBehaviorSystem.js"></script>
     
     <!-- Ambient Creatures System -->
-    <script src="AmbientCreaturesGenerator.js"></script>
-    <script src="FireflyBehaviorSystem.js"></script>
-    <script src="BirdBehaviorSystem.js"></script>
-    <script src="MagicParticleBehaviorSystem.js"></script>
+    <script src="core/characters/ambient_creatures/AmbientCreaturesGenerator.js"></script>
+    <script src="core/characters/ambient_creatures/AmbientCreaturesBehavior.js"></script>
+    <script src="core/characters/firefly/FireflyBehaviorSystem.js"></script>
+    <script src="core/characters/bird/BirdBehaviorSystem.js"></script>
+    <script src="core/characters/magic_particle/MagicParticleBehaviorSystem.js"></script>
     
-    <!-- Game Scenes -->
-    <script src="scenes/BootScene.js"></script>
-    <script src="scenes/MenuScene.js"></script>
-    <script src="scenes/Level1Scene.js"></script>
-    <script src="scenes/UIScene.js"></script>
+    <!-- Game Screens -->
+    <script src="screens/boot/BootScreen.js"></script>
+    <script src="screens/menu/MenuScreen.js"></script>
+    <script src="screens/counting_forest/CountingForestScreen.js"></script>
+    <script src="screens/mirror_city/MirrorCityScreen.js"></script>
+    <script src="screens/UIScreen.js"></script>
+    
+    <!-- Screen-specific data -->
+    <script src="screens/mirror_city/MirrorPuzzleData.js"></script>
+    
+    <!-- Game Flow Configuration -->
+    <script src="GameFlowConfig.js"></script>
     
     <!-- Main Game Configuration -->
     <script src="game.js"></script>

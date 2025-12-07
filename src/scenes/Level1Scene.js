@@ -25,6 +25,9 @@ class Level1Scene extends Phaser.Scene {
         const width = this.cameras.main.width;
         const height = this.cameras.main.height;
 
+        // Play level 1 background music
+        this.playLevelBGM();
+
         // Create magical forest background
         this.createForestBackground();
 
@@ -528,6 +531,43 @@ class Level1Scene extends Phaser.Scene {
     }
 
     /**
+     * Play level 1 background music
+     */
+    playLevelBGM() {
+        if (this.cache.audio.exists('bgm_level1') && window.gameData?.musicEnabled !== false) {
+            // Stop any existing sounds (but keep voice audio capability)
+            this.sound.stopAll();
+            
+            // Create and play level BGM
+            this.levelBGM = this.sound.add('bgm_level1', {
+                volume: 0.45, // Moderate volume for background ambiance
+                loop: true
+            });
+            this.levelBGM.play();
+            console.log('🎵 Playing level 1 BGM');
+        }
+    }
+    
+    /**
+     * Stop level BGM (called before scene transition)
+     */
+    stopLevelBGM() {
+        if (this.levelBGM) {
+            // Fade out BGM
+            this.tweens.add({
+                targets: this.levelBGM,
+                volume: 0,
+                duration: 500,
+                onComplete: () => {
+                    if (this.levelBGM) {
+                        this.levelBGM.stop();
+                    }
+                }
+            });
+        }
+    }
+
+    /**
      * Play voice audio safely (stop previous if playing)
      */
     playVoice(voiceKey) {
@@ -539,7 +579,7 @@ class Level1Scene extends Phaser.Scene {
         
         // Check if audio exists and play
         if (this.cache.audio.exists(voiceKey)) {
-            this.currentVoice = this.sound.add(voiceKey, { volume: 1.0 });
+            this.currentVoice = this.sound.add(voiceKey, { volume: 0.35 }); // Lower volume for Wise Owl
             this.currentVoice.play();
             console.log('Playing voice:', voiceKey);
             return this.currentVoice;
@@ -1357,6 +1397,8 @@ class Level1Scene extends Phaser.Scene {
         btnText.setDepth(253);
         
         btn.on('pointerdown', () => {
+            // Stop level BGM before returning to menu
+            this.stopLevelBGM();
             this.scene.stop('UIScene');
             this.scene.start('MenuScene');
         });
@@ -1375,6 +1417,11 @@ class Level1Scene extends Phaser.Scene {
     shutdown() {
         // Cleanup voice audio
         this.stopVoice();
+        
+        // Stop level BGM
+        if (this.levelBGM) {
+            this.levelBGM.stop();
+        }
         
         // Cleanup
         if (this.wiseOwl) {

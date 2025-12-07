@@ -15,6 +15,11 @@ class BootScene extends Phaser.Scene {
         this.load.image('garden_bg', 'assets/backgrounds/garden_bg_1.png');
         this.load.image('level1_bg', 'assets/backgrounds/l1_bg_1.png');
         
+        // Load background music (BGM) for all scenes
+        this.load.audio('bgm_boot', 'assets/audio/bgm/boot_bgm.wav');
+        this.load.audio('bgm_menu', 'assets/audio/bgm/menu_bgm.wav');
+        this.load.audio('bgm_level1', 'assets/audio/bgm/level1_bgm.wav');
+        
         // Load voice audio files for dialogues
         this.load.audio('voice_intro_1', 'assets/audio/voice/intro_1.mp3');
         this.load.audio('voice_intro_2', 'assets/audio/voice/intro_2.mp3');
@@ -30,6 +35,17 @@ class BootScene extends Phaser.Scene {
         
         this.load.on('filecomplete-image-level1_bg', () => {
             console.log('✓ Level 1 background image loaded successfully');
+        });
+        
+        // BGM audio load handlers
+        this.load.on('filecomplete-audio-bgm_boot', () => {
+            console.log('✓ BGM: boot_bgm loaded');
+        });
+        this.load.on('filecomplete-audio-bgm_menu', () => {
+            console.log('✓ BGM: menu_bgm loaded');
+        });
+        this.load.on('filecomplete-audio-bgm_level1', () => {
+            console.log('✓ BGM: level1_bgm loaded');
         });
         
         // Voice audio load handlers
@@ -69,11 +85,18 @@ class BootScene extends Phaser.Scene {
             if (file.key && file.key.startsWith('voice_')) {
                 console.warn('⚠ Voice audio not loaded:', file.key, '- dialogues will show text only');
             }
+            // Log BGM load errors
+            if (file.key && file.key.startsWith('bgm_')) {
+                console.warn('⚠ BGM not loaded:', file.key, '- scene will play without background music');
+            }
         });
     }
 
     create() {
         console.log('BootScene: create() called');
+        
+        // Play boot background music
+        this.playBootBGM();
         
         // Tạo loading screen với magical garden
         const width = this.cameras.main.width;
@@ -389,11 +412,48 @@ class BootScene extends Phaser.Scene {
                 console.log('BootScene: Creating placeholder graphics...');
                 this.createPlaceholderGraphics();
                 console.log('BootScene: Graphics created, starting MenuScene...');
-                this.time.delayedCall(200, () => {
+                // Stop boot BGM before transitioning
+                this.stopBootBGM();
+                this.time.delayedCall(500, () => {
                     this.scene.start('MenuScene');
                 });
                 });
             }
+    }
+
+    /**
+     * Play boot scene background music
+     */
+    playBootBGM() {
+        if (this.cache.audio.exists('bgm_boot') && window.gameData?.musicEnabled !== false) {
+            // Stop any existing BGM
+            this.sound.stopAll();
+            
+            // Create and play boot BGM
+            this.bootBGM = this.sound.add('bgm_boot', {
+                volume: 0.4,
+                loop: true
+            });
+            this.bootBGM.play();
+            console.log('🎵 Playing boot BGM');
+        }
+    }
+    
+    /**
+     * Stop boot BGM (called before scene transition)
+     */
+    stopBootBGM() {
+        if (this.bootBGM) {
+            // Fade out BGM
+            this.tweens.add({
+                targets: this.bootBGM,
+                volume: 0,
+                duration: 500,
+                onComplete: () => {
+                    this.bootBGM.stop();
+                }
+            });
+        }
     }
 
     createPlaceholderGraphics() {

@@ -288,6 +288,32 @@
       }
     ],
     "audio": {
+      "bgm": [
+        {
+          "key": "bgm_boot",
+          "file": "assets/audio/bgm/boot_bgm.wav",
+          "format": "WAV",
+          "duration": "20s",
+          "loop": true,
+          "notes": "Nhạc boot screen - magical, whimsical loading music. Bell-like arpeggios, soft pads, sparkle effects."
+        },
+        {
+          "key": "bgm_menu",
+          "file": "assets/audio/bgm/menu_bgm.wav",
+          "format": "WAV",
+          "duration": "60s",
+          "loop": true,
+          "notes": "Nhạc menu - cheerful, playful garden music. Bouncy melody, soft bass, harmony pads, bird chirp effects."
+        },
+        {
+          "key": "bgm_level1",
+          "file": "assets/audio/bgm/level1_bgm.wav",
+          "format": "WAV",
+          "duration": "90s",
+          "loop": true,
+          "notes": "Nhạc level 1 - gentle forest adventure, encouraging but not distracting. Calm melody, soft bass drone, forest atmosphere."
+        }
+      ],
       "music": [
         {
           "key": "music_menu",

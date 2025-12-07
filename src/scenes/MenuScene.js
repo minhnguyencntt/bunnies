@@ -24,6 +24,9 @@ class MenuScene extends Phaser.Scene {
         const width = this.cameras.main.width;
         const height = this.cameras.main.height;
 
+        // Play menu background music
+        this.playMenuBGM();
+
         // Ensure bunny textures are generated (if not already done in BootScene)
         if (typeof generateAllBunnyTextures === 'function') {
             // Check if textures exist, if not generate them
@@ -219,6 +222,8 @@ class MenuScene extends Phaser.Scene {
 
         // Button interactions
         startBtn.on('pointerdown', () => {
+            // Stop menu BGM before starting level
+            this.stopMenuBGM();
             this.scene.start('Level1Scene');
         })
         .on('pointerover', () => {
@@ -805,7 +810,49 @@ class MenuScene extends Phaser.Scene {
     }
 
 
+    /**
+     * Play menu scene background music
+     */
+    playMenuBGM() {
+        if (this.cache.audio.exists('bgm_menu') && window.gameData?.musicEnabled !== false) {
+            // Stop any existing sounds
+            this.sound.stopAll();
+            
+            // Create and play menu BGM
+            this.menuBGM = this.sound.add('bgm_menu', {
+                volume: 0.35,
+                loop: true
+            });
+            this.menuBGM.play();
+            console.log('🎵 Playing menu BGM');
+        }
+    }
+    
+    /**
+     * Stop menu BGM (called before scene transition)
+     */
+    stopMenuBGM() {
+        if (this.menuBGM) {
+            // Fade out BGM
+            this.tweens.add({
+                targets: this.menuBGM,
+                volume: 0,
+                duration: 500,
+                onComplete: () => {
+                    if (this.menuBGM) {
+                        this.menuBGM.stop();
+                    }
+                }
+            });
+        }
+    }
+
     shutdown() {
+        // Stop BGM on shutdown
+        if (this.menuBGM) {
+            this.menuBGM.stop();
+        }
+        
         // Cleanup behavior systems when scene is destroyed
         this.bunnies.forEach(bunny => {
             const behaviorSystem = bunny.getData('behaviorSystem');

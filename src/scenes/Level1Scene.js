@@ -17,6 +17,7 @@ class Level1Scene extends Phaser.Scene {
         this.fireflies = [];
         this.magicParticles = [];
         this.dialogueIndex = 0;
+        this.currentVoice = null; // Current playing voice audio
     }
 
     create() {
@@ -501,15 +502,86 @@ class Level1Scene extends Phaser.Scene {
     }
 
     showIntroductionDialogue() {
+        // Dialogues with corresponding voice audio keys
         const dialogues = [
-            "Chào mừng đến Khu Rừng Đếm Số, Bé Thỏ! Con đường ma thuật này đầy những con số đang chờ bạn khám phá.",
-            "Ồ không! Cây cầu gỗ bị gãy, và bạn không thể băng qua dòng suối. Nhưng đừng lo, mỗi câu trả lời đúng sẽ giúp khôi phục một tấm ván.",
-            "Giải các bài toán cộng bằng cách chọn số đúng. Kéo nó vào chỗ trống trên cầu. Mỗi câu trả lời đúng sẽ khôi phục một tấm ván. Hãy xem bạn có thể khôi phục cả 10 tấm ván không!"
+            {
+                text: "Chào mừng đến Khu Rừng Đếm Số, Bé Thỏ! Con đường ma thuật này đầy những con số đang chờ bạn khám phá.",
+                voiceKey: 'voice_intro_1',
+                duration: 7000 // Longer duration to match audio
+            },
+            {
+                text: "Ồ không! Cây cầu gỗ bị gãy, và bạn không thể băng qua dòng suối. Nhưng đừng lo, mỗi câu trả lời đúng sẽ giúp khôi phục một tấm ván.",
+                voiceKey: 'voice_intro_2',
+                duration: 9000
+            },
+            {
+                text: "Giải các bài toán cộng bằng cách chọn số đúng. Kéo nó vào chỗ trống trên cầu. Mỗi câu trả lời đúng sẽ khôi phục một tấm ván. Hãy xem bạn có thể khôi phục cả 10 tấm ván không!",
+                voiceKey: 'voice_intro_3',
+                duration: 12000
+            }
         ];
         
-        this.showDialogueSequence(dialogues, () => {
+        this.showDialogueSequenceWithVoice(dialogues, () => {
             // Start first question after dialogues
             this.generateNewQuestion();
+        });
+    }
+
+    /**
+     * Play voice audio safely (stop previous if playing)
+     */
+    playVoice(voiceKey) {
+        // Stop current voice if playing
+        if (this.currentVoice) {
+            this.currentVoice.stop();
+            this.currentVoice = null;
+        }
+        
+        // Check if audio exists and play
+        if (this.cache.audio.exists(voiceKey)) {
+            this.currentVoice = this.sound.add(voiceKey, { volume: 1.0 });
+            this.currentVoice.play();
+            console.log('Playing voice:', voiceKey);
+            return this.currentVoice;
+        } else {
+            console.warn('Voice audio not found:', voiceKey);
+            return null;
+        }
+    }
+
+    /**
+     * Stop current voice audio
+     */
+    stopVoice() {
+        if (this.currentVoice) {
+            this.currentVoice.stop();
+            this.currentVoice = null;
+        }
+    }
+
+    showDialogueSequenceWithVoice(dialogues, onComplete) {
+        if (this.dialogueIndex >= dialogues.length) {
+            this.dialogueIndex = 0;
+            if (onComplete) onComplete();
+            return;
+        }
+        
+        const dialogue = dialogues[this.dialogueIndex];
+        const text = dialogue.text;
+        const voiceKey = dialogue.voiceKey;
+        const duration = dialogue.duration || 4000;
+        
+        // Show text dialogue
+        if (this.wiseOwl) {
+            this.wiseOwl.showDialogue(text, duration);
+        }
+        
+        // Play voice audio
+        this.playVoice(voiceKey);
+        
+        this.dialogueIndex++;
+        this.time.delayedCall(duration + 500, () => {
+            this.showDialogueSequenceWithVoice(dialogues, onComplete);
         });
     }
 
@@ -861,14 +933,16 @@ class Level1Scene extends Phaser.Scene {
         // Create bunny on the restored plank (randomly positioned)
         this.createBunnyOnPlank(plankIndex);
         
-        // Wise Owl feedback (same style as introduction dialogue)
+        // Wise Owl feedback with voice (same style as introduction dialogue)
         if (this.wiseOwl) {
             this.wiseOwl.cheer(); // Play cheering animation
-            this.wiseOwl.showDialogue("Làm tốt lắm, Bé Thỏ! Một tấm ván nữa đã được khôi phục. Tiếp tục nhé!", 4000);
+            this.wiseOwl.showDialogue("Làm tốt lắm, Bé Thỏ! Một tấm ván nữa đã được khôi phục. Tiếp tục nhé!", 5000);
+            // Play voice audio for correct answer
+            this.playVoice('voice_correct');
         }
         
-        // Next question after delay (matching introduction dialogue timing)
-        this.time.delayedCall(4500, () => {
+        // Next question after delay (matching voice audio duration)
+        this.time.delayedCall(5500, () => {
             if (this.planksRestored < this.totalPlanks) {
                 this.wiseOwl.returnToIdle(); // Return to idle after speaking
                 this.generateNewQuestion();
@@ -947,10 +1021,12 @@ class Level1Scene extends Phaser.Scene {
             this.createDenialSparkles(sparkX, sparkY);
         }
         
-        // Wise Owl feedback (same style as introduction dialogue)
+        // Wise Owl feedback with voice (same style as introduction dialogue)
         if (this.wiseOwl) {
             this.wiseOwl.showSadness(); // Play sad animation
             this.wiseOwl.showDialogue("Ồ! Chưa đúng. Hãy đếm cẩn thận và chọn lại nhé!", 4000);
+            // Play voice audio for wrong answer
+            this.playVoice('voice_wrong');
             // Return to idle after dialogue
             this.time.delayedCall(4500, () => {
                 this.wiseOwl.returnToIdle();
@@ -1285,16 +1361,21 @@ class Level1Scene extends Phaser.Scene {
             this.scene.start('MenuScene');
         });
         
-        // Wise Owl final message (same style as introduction dialogue)
+        // Wise Owl final message with voice (same style as introduction dialogue)
         if (this.wiseOwl) {
             this.time.delayedCall(500, () => {
                 this.wiseOwl.celebrate(); // Play celebrating animation
-                this.wiseOwl.showDialogue("Tuyệt vời! Bạn đã học được sức mạnh của những con số!", 4000);
+                this.wiseOwl.showDialogue("Tuyệt vời! Bạn đã học được sức mạnh của những con số!", 5000);
+                // Play voice audio for level completion
+                this.playVoice('voice_complete');
             });
         }
     }
 
     shutdown() {
+        // Cleanup voice audio
+        this.stopVoice();
+        
         // Cleanup
         if (this.wiseOwl) {
             this.wiseOwl.destroy();

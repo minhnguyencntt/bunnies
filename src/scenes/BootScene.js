@@ -15,6 +15,14 @@ class BootScene extends Phaser.Scene {
         this.load.image('garden_bg', 'assets/backgrounds/garden_bg_1.png');
         this.load.image('level1_bg', 'assets/backgrounds/l1_bg_1.png');
         
+        // Load voice audio files for dialogues
+        this.load.audio('voice_intro_1', 'assets/audio/voice/intro_1.mp3');
+        this.load.audio('voice_intro_2', 'assets/audio/voice/intro_2.mp3');
+        this.load.audio('voice_intro_3', 'assets/audio/voice/intro_3.mp3');
+        this.load.audio('voice_correct', 'assets/audio/voice/correct_answer.mp3');
+        this.load.audio('voice_wrong', 'assets/audio/voice/wrong_answer.mp3');
+        this.load.audio('voice_complete', 'assets/audio/voice/level_complete.mp3');
+        
         // Add load event handlers for debugging
         this.load.on('filecomplete-image-garden_bg', () => {
             console.log('✓ Garden background image loaded successfully');
@@ -22,6 +30,26 @@ class BootScene extends Phaser.Scene {
         
         this.load.on('filecomplete-image-level1_bg', () => {
             console.log('✓ Level 1 background image loaded successfully');
+        });
+        
+        // Voice audio load handlers
+        this.load.on('filecomplete-audio-voice_intro_1', () => {
+            console.log('✓ Voice audio: intro_1 loaded');
+        });
+        this.load.on('filecomplete-audio-voice_intro_2', () => {
+            console.log('✓ Voice audio: intro_2 loaded');
+        });
+        this.load.on('filecomplete-audio-voice_intro_3', () => {
+            console.log('✓ Voice audio: intro_3 loaded');
+        });
+        this.load.on('filecomplete-audio-voice_correct', () => {
+            console.log('✓ Voice audio: correct_answer loaded');
+        });
+        this.load.on('filecomplete-audio-voice_wrong', () => {
+            console.log('✓ Voice audio: wrong_answer loaded');
+        });
+        this.load.on('filecomplete-audio-voice_complete', () => {
+            console.log('✓ Voice audio: level_complete loaded');
         });
         
         this.load.on('loaderror', (file) => {
@@ -36,6 +64,10 @@ class BootScene extends Phaser.Scene {
                 console.error('Trying alternative path...');
                 // Try alternative path
                 this.load.image('level1_bg', 'src/assets/backgrounds/l1_bg_1.png');
+            }
+            // Log voice audio load errors
+            if (file.key && file.key.startsWith('voice_')) {
+                console.warn('⚠ Voice audio not loaded:', file.key, '- dialogues will show text only');
             }
         });
     }

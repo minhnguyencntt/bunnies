@@ -84,8 +84,8 @@ class BunnyBehaviorSystem {
             this.bunny.on('pointerdown', () => this.onBunnyClicked());
         }
         
-        // Set depth for proper layering
-        if (this.bunny.setDepth) {
+        // Set depth for proper layering (will be overridden in MenuScreen if needed)
+        if (this.bunny.setDepth && !this.bunny.getData('depthSet')) {
             this.bunny.setDepth(100);
         }
     }
@@ -232,6 +232,10 @@ class BunnyBehaviorSystem {
         const currentX = this.bunny.x;
         const currentY = this.bunny.y;
         
+        // Get bottom area bounds if set (for menu screen)
+        const bottomAreaTop = this.bunny.getData ? this.bunny.getData('bottomAreaTop') : null;
+        const bottomAreaBottom = this.bunny.getData ? this.bunny.getData('bottomAreaBottom') : null;
+        
         // More random distance and direction
         const moveDistance = Phaser.Math.Between(80, 200);
         const randomDirection = Phaser.Math.Between(0, 1) === 0 ? 1 : -1;
@@ -241,11 +245,22 @@ class BunnyBehaviorSystem {
             width - 50
         );
         
-        // More random Y movement (allow more area, avoid top 20% for title/buttons)
+        // Y movement - constrain to bottom area if bounds are set (menu screen)
+        let minY, maxY;
+        if (bottomAreaTop !== null && bottomAreaBottom !== null) {
+            // Menu screen: only move in bottom area
+            minY = bottomAreaTop;
+            maxY = bottomAreaBottom;
+        } else {
+            // Other screens: allow more area, avoid top 20% for title/buttons
+            minY = height * 0.25;
+            maxY = height - 50;
+        }
+        
         const targetY = Phaser.Math.Clamp(
             currentY + Phaser.Math.Between(-40, 40),
-            height * 0.25,
-            height - 50
+            minY,
+            maxY
         );
         
         // Variable speed for more randomness
@@ -275,20 +290,49 @@ class BunnyBehaviorSystem {
         this.playAnimation('jump');
         this.isMoving = false;
         
+        // Get bottom area bounds if set (for menu screen)
+        const bottomAreaTop = this.bunny.getData ? this.bunny.getData('bottomAreaTop') : null;
+        const bottomAreaBottom = this.bunny.getData ? this.bunny.getData('bottomAreaBottom') : null;
+        
         // More random jump distance and direction
         const jumpDistance = Phaser.Math.Between(40, 120);
         const jumpDirection = Phaser.Math.Between(0, 1) === 0 ? 1 : -1;
         const jumpHeight = Phaser.Math.Between(30, 60);
         
+        // Calculate target position
+        const targetX = Phaser.Math.Clamp(
+            this.bunny.x + (jumpDistance * jumpDirection),
+            50,
+            this.scene.cameras.main.width - 50
+        );
+        
+        // For Y, ensure we stay within bottom area bounds if set
+        let targetY = this.bunny.y;
+        if (bottomAreaTop !== null && bottomAreaBottom !== null) {
+            // Menu screen: ensure jump stays within bottom area
+            targetY = Phaser.Math.Clamp(
+                this.bunny.y - jumpHeight,
+                bottomAreaTop,
+                bottomAreaBottom
+            );
+        } else {
+            targetY = this.bunny.y - jumpHeight;
+        }
+        
         // Jump up and forward/backward randomly
         this.scene.tweens.add({
             targets: this.bunny,
-            y: this.bunny.y - jumpHeight,
-            x: this.bunny.x + (jumpDistance * jumpDirection),
+            y: targetY,
+            x: targetX,
             duration: Phaser.Math.Between(250, 400),
             ease: 'Power2',
             yoyo: true,
             onComplete: () => {
+                // After jump, ensure we're still in bounds
+                if (bottomAreaTop !== null && bottomAreaBottom !== null) {
+                    const finalY = Phaser.Math.Clamp(this.bunny.y, bottomAreaTop, bottomAreaBottom);
+                    this.bunny.y = finalY;
+                }
                 // After jump, return to idle (shorter delay)
                 this.behaviorTimer = this.scene.time.delayedCall(Phaser.Math.Between(300, 700), () => {
                     this.selectRandomBehavior();
@@ -345,10 +389,20 @@ class BunnyBehaviorSystem {
         this.playAnimation('victory');
         this.isMoving = false;
         
-        // Jump up with celebration
+        // Get bottom area bounds if set (for menu screen)
+        const bottomAreaTop = this.bunny.getData ? this.bunny.getData('bottomAreaTop') : null;
+        
+        // Jump up with celebration, but respect bottom area bounds
+        let jumpHeight = 30;
+        if (bottomAreaTop !== null) {
+            // Ensure jump doesn't go above bottom area
+            const maxJump = this.bunny.y - bottomAreaTop;
+            jumpHeight = Math.min(jumpHeight, maxJump);
+        }
+        
         this.scene.tweens.add({
             targets: this.bunny,
-            y: this.bunny.y - 30,
+            y: this.bunny.y - jumpHeight,
             scaleX: 1.2,
             scaleY: 1.2,
             duration: 400,
@@ -453,6 +507,10 @@ class BunnyBehaviorSystem {
         const currentX = this.bunny.x;
         const currentY = this.bunny.y;
         
+        // Get bottom area bounds if set (for menu screen)
+        const bottomAreaTop = this.bunny.getData ? this.bunny.getData('bottomAreaTop') : null;
+        const bottomAreaBottom = this.bunny.getData ? this.bunny.getData('bottomAreaBottom') : null;
+        
         // More random walk distance
         const moveDistance = Phaser.Math.Between(50, 120);
         const targetX = Phaser.Math.Clamp(
@@ -463,11 +521,22 @@ class BunnyBehaviorSystem {
             width - 50
         );
         
-        // Random Y movement during walk (allow more area)
+        // Y movement - constrain to bottom area if bounds are set (menu screen)
+        let minY, maxY;
+        if (bottomAreaTop !== null && bottomAreaBottom !== null) {
+            // Menu screen: only move in bottom area
+            minY = bottomAreaTop;
+            maxY = bottomAreaBottom;
+        } else {
+            // Other screens: allow more area
+            minY = height * 0.25;
+            maxY = height - 50;
+        }
+        
         const targetY = Phaser.Math.Clamp(
             currentY + Phaser.Math.Between(-25, 25),
-            height * 0.25,
-            height - 50
+            minY,
+            maxY
         );
         
         // Variable speed for walking
@@ -560,11 +629,23 @@ class BunnyBehaviorSystem {
                     const newX = this.bunny.x + Math.cos(angle) * avoidDistance;
                     const newY = this.bunny.y + Math.sin(angle) * avoidDistance;
                     
-                    // Clamp to screen bounds (allow more area)
+                    // Clamp to screen bounds
                     const width = this.scene.cameras.main.width;
                     const height = this.scene.cameras.main.height;
+                    
+                    // Get bottom area bounds if set (for menu screen)
+                    const bottomAreaTop = this.bunny.getData ? this.bunny.getData('bottomAreaTop') : null;
+                    const bottomAreaBottom = this.bunny.getData ? this.bunny.getData('bottomAreaBottom') : null;
+                    
                     const clampedX = Phaser.Math.Clamp(newX, 50, width - 50);
-                    const clampedY = Phaser.Math.Clamp(newY, 50, height - 50); // Allow full height
+                    let clampedY;
+                    if (bottomAreaTop !== null && bottomAreaBottom !== null) {
+                        // Menu screen: constrain to bottom area
+                        clampedY = Phaser.Math.Clamp(newY, bottomAreaTop, bottomAreaBottom);
+                    } else {
+                        // Other screens: allow full height
+                        clampedY = Phaser.Math.Clamp(newY, 50, height - 50);
+                    }
                     
                     // Cancel any existing movement tweens and move away from collision
                     this.scene.tweens.killTweensOf(this.bunny);
@@ -611,8 +692,20 @@ class BunnyBehaviorSystem {
                     
                     const width = this.scene.cameras.main.width;
                     const height = this.scene.cameras.main.height;
+                    
+                    // Get bottom area bounds if set (for menu screen)
+                    const bottomAreaTop = this.bunny.getData ? this.bunny.getData('bottomAreaTop') : null;
+                    const bottomAreaBottom = this.bunny.getData ? this.bunny.getData('bottomAreaBottom') : null;
+                    
                     const clampedX = Phaser.Math.Clamp(adjustX, 50, width - 50);
-                    const clampedY = Phaser.Math.Clamp(adjustY, 50, height - 50);
+                    let clampedY;
+                    if (bottomAreaTop !== null && bottomAreaBottom !== null) {
+                        // Menu screen: constrain to bottom area
+                        clampedY = Phaser.Math.Clamp(adjustY, bottomAreaTop, bottomAreaBottom);
+                    } else {
+                        // Other screens: allow full height
+                        clampedY = Phaser.Math.Clamp(adjustY, 50, height - 50);
+                    }
                     
                     // Only adjust if not currently moving with a tween
                     if (!this.isMoving) {

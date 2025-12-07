@@ -1521,11 +1521,16 @@ const MIRROR_PUZZLES = [
 
 /**
  * Select 10 random puzzles for a game session
- * Ensures variety: at least 2 easy, 3 medium, 2 hard
- * No duplicate categories in adjacent mirrors
+ * Ensures variety: 
+ * - At least 2 easy, 3 medium, 2 hard
+ * - Maximum diversity in categories (no more than 2 puzzles from same category)
+ * - No duplicate categories in adjacent mirrors
  * @returns {Array} Array of 10 puzzle configurations
  */
 function selectMirrorPuzzles() {
+    // Get all unique categories
+    const allCategories = [...new Set(MIRROR_PUZZLES.map(p => p.category))];
+    
     // Separate puzzles by difficulty
     const easyPuzzles = MIRROR_PUZZLES.filter(p => p.difficulty === 1);
     const mediumPuzzles = MIRROR_PUZZLES.filter(p => p.difficulty === 2);
@@ -1536,26 +1541,80 @@ function selectMirrorPuzzles() {
     Phaser.Utils.Array.Shuffle(mediumPuzzles);
     Phaser.Utils.Array.Shuffle(hardPuzzles);
     
-    // Select guaranteed puzzles: 2 easy, 3 medium, 2 hard = 7 total
     const selected = [];
-    selected.push(...easyPuzzles.slice(0, 2));
-    selected.push(...mediumPuzzles.slice(0, 3));
-    selected.push(...hardPuzzles.slice(0, 2));
+    const categoryCount = {}; // Track how many puzzles per category
+    const maxPerCategory = 2; // Maximum 2 puzzles from same category
     
-    // Fill remaining 3 slots randomly from remaining puzzles
+    // Helper function to select puzzle ensuring category diversity
+    const selectPuzzleWithDiversity = (puzzleArray, preferredDifficulty = null) => {
+        // Shuffle to randomize
+        const shuffled = [...puzzleArray];
+        Phaser.Utils.Array.Shuffle(shuffled);
+        
+        // First try: find puzzle with category count < maxPerCategory
+        for (const puzzle of shuffled) {
+            const catCount = categoryCount[puzzle.category] || 0;
+            if (catCount < maxPerCategory) {
+                return puzzle;
+            }
+        }
+        
+        // Fallback: if all categories are at max, just return first
+        return shuffled[0];
+    };
+    
+    // Select guaranteed puzzles: 2 easy, 3 medium, 2 hard = 7 total
+    // But ensure category diversity
+    for (let i = 0; i < 2; i++) {
+        const puzzle = selectPuzzleWithDiversity(easyPuzzles);
+        selected.push(puzzle);
+        categoryCount[puzzle.category] = (categoryCount[puzzle.category] || 0) + 1;
+        // Remove from array to avoid duplicates
+        const index = easyPuzzles.indexOf(puzzle);
+        if (index > -1) easyPuzzles.splice(index, 1);
+    }
+    
+    for (let i = 0; i < 3; i++) {
+        const puzzle = selectPuzzleWithDiversity(mediumPuzzles);
+        selected.push(puzzle);
+        categoryCount[puzzle.category] = (categoryCount[puzzle.category] || 0) + 1;
+        const index = mediumPuzzles.indexOf(puzzle);
+        if (index > -1) mediumPuzzles.splice(index, 1);
+    }
+    
+    for (let i = 0; i < 2; i++) {
+        const puzzle = selectPuzzleWithDiversity(hardPuzzles);
+        selected.push(puzzle);
+        categoryCount[puzzle.category] = (categoryCount[puzzle.category] || 0) + 1;
+        const index = hardPuzzles.indexOf(puzzle);
+        if (index > -1) hardPuzzles.splice(index, 1);
+    }
+    
+    // Fill remaining 3 slots randomly from remaining puzzles (ensuring diversity)
     const remaining = [
-        ...easyPuzzles.slice(2),
-        ...mediumPuzzles.slice(3),
-        ...hardPuzzles.slice(2)
+        ...easyPuzzles,
+        ...mediumPuzzles,
+        ...hardPuzzles
     ];
-    Phaser.Utils.Array.Shuffle(remaining);
-    selected.push(...remaining.slice(0, 3));
+    
+    for (let i = 0; i < 3; i++) {
+        const puzzle = selectPuzzleWithDiversity(remaining);
+        selected.push(puzzle);
+        categoryCount[puzzle.category] = (categoryCount[puzzle.category] || 0) + 1;
+        const index = remaining.indexOf(puzzle);
+        if (index > -1) remaining.splice(index, 1);
+    }
     
     // Shuffle selected puzzles
     Phaser.Utils.Array.Shuffle(selected);
     
     // Reorder to avoid adjacent duplicate categories
     const reordered = reorderToAvoidDuplicateCategories(selected);
+    
+    // Log selected categories for debugging
+    const selectedCategories = reordered.map(p => p.category);
+    console.log('Selected puzzles categories:', selectedCategories);
+    console.log('Category distribution:', categoryCount);
     
     return reordered;
 }

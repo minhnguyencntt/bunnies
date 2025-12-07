@@ -9,16 +9,28 @@ class MenuScreen extends Phaser.Scene {
         this.fireflies = [];
         this.birds = [];
         this.magicParticles = [];
+        this.cityMarkers = [];
+        this.currentHoveredMarker = null;
+        this.blurOverlay = null;
+        this.highlightMask = null;
+        this.speechSynthesis = null;
+        this.currentUtterance = null;
+        this.currentCityAudio = null; // Current playing city audio
     }
 
     preload() {
-        // Load menu screen assets
+        // Load menu screen assets - World of Knowledge map
         if (!this.textures.exists('menu_bg')) {
-            this.load.image('menu_bg', 'screens/menu/assets/backgrounds/garden_bg_1.png');
+            this.load.image('menu_bg', 'screens/menu/assets/backgrounds/bunnies_world.jpg');
             console.log('MenuScreen: Loading background image');
         }
         // Load menu BGM
         this.load.audio('bgm_menu', 'screens/menu/assets/audio/bgm/menu_bgm.wav');
+        
+        // Load city description audio files
+        this.load.audio('voice_city_1', 'screens/menu/assets/audio/voice/city_1_khu_rung_dem_so.mp3');
+        this.load.audio('voice_city_2', 'screens/menu/assets/audio/voice/city_2_thanh_pho_guong.mp3');
+        this.load.audio('voice_city_click', 'screens/menu/assets/audio/voice/city_click.mp3');
     }
 
     create() {
@@ -54,23 +66,27 @@ class MenuScreen extends Phaser.Scene {
         // Generate and create ambient creatures (fireflies, birds, magic particles)
         this.createAmbientCreatures(width, height);
 
-        // Enhanced title with glowing outline and fairy dust
-        this.createEnhancedTitle(width, height);
+        // Title removed - already in background image
 
-        // Magical signboard-style buttons
-        this.createMagicalButtons(width, height);
+        // Buttons removed - navigation now via map markers
 
         // Add multiple bunny characters hopping around
         this.createBunnies(width, height);
 
         // Continuous sparkle particles
         this.startSparkleParticles(width, height);
+
+        // Create world map markers
+        this.createWorldMapMarkers(width, height);
+        
+        // Initialize speech synthesis for audio descriptions
+        this.initSpeechSynthesis();
     }
 
 
     createEnhancedTitle(width, height) {
         // Title text with magical styling
-        const title = this.add.text(width / 2, height / 4, 'Bé Thỏ và\nRừng Tri Thức', {
+        const title = this.add.text(width / 2, height / 4, 'Bunnies\nvà\nthế giới tri thức', {
             fontSize: '52px',
             fill: '#FFD700',
             fontFamily: 'Comic Sans MS, Arial Rounded MT Bold, Arial',
@@ -151,315 +167,8 @@ class MenuScreen extends Phaser.Scene {
         });
     }
 
-    createMagicalButtons(width, height) {
-        // Check if level select is enabled in GameFlowConfig
-        const showLevelSelect = typeof GameFlowConfig !== 'undefined' && GameFlowConfig.showLevelSelect;
-        
-        if (showLevelSelect) {
-            // Create level selection buttons
-            this.createLevelSelectButtons(width, height);
-        } else {
-            // Create single start button (original behavior)
-            this.createSingleStartButton(width, height);
-        }
-    }
-
-    createSingleStartButton(width, height) {
-        // Start Button with magical signboard style
-        const startBtnContainer = this.add.container(width / 2, height / 2);
-        
-        // Button background with magical frame
-        const startBtnBg = this.add.graphics();
-        const btnWidth = 320;
-        const btnHeight = 90;
-        const btnX = 0;
-        const btnY = 0;
-        
-        // Glass-like transparent button
-        startBtnBg.fillStyle(0x000000, 0.15);
-        startBtnBg.fillRoundedRect(btnX - 5, btnY - 5, btnWidth + 10, btnHeight + 10, 25);
-        startBtnBg.fillStyle(0xFFFFFF, 0.3);
-        startBtnBg.fillRoundedRect(btnX, btnY, btnWidth, btnHeight, 20);
-        startBtnBg.fillGradientStyle(0xFFD700, 0xFFD700, 0xFF8C00, 0xFF8C00, 0.4);
-        startBtnBg.fillRoundedRect(btnX, btnY, btnWidth, btnHeight, 20);
-        startBtnBg.lineStyle(4, 0xFFFFFF, 0.7);
-        startBtnBg.strokeRoundedRect(btnX, btnY, btnWidth, btnHeight, 20);
-        startBtnBg.lineStyle(2, 0xFFFFFF, 0.5);
-        startBtnBg.strokeRoundedRect(btnX + 5, btnY + 5, btnWidth - 10, btnHeight - 10, 15);
-        startBtnBg.generateTexture('btn_start_magical', btnWidth + 10, btnHeight + 10);
-        startBtnBg.destroy();
-        
-        const startBtn = this.add.image(0, 0, 'btn_start_magical')
-            .setOrigin(0.5)
-            .setInteractive({ useHandCursor: true });
-        startBtnContainer.add(startBtn);
-
-        // Blinking magical lights
-        for (let i = 0; i < 8; i++) {
-            const angle = (i * 45) * Math.PI / 180;
-            const lightX = Math.cos(angle) * 180;
-            const lightY = Math.sin(angle) * 80;
-            const light = this.add.graphics();
-            light.fillStyle(0xFFD700, 1);
-            light.fillCircle(lightX, lightY, 6);
-            light.fillStyle(0xFFFFFF, 0.8);
-            light.fillCircle(lightX, lightY, 3);
-            startBtnContainer.add(light);
-            
-            this.tweens.add({
-                targets: light,
-                alpha: 0.3,
-                scale: 0.5,
-                duration: 500 + Math.random() * 500,
-                yoyo: true,
-                repeat: -1,
-                ease: 'Sine.easeInOut',
-                delay: i * 100
-            });
-        }
-
-        this.startFloatingParticles(startBtnContainer, 0, 0);
-
-        const startText = this.add.text(0, 0, '🎮 BẮT ĐẦU', {
-            fontSize: '36px',
-            fill: '#FFFFFF',
-            fontFamily: 'Comic Sans MS, Arial Rounded MT Bold, Arial',
-            fontStyle: 'bold',
-            stroke: '#000000',
-            strokeThickness: 4
-        }).setOrigin(0.5);
-        startBtnContainer.add(startText);
-
-        startBtn.on('pointerdown', () => {
-            this.stopMenuBGM();
-            const firstScreen = typeof GameFlowConfig !== 'undefined' ? GameFlowConfig.getFirstScreen() : null;
-            if (firstScreen) {
-                this.scene.start(firstScreen.key);
-            } else {
-                console.warn('No screens configured in GameFlowConfig');
-            }
-        })
-        .on('pointerover', () => {
-            startBtnContainer.setScale(1.1);
-            startBtn.setTint(0xFFFFFF);
-        })
-        .on('pointerout', () => {
-            startBtnContainer.setScale(1);
-            startBtn.clearTint();
-        });
-
-        this.tweens.add({
-            targets: startBtnContainer,
-            y: height / 2 - 5,
-            duration: 1500,
-            yoyo: true,
-            repeat: -1,
-            ease: 'Sine.easeInOut'
-        });
-    }
-
-    createLevelSelectButtons(width, height) {
-        // Get all screens from config
-        const screens = typeof GameFlowConfig !== 'undefined' ? GameFlowConfig.getAllScreens() : [];
-        
-        if (screens.length === 0) {
-            // Fallback if no config
-            this.createSingleStartButton(width, height);
-            return;
-        }
-
-        // Create screen cards in a horizontal layout
-        const cardWidth = 160;
-        const cardHeight = 180;
-        const spacing = 30;
-        const totalWidth = screens.length * cardWidth + (screens.length - 1) * spacing;
-        const startX = (width - totalWidth) / 2 + cardWidth / 2;
-        const cardY = height / 2 + 20;
-
-        screens.forEach((screenInfo, index) => {
-            const cardX = startX + index * (cardWidth + spacing);
-            this.createLevelCard(cardX, cardY, cardWidth, cardHeight, screenInfo, index);
-        });
-    }
-
-    createLevelCard(x, y, cardWidth, cardHeight, screenInfo, index) {
-        const container = this.add.container(x, y);
-        
-        // Card background with glass effect
-        const cardBg = this.add.graphics();
-        const color = screenInfo.color || 0x4A90E2;
-        
-        // Shadow
-        cardBg.fillStyle(0x000000, 0.3);
-        cardBg.fillRoundedRect(-cardWidth/2 + 5, -cardHeight/2 + 5, cardWidth, cardHeight, 20);
-        
-        // Main card background
-        cardBg.fillGradientStyle(color, color, 0x000000, 0x000000, 0.9);
-        cardBg.fillRoundedRect(-cardWidth/2, -cardHeight/2, cardWidth, cardHeight, 20);
-        
-        // Glass overlay
-        cardBg.fillStyle(0xFFFFFF, 0.15);
-        cardBg.fillRoundedRect(-cardWidth/2, -cardHeight/2, cardWidth, cardHeight * 0.4, { tl: 20, tr: 20, bl: 0, br: 0 });
-        
-        // Border with glow
-        cardBg.lineStyle(4, 0xFFD700, 1);
-        cardBg.strokeRoundedRect(-cardWidth/2, -cardHeight/2, cardWidth, cardHeight, 20);
-        
-        container.add(cardBg);
-
-        // Large icon at top
-        const icon = this.add.text(0, -cardHeight/2 + 45, screenInfo.icon || '🎮', {
-            fontSize: '48px'
-        }).setOrigin(0.5);
-        container.add(icon);
-
-        // Screen number badge
-        const badge = this.add.graphics();
-        badge.fillStyle(0xFFD700, 1);
-        badge.fillCircle(-cardWidth/2 + 25, -cardHeight/2 + 25, 18);
-        badge.lineStyle(2, 0xFFFFFF, 1);
-        badge.strokeCircle(-cardWidth/2 + 25, -cardHeight/2 + 25, 18);
-        container.add(badge);
-
-        const screenNum = this.add.text(-cardWidth/2 + 25, -cardHeight/2 + 25, screenInfo.id.toString(), {
-            fontSize: '18px',
-            fill: '#000000',
-            fontFamily: 'Comic Sans MS, Arial',
-            fontStyle: 'bold'
-        }).setOrigin(0.5);
-        container.add(screenNum);
-
-        // Screen name
-        const screenName = this.add.text(0, 15, screenInfo.name, {
-            fontSize: '16px',
-            fill: '#FFFFFF',
-            fontFamily: 'Comic Sans MS, Arial',
-            fontStyle: 'bold',
-            stroke: '#000000',
-            strokeThickness: 2,
-            align: 'center',
-            wordWrap: { width: cardWidth - 20 }
-        }).setOrigin(0.5);
-        container.add(screenName);
-
-        // Play button at bottom
-        const playBtn = this.add.graphics();
-        playBtn.fillStyle(0x4CAF50, 1);
-        playBtn.fillRoundedRect(-45, cardHeight/2 - 50, 90, 35, 10);
-        playBtn.lineStyle(2, 0xFFFFFF, 0.8);
-        playBtn.strokeRoundedRect(-45, cardHeight/2 - 50, 90, 35, 10);
-        container.add(playBtn);
-
-        const playText = this.add.text(0, cardHeight/2 - 32, '▶ CHƠI', {
-            fontSize: '14px',
-            fill: '#FFFFFF',
-            fontFamily: 'Comic Sans MS, Arial',
-            fontStyle: 'bold'
-        }).setOrigin(0.5);
-        container.add(playText);
-
-        // Sparkle effects on hover
-        const sparkles = [];
-        for (let i = 0; i < 4; i++) {
-            const sparkle = this.add.text(
-                Phaser.Math.Between(-cardWidth/2 + 10, cardWidth/2 - 10),
-                Phaser.Math.Between(-cardHeight/2 + 10, cardHeight/2 - 10),
-                '✨',
-                { fontSize: '12px' }
-            ).setOrigin(0.5).setAlpha(0);
-            container.add(sparkle);
-            sparkles.push(sparkle);
-        }
-
-        // Make interactive
-        container.setSize(cardWidth, cardHeight);
-        container.setInteractive({ useHandCursor: true });
-
-        container.on('pointerdown', () => {
-            // Click animation
-            this.tweens.add({
-                targets: container,
-                scaleX: 0.95,
-                scaleY: 0.95,
-                duration: 100,
-                yoyo: true,
-                onComplete: () => {
-                    this.stopMenuBGM();
-                    this.scene.start(screenInfo.key);
-                }
-            });
-        });
-
-        container.on('pointerover', () => {
-            this.tweens.add({
-                targets: container,
-                scaleX: 1.08,
-                scaleY: 1.08,
-                duration: 200,
-                ease: 'Back.easeOut'
-            });
-            // Show sparkles
-            sparkles.forEach((sparkle, i) => {
-                this.tweens.add({
-                    targets: sparkle,
-                    alpha: 1,
-                    y: sparkle.y - 10,
-                    duration: 300,
-                    delay: i * 50,
-                    yoyo: true,
-                    repeat: -1
-                });
-            });
-        });
-
-        container.on('pointerout', () => {
-            this.tweens.add({
-                targets: container,
-                scaleX: 1,
-                scaleY: 1,
-                duration: 200,
-                ease: 'Back.easeOut'
-            });
-            // Hide sparkles
-            sparkles.forEach(sparkle => {
-                this.tweens.killTweensOf(sparkle);
-                sparkle.setAlpha(0);
-            });
-        });
-
-        // Entrance animation
-        container.setAlpha(0);
-        container.y = y + 50;
-        this.tweens.add({
-            targets: container,
-            y: y,
-            alpha: 1,
-            duration: 500,
-            delay: index * 150,
-            ease: 'Back.easeOut'
-        });
-
-        // Subtle floating animation
-        this.tweens.add({
-            targets: container,
-            y: y - 5,
-            duration: 2500 + index * 300,
-            yoyo: true,
-            repeat: -1,
-            ease: 'Sine.easeInOut',
-            delay: 500 + index * 100
-        });
-
-        // Icon bounce animation
-        this.tweens.add({
-            targets: icon,
-            y: icon.y - 5,
-            duration: 1500,
-            yoyo: true,
-            repeat: -1,
-            ease: 'Sine.easeInOut'
-        });
-    }
+    // Buttons removed - navigation now via map markers
+    // Legacy button code (createSingleStartButton, createLevelSelectButtons, createLevelCard) removed
 
     startFloatingParticles(container, x, y) {
         const createParticle = () => {
@@ -499,15 +208,24 @@ class MenuScreen extends Phaser.Scene {
         const existingPositions = []; // Track positions to avoid overlap
         const maxAttempts = 50; // Maximum attempts to find a valid position
         
+        // Calculate button area to avoid - buttons are at height/2 + 20 with height 180
+        // So button area is roughly from height/2 - 70 to height/2 + 110
+        const buttonAreaTop = height / 2 - 100; // Add extra margin
+        const buttonAreaBottom = height / 2 + 150; // Add extra margin
+        
+        // Bunnies should only be at the bottom of screen, below button area
+        const bottomAreaTop = buttonAreaBottom;
+        const bottomAreaBottom = height - 60;
+        
         // Helper function to find a valid position without overlap
         const findValidPosition = () => {
             let attempts = 0;
             let validPosition = null;
             
             while (attempts < maxAttempts && !validPosition) {
-                // More diverse positions - spread across entire screen (avoiding top 20% for title/buttons)
+                // Bunnies only at bottom of screen, avoiding button area
                 const startX = Phaser.Math.Between(80, width - 80);
-                const startY = Phaser.Math.Between(height * 0.25, height - 60);
+                const startY = Phaser.Math.Between(bottomAreaTop, bottomAreaBottom);
                 
                 // Check if position is far enough from existing bunnies
                 let tooClose = false;
@@ -534,7 +252,7 @@ class MenuScreen extends Phaser.Scene {
             if (!validPosition) {
                 validPosition = {
                     x: Phaser.Math.Between(80, width - 80),
-                    y: Phaser.Math.Between(height * 0.25, height - 60)
+                    y: Phaser.Math.Between(bottomAreaTop, bottomAreaBottom)
                 };
                 existingPositions.push(validPosition);
             }
@@ -562,6 +280,27 @@ class MenuScreen extends Phaser.Scene {
                 
                 // Create animated bunny with behavior system
                 const bunny = createAnimatedMenuBunny(this, position.x, position.y, charConfig);
+                
+                // Store bottom area bounds for movement constraints
+                const buttonAreaTop = height / 2 - 100;
+                const buttonAreaBottom = height / 2 + 150;
+                const bottomAreaTop = buttonAreaBottom;
+                const bottomAreaBottom = height - 60;
+                bunny.setData('bottomAreaTop', bottomAreaTop);
+                bunny.setData('bottomAreaBottom', bottomAreaBottom);
+                bunny.setData('buttonAreaTop', buttonAreaTop);
+                bunny.setData('buttonAreaBottom', buttonAreaBottom);
+                
+                // Set depth lower than buttons (buttons will be at depth 200)
+                if (bunny.setDepth) {
+                    bunny.setDepth(50);
+                }
+                
+                // Disable interaction to prevent blocking button clicks
+                if (bunny.disableInteractive) {
+                    bunny.disableInteractive();
+                }
+                
                 this.bunnies.push(bunny);
             }
         } else if (typeof BunnyCharacter !== 'undefined' && typeof BUNNY_CHARACTERS !== 'undefined') {
@@ -573,6 +312,25 @@ class MenuScreen extends Phaser.Scene {
                 const charConfig = BUNNY_CHARACTERS[randomKey];
                 const position = findValidPosition();
                 const bunny = this.createBunnyCharacter(width, height, charConfig, position.x, position.y);
+                
+                // Store bottom area bounds for movement constraints
+                const buttonAreaTop = height / 2 - 100;
+                const buttonAreaBottom = height / 2 + 150;
+                const bottomAreaTop = buttonAreaBottom;
+                const bottomAreaBottom = height - 60;
+                bunny.setData('bottomAreaTop', bottomAreaTop);
+                bunny.setData('bottomAreaBottom', bottomAreaBottom);
+                
+                // Set depth lower than buttons
+                if (bunny.setDepth) {
+                    bunny.setDepth(50);
+                }
+                
+                // Disable interaction to prevent blocking button clicks
+                if (bunny.disableInteractive) {
+                    bunny.disableInteractive();
+                }
+                
                 this.bunnies.push(bunny);
             }
         } else {
@@ -591,6 +349,25 @@ class MenuScreen extends Phaser.Scene {
                 const colors = bunnyColors[nameIndex] || bunnyColors[0];
                 const position = findValidPosition();
                 const bunny = this.createBunnyCharacterFallback(width, height, name, colors, position.x, position.y);
+                
+                // Store bottom area bounds for movement constraints
+                const buttonAreaTop = height / 2 - 100;
+                const buttonAreaBottom = height / 2 + 150;
+                const bottomAreaTop = buttonAreaBottom;
+                const bottomAreaBottom = height - 60;
+                bunny.setData('bottomAreaTop', bottomAreaTop);
+                bunny.setData('bottomAreaBottom', bottomAreaBottom);
+                
+                // Set depth lower than buttons
+                if (bunny.setDepth) {
+                    bunny.setDepth(50);
+                }
+                
+                // Disable interaction to prevent blocking button clicks
+                if (bunny.disableInteractive) {
+                    bunny.disableInteractive();
+                }
+                
                 this.bunnies.push(bunny);
             }
         }
@@ -598,8 +375,13 @@ class MenuScreen extends Phaser.Scene {
 
     createBunnyCharacter(width, height, charConfig, startX = null, startY = null) {
         // Use provided position or generate random one
+        // If not provided, constrain to bottom area
         if (startX === null) startX = Phaser.Math.Between(100, width - 100);
-        if (startY === null) startY = Phaser.Math.Between(height * 0.25, height - 80);
+        if (startY === null) {
+            const buttonAreaBottom = height / 2 + 150;
+            const bottomAreaBottom = height - 60;
+            startY = Phaser.Math.Between(buttonAreaBottom, bottomAreaBottom);
+        }
         
         // Create bunny character using new system
         const bunnyChar = new BunnyCharacter(this, { ...charConfig, size: 80 });
@@ -621,7 +403,10 @@ class MenuScreen extends Phaser.Scene {
         // Hopping animation - switch to jumping texture during hop
         const hop = () => {
             const targetX = Phaser.Math.Between(80, width - 80);
-            const targetY = Phaser.Math.Between(height * 0.7, height - 80);
+            // Constrain Y to bottom area only
+            const bottomAreaTop = bunny.getData('bottomAreaTop') || (height / 2 + 150);
+            const bottomAreaBottom = bunny.getData('bottomAreaBottom') || (height - 60);
+            const targetY = Phaser.Math.Between(bottomAreaTop, bottomAreaBottom);
             
             // Switch to jumping texture
             const jumpingTexture = bunnyChar.generateTexture('jumping');
@@ -732,8 +517,13 @@ class MenuScreen extends Phaser.Scene {
     createBunnyCharacterFallback(width, height, name, colors, startX = null, startY = null) {
         // Fallback method if BunnyCharacter system not available
         // Use provided position or generate random one
+        // If not provided, constrain to bottom area
         if (startX === null) startX = Phaser.Math.Between(100, width - 100);
-        if (startY === null) startY = Phaser.Math.Between(height * 0.25, height - 80);
+        if (startY === null) {
+            const buttonAreaBottom = height / 2 + 150;
+            const bottomAreaBottom = height - 60;
+            startY = Phaser.Math.Between(buttonAreaBottom, bottomAreaBottom);
+        }
         
         const bunny = this.add.graphics();
         bunny.fillStyle(colors.body, 1);
@@ -772,7 +562,10 @@ class MenuScreen extends Phaser.Scene {
 
         const hop = () => {
             const targetX = Phaser.Math.Between(80, width - 80);
-            const targetY = Phaser.Math.Between(height * 0.7, height - 80);
+            // Constrain Y to bottom area only
+            const bottomAreaTop = bunny.getData('bottomAreaTop') || (height / 2 + 150);
+            const bottomAreaBottom = bunny.getData('bottomAreaBottom') || (height - 60);
+            const targetY = Phaser.Math.Between(bottomAreaTop, bottomAreaBottom);
             
             this.tweens.add({
                 targets: bunny,
@@ -1061,10 +854,770 @@ class MenuScreen extends Phaser.Scene {
         }
     }
 
+    /**
+     * Initialize Web Speech API for audio descriptions
+     */
+    initSpeechSynthesis() {
+        if ('speechSynthesis' in window) {
+            this.speechSynthesis = window.speechSynthesis;
+            console.log('Speech synthesis initialized');
+        } else {
+            console.warn('Speech synthesis not supported in this browser');
+        }
+    }
+
+    /**
+     * Create world map markers for all cities with collision detection
+     */
+    createWorldMapMarkers(width, height) {
+        // Check if WorldMapData is available
+        if (typeof WORLD_MAP_CITIES === 'undefined') {
+            console.warn('WorldMapData not loaded, skipping markers');
+            return;
+        }
+
+        // Calculate scale factor from 1920x1080 to actual screen size
+        const scaleX = width / 1920;
+        const scaleY = height / 1080;
+        const scale = Math.min(scaleX, scaleY); // Use min to maintain aspect ratio
+
+        // Create blur overlay (initially hidden)
+        this.createBlurOverlay(width, height);
+
+        // Calculate button area to avoid (center of screen)
+        const buttonArea = {
+            x: width / 2 - 200,
+            y: height / 2 - 100,
+            width: 400,
+            height: 300
+        };
+
+        // Process cities with collision detection
+        // Chỉ tạo marker cho các thành phố có visible = true
+        const processedPositions = [];
+        const minDistance = 50 * scale; // Minimum distance between markers
+
+        WORLD_MAP_CITIES.forEach(city => {
+            // Kiểm tra visible flag - chỉ tạo marker nếu visible !== false
+            // Mặc định visible = true nếu không được định nghĩa (backward compatibility)
+            if (city.visible === false) {
+                return; // Bỏ qua thành phố này
+            }
+            
+            // Calculate base position
+            let baseX = city.x * scale;
+            let baseY = city.y * scale;
+            
+            // Adjust position to avoid overlaps and button area
+            const adjustedPos = this.adjustMarkerPosition(
+                baseX, baseY, 
+                processedPositions, 
+                buttonArea, 
+                minDistance,
+                width, height
+            );
+            
+            const marker = this.createCityMarker(
+                city,
+                adjustedPos.x,
+                adjustedPos.y,
+                width,
+                height,
+                scale
+            );
+            
+            if (marker) {
+                this.cityMarkers.push(marker);
+                // Store position for collision detection
+                processedPositions.push({
+                    x: adjustedPos.x,
+                    y: adjustedPos.y,
+                    radius: 40 * scale // Approximate marker radius
+                });
+            }
+        });
+
+        console.log(`Created ${this.cityMarkers.length} city markers with collision detection`);
+    }
+
+    /**
+     * Adjust marker position to avoid overlaps and button area
+     */
+    adjustMarkerPosition(x, y, existingPositions, buttonArea, minDistance, screenWidth, screenHeight) {
+        let adjustedX = x;
+        let adjustedY = y;
+        let attempts = 0;
+        const maxAttempts = 20;
+        const stepSize = minDistance * 0.5;
+
+        while (attempts < maxAttempts) {
+            // Check if position is in button area
+            const inButtonArea = (
+                adjustedX >= buttonArea.x && 
+                adjustedX <= buttonArea.x + buttonArea.width &&
+                adjustedY >= buttonArea.y && 
+                adjustedY <= buttonArea.y + buttonArea.height
+            );
+
+            // Check collision with existing markers
+            let hasCollision = false;
+            for (const pos of existingPositions) {
+                const distance = Phaser.Math.Distance.Between(adjustedX, adjustedY, pos.x, pos.y);
+                if (distance < minDistance) {
+                    hasCollision = true;
+                    break;
+                }
+            }
+
+            // If no collision and not in button area, use this position
+            if (!hasCollision && !inButtonArea) {
+                // Ensure within bounds
+                adjustedX = Phaser.Math.Clamp(adjustedX, 50, screenWidth - 50);
+                adjustedY = Phaser.Math.Clamp(adjustedY, 50, screenHeight - 50);
+                return { x: adjustedX, y: adjustedY };
+            }
+
+            // Try different positions in a spiral pattern
+            const angle = (attempts * 45) * Math.PI / 180;
+            const radius = stepSize * (1 + Math.floor(attempts / 8));
+            adjustedX = x + Math.cos(angle) * radius;
+            adjustedY = y + Math.sin(angle) * radius;
+            
+            // Keep within bounds
+            adjustedX = Phaser.Math.Clamp(adjustedX, 50, screenWidth - 50);
+            adjustedY = Phaser.Math.Clamp(adjustedY, 50, screenHeight - 50);
+            
+            attempts++;
+        }
+
+        // If all attempts failed, return original position (better than nothing)
+        return { 
+            x: Phaser.Math.Clamp(x, 50, screenWidth - 50), 
+            y: Phaser.Math.Clamp(y, 50, screenHeight - 50) 
+        };
+    }
+
+    /**
+     * Create blur overlay for highlighting hovered city
+     */
+    createBlurOverlay(width, height) {
+        // Create a graphics object for the blur overlay
+        this.blurOverlay = this.add.graphics();
+        this.blurOverlay.fillStyle(0x000000, 0.3);
+        this.blurOverlay.fillRect(0, 0, width, height);
+        this.blurOverlay.setDepth(250); // Above buttons/bunnies but below markers
+        this.blurOverlay.setAlpha(0); // Initially invisible
+        this.blurOverlay.setVisible(false);
+
+        // Create highlight mask for bright area around marker
+        this.highlightMask = this.add.graphics();
+        this.highlightMask.setDepth(251); // Just above blur overlay
+        this.highlightMask.setAlpha(0);
+        this.highlightMask.setVisible(false);
+    }
+
+    /**
+     * Get icon emoji for city based on theme
+     */
+    getCityIcon(city) {
+        const iconMap = {
+            'Đếm số': '🔢',
+            'Tìm điểm khác biệt': '🔍',
+            'Phép cộng': '➕',
+            'Phép trừ': '➖',
+            'Hình học cơ bản': '🔷',
+            'Màu sắc': '🌈',
+            'Chữ cái': '📝',
+            'Âm thanh': '🎵',
+            'Từ vựng': '📚',
+            'Thời gian': '⏰',
+            'Logic': '🧩',
+            'Ghép hình': '🧩',
+            'So sánh số': '⚖️',
+            'Bảng chữ cái': '🔤',
+            'Khoa học': '🔬',
+            'Trung bình cộng': '📊',
+            'Quy luật số': '🔢',
+            'Trí nhớ': '🧠',
+            'Quy trình': '🔄',
+            'Bảng cửu chương': '✖️',
+            'Đối xứng': '🪞',
+            'Âm nhạc': '🎶',
+            'Hình bóng': '👤',
+            'Khối lượng': '⚖️',
+            'Phép nhân': '✖️',
+            'Định hướng': '🧭',
+            'Năng lượng': '⚡',
+            'Hình học': '📐',
+            'Sáng tạo': '✨',
+            'Khủng long': '🦕'
+        };
+        return iconMap[city.puzzleTheme] || '⭐';
+    }
+
+    /**
+     * Get pastel color for marker based on city ID
+     */
+    getMarkerColor(cityId) {
+        const colors = [
+            { bg: 0xFFF9C4, border: 0xFFFFFF, icon: 0xFFD700 }, // Vàng pastel
+            { bg: 0xB2F5EA, border: 0xFFFFFF, icon: 0x4FD1C7 }, // Mint
+            { bg: 0xFFE0E6, border: 0xFFFFFF, icon: 0xFF69B4 }, // Hồng pastel
+            { bg: 0xE9D5FF, border: 0xFFFFFF, icon: 0x9B59B6 }, // Tím nhẹ
+            { bg: 0xFFF9C4, border: 0xFFFFFF, icon: 0xFFD700 }, // Vàng pastel
+            { bg: 0xB2F5EA, border: 0xFFFFFF, icon: 0x4FD1C7 }, // Mint
+            { bg: 0xFFE0E6, border: 0xFFFFFF, icon: 0xFF69B4 }, // Hồng pastel
+            { bg: 0xE9D5FF, border: 0xFFFFFF, icon: 0x9B59B6 }, // Tím nhẹ
+        ];
+        return colors[cityId % colors.length];
+    }
+
+    /**
+     * Create a single city marker with new pastel design
+     */
+    createCityMarker(city, x, y, screenWidth, screenHeight, scale) {
+        // Create marker container
+        const markerContainer = this.add.container(x, y);
+        markerContainer.setDepth(300); // Above everything
+        markerContainer.setData('city', city);
+        markerContainer.setData('originalScale', 1);
+        markerContainer.setData('idleTween', null);
+        markerContainer.setData('hoverTween', null);
+
+        // Giảm kích thước icon (từ 35 xuống 24)
+        const markerSize = Math.max(20, 24 * scale);
+        const colors = this.getMarkerColor(city.id);
+        const iconEmoji = this.getCityIcon(city);
+        
+        // Store marker size and scale for highlight calculation
+        markerContainer.setData('markerSize', markerSize);
+        markerContainer.setData('scale', scale);
+
+        // Create marker background (pastel circle with transparency)
+        const markerBg = this.add.graphics();
+        const bgRadius = markerSize;
+        
+        // Outer glow (subtle)
+        markerBg.fillStyle(colors.bg, 0.2);
+        markerBg.fillCircle(0, 0, bgRadius + 3);
+        
+        // Main background - pastel color with 50% opacity
+        markerBg.fillStyle(colors.bg, 0.5);
+        markerBg.fillCircle(0, 0, bgRadius);
+        
+        // White border
+        markerBg.lineStyle(2, colors.border, 0.9);
+        markerBg.strokeCircle(0, 0, bgRadius);
+        
+        // Inner highlight
+        markerBg.fillStyle(0xFFFFFF, 0.3);
+        markerBg.fillCircle(0, -bgRadius * 0.2, bgRadius * 0.4);
+        
+        markerContainer.add(markerBg);
+
+        // Create icon text (emoji) - giảm kích thước
+        const iconText = this.add.text(0, 0, iconEmoji, {
+            fontSize: `${Math.max(14, 18 * scale)}px`,
+            fontFamily: 'Arial'
+        }).setOrigin(0.5);
+        markerContainer.add(iconText);
+
+        // Create city name label - đặt ở dưới icon với margin
+        const nameLabel = this.createCityNameLabel(city.name, markerSize, scale, screenWidth, x);
+        
+        // Tính toán vị trí title dựa trên chiều cao thực tế của text
+        // Lấy chiều cao thực tế của text (có thể 1 hoặc 2 dòng)
+        const labelTextHeight = nameLabel.getData('textHeight') || 0;
+        const labelBgHeight = nameLabel.getData('bgHeight') || 0;
+        const actualLabelHeight = Math.max(labelTextHeight, labelBgHeight);
+        
+        // Khoảng cách tối thiểu giữa icon và text
+        // markerSize là bán kính, nên cần + markerSize để ra khỏi icon + margin an toàn
+        const marginBetween = 25 * scale; // Giảm margin một chút
+        // Tính safe distance: từ tâm icon (0) xuống dưới icon (markerSize) + margin + nửa chiều cao label
+        const safeDistance = markerSize + marginBetween + (actualLabelHeight / 2);
+        
+        // Đặt label ở dưới icon với khoảng cách an toàn
+        nameLabel.y = safeDistance;
+        markerContainer.add(nameLabel);
+        markerContainer.setData('nameLabel', nameLabel);
+        // Lưu chiều cao label để dùng cho hit area
+        markerContainer.setData('labelHeight', actualLabelHeight);
+
+        // Make interactive - tăng hit area để dễ hover/click
+        // Tính toán hit area bao gồm cả icon và label
+        const hitAreaSize = Math.max(markerSize * 3, 80 * scale);
+        
+        // Sử dụng chiều cao label đã tính ở trên
+        const labelHeight = markerContainer.getData('labelHeight') || actualLabelHeight || 50 * scale;
+        
+        // Height bao gồm: icon (markerSize*2) + margin (25*scale) + label height + margin dưới (20*scale)
+        const totalHeight = markerSize * 2 + 25 * scale + labelHeight + 20 * scale;
+        markerContainer.setSize(hitAreaSize, totalHeight);
+        
+        // Hit area bắt đầu từ trên icon, kéo dài xuống dưới label
+        markerContainer.setInteractive(new Phaser.Geom.Rectangle(-hitAreaSize/2, -markerSize - 10, hitAreaSize, totalHeight), Phaser.Geom.Rectangle.Contains);
+        markerContainer.input.cursor = 'pointer';
+        markerContainer.setDepth(300); // Đảm bảo depth cao để có thể tương tác
+
+        // Hover events
+        markerContainer.on('pointerover', () => {
+            this.onMarkerHover(markerContainer, city, screenWidth, screenHeight);
+        });
+
+        markerContainer.on('pointerout', () => {
+            this.onMarkerOut(markerContainer);
+        });
+
+        // Click event
+        markerContainer.on('pointerdown', () => {
+            this.onMarkerClick(markerContainer, city);
+        });
+
+        // Idle animation - nhún nhảy nhẹ (0.95 → 1.05 → 1.0)
+        const idleTween = this.tweens.add({
+            targets: markerContainer,
+            scaleX: 0.95,
+            scaleY: 0.95,
+            duration: 1000,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut',
+            delay: city.id * 100 // Stagger animations
+        });
+        
+        // Add bounce effect
+        this.tweens.add({
+            targets: markerContainer,
+            scaleX: 1.05,
+            scaleY: 1.05,
+            duration: 1500,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeOut',
+            delay: city.id * 100 + 500
+        });
+        
+        markerContainer.setData('idleTween', idleTween);
+
+        return markerContainer;
+    }
+
+    /**
+     * Create city name label with smart positioning and backdrop blur effect
+     */
+    createCityNameLabel(name, markerSize, scale, screenWidth, markerX) {
+        const fontSize = Math.max(12, 14 * scale);
+        // Tăng padding để text không sát viền
+        const padding = 10 * scale; // Tăng từ 6 lên 10
+        const verticalPadding = 8 * scale; // Padding dọc riêng
+        
+        // Create text first - vị trí sẽ được set bởi parent container
+        const nameText = this.add.text(0, 0, name, {
+            fontSize: `${fontSize}px`,
+            fill: '#FFFFFF',
+            fontFamily: 'Poppins, Baloo, Nunito, Comic Sans MS, Arial Rounded MT Bold, Arial',
+            fontStyle: 'bold',
+            align: 'center',
+            wordWrap: { width: 150 * scale }
+        }).setOrigin(0.5);
+        
+        // Tính toán chiều cao thực tế của text (có thể wrap thành nhiều dòng)
+        // Cần update text để tính bounds chính xác
+        nameText.updateText();
+        const textBounds = nameText.getBounds();
+        const actualTextHeight = textBounds.height;
+        
+        // Create background for text (simulate backdrop blur with semi-transparent background)
+        const textBg = this.add.graphics();
+        // Sử dụng padding riêng cho width và height
+        const bgWidth = textBounds.width + padding * 2;
+        const bgHeight = actualTextHeight + verticalPadding * 2;
+        
+        // Draw rounded rectangle background with transparency
+        textBg.fillStyle(0x000000, 0.4); // Semi-transparent black for readability
+        textBg.fillRoundedRect(
+            -bgWidth / 2, 
+            -bgHeight / 2, 
+            bgWidth, 
+            bgHeight, 
+            8 * scale
+        );
+        
+        // White border
+        textBg.lineStyle(1, 0xFFFFFF, 0.6);
+        textBg.strokeRoundedRect(
+            -bgWidth / 2, 
+            -bgHeight / 2, 
+            bgWidth, 
+            bgHeight, 
+            8 * scale
+        );
+        
+        // Position background behind text
+        textBg.x = nameText.x;
+        textBg.y = nameText.y;
+        textBg.setDepth(nameText.depth - 1);
+        
+        // Add shadow to text
+        nameText.setShadow(1, 1, '#000000', 2, true, true);
+        
+        // Create container for label - đặt ở center (0, 0) vì sẽ được parent container điều chỉnh
+        const labelContainer = this.add.container(0, 0);
+        labelContainer.add(textBg);
+        labelContainer.add(nameText);
+        labelContainer.setData('text', nameText);
+        labelContainer.setData('bg', textBg);
+        // Lưu chiều cao thực tế để tính toán vị trí
+        labelContainer.setData('textHeight', actualTextHeight);
+        labelContainer.setData('bgHeight', bgHeight);
+        
+        return labelContainer;
+    }
+
+    /**
+     * Handle marker hover - animation, blur, and audio
+     */
+    onMarkerHover(markerContainer, city, screenWidth, screenHeight) {
+        // Don't process if already hovering this marker
+        if (this.currentHoveredMarker === markerContainer) {
+            return;
+        }
+
+        // Stop any previous hover effects
+        if (this.currentHoveredMarker) {
+            this.onMarkerOut(this.currentHoveredMarker);
+        }
+
+        this.currentHoveredMarker = markerContainer;
+
+        // Stop idle animation
+        const idleTween = markerContainer.getData('idleTween');
+        if (idleTween) {
+            this.tweens.killTweensOf(markerContainer);
+        }
+
+        // Scale up animation (15-20% increase)
+        const hoverTween = this.tweens.add({
+            targets: markerContainer,
+            scaleX: 1.2,
+            scaleY: 1.2,
+            duration: 200,
+            ease: 'Back.easeOut'
+        });
+        markerContainer.setData('hoverTween', hoverTween);
+
+        // Add glow effect to marker background
+        const glow = this.add.graphics();
+        const glowRadius = 40 * (screenWidth / 1920);
+        glow.fillStyle(0xFFD700, 0.4);
+        glow.fillCircle(0, 0, glowRadius);
+        glow.setPosition(markerContainer.x, markerContainer.y);
+        glow.setDepth(markerContainer.depth - 1);
+        markerContainer.setData('glow', glow);
+        
+        // Pulse glow
+        this.tweens.add({
+            targets: glow,
+            alpha: 0.6,
+            scaleX: 1.2,
+            scaleY: 1.2,
+            duration: 500,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
+        });
+
+        // Scale up name label
+        const nameLabel = markerContainer.getData('nameLabel');
+        if (nameLabel) {
+            this.tweens.add({
+                targets: nameLabel,
+                scaleX: 1.1,
+                scaleY: 1.1,
+                duration: 200,
+                ease: 'Back.easeOut'
+            });
+        }
+
+        // Create blur overlay with highlight
+        this.showBlurOverlay(markerContainer, city, screenWidth, screenHeight);
+
+        // Play audio description (only if not already playing)
+        this.playCityDescription(city);
+    }
+
+    /**
+     * Show blur overlay with highlight for hovered city
+     * Highlight chỉ bao quanh icon tròn, không bao gồm text label
+     */
+    showBlurOverlay(markerContainer, city, screenWidth, screenHeight) {
+        if (!this.blurOverlay) return;
+
+        // Lấy kích thước thực tế của marker icon (chỉ icon tròn)
+        const markerSize = markerContainer.getData('markerSize') || 35;
+        const scale = markerContainer.getData('scale') || 1;
+        const currentScale = markerContainer.scaleX || 1; // Scale khi hover (1.2)
+        
+        // Tính highlight radius chỉ bao quanh icon tròn
+        // markerSize là bán kính của icon, nhân với currentScale để tính khi đã zoom
+        // Thêm padding nhỏ (1.3x) để có chút không gian xung quanh
+        const baseRadius = markerSize * currentScale;
+        const highlightRadius = baseRadius * 1.3; // Chỉ lớn hơn icon một chút
+        
+        // Vị trí chính xác của marker (icon tròn ở center của container)
+        const markerX = markerContainer.x;
+        const markerY = markerContainer.y;
+
+        // Clear and redraw overlay
+        this.blurOverlay.clear();
+        
+        // Draw dark overlay covering entire screen
+        this.blurOverlay.fillStyle(0x000000, 0.5);
+        this.blurOverlay.fillRect(0, 0, screenWidth, screenHeight);
+
+        // Use existing highlight mask
+        if (!this.highlightMask) return;
+        
+        this.highlightMask.clear();
+        
+        // Draw highlight circle chỉ bao quanh icon tròn
+        this.highlightMask.fillStyle(0xFFFFFF, 0.15);
+        this.highlightMask.fillCircle(markerX, markerY, highlightRadius);
+        
+        // Add subtle glow effect around highlight (nhỏ hơn trước)
+        for (let i = 1; i <= 2; i++) {
+            const radius = highlightRadius + (i * 10); // Giảm từ 20 xuống 10
+            const alpha = 0.08 / i; // Tăng alpha một chút để thấy rõ hơn
+            this.highlightMask.fillStyle(0xFFFFFF, alpha);
+            this.highlightMask.fillCircle(markerX, markerY, radius);
+        }
+
+        // Fade in overlay
+        this.blurOverlay.setVisible(true);
+        this.highlightMask.setVisible(true);
+        this.tweens.add({
+            targets: [this.blurOverlay, this.highlightMask],
+            alpha: 1,
+            duration: 300,
+            ease: 'Power2'
+        });
+    }
+
+    /**
+     * Play city description using audio files (like CountingForestScreen)
+     */
+    playCityDescription(city) {
+        // Don't restart if already playing the same city
+        if (this.currentCityAudio && this.currentCityAudio.cityId === city.id) {
+            if (this.currentCityAudio.isPlaying) {
+                return; // Already playing, don't restart
+            }
+        }
+
+        // Stop any ongoing audio from different city
+        if (this.currentCityAudio) {
+            this.currentCityAudio.stop();
+            this.currentCityAudio = null;
+        }
+
+        // Map city ID to audio key
+        const audioKey = `voice_city_${city.id}`;
+        
+        // Check if audio exists
+        if (this.cache.audio.exists(audioKey)) {
+            // Play audio file
+            this.currentCityAudio = this.sound.add(audioKey, {
+                volume: 0.7,
+                loop: false
+            });
+            this.currentCityAudio.cityId = city.id; // Store city ID
+            this.currentCityAudio.play();
+            
+            console.log(`Playing audio for city: ${city.name}`);
+        } else {
+            // Fallback: use speech synthesis if audio file not found
+            const description = `${city.name}. ${city.description} Chủ đề: ${city.puzzleTheme}.`;
+            
+            if (this.speechSynthesis && 'SpeechSynthesisUtterance' in window) {
+                const utterance = new SpeechSynthesisUtterance(description);
+                utterance.lang = 'vi-VN';
+                utterance.rate = 0.9;
+                utterance.pitch = 1.1;
+                utterance.volume = 0.8;
+                utterance.cityId = city.id;
+                this.currentUtterance = utterance;
+                this.speechSynthesis.speak(utterance);
+            } else {
+                console.log(`City: ${city.name} - ${city.description} - Chủ đề: ${city.puzzleTheme}`);
+            }
+        }
+    }
+
+    /**
+     * Stop city description with fade-out effect
+     */
+    stopCityDescription() {
+        // Stop audio file with fade-out
+        if (this.currentCityAudio && this.currentCityAudio.isPlaying) {
+            this.tweens.add({
+                targets: this.currentCityAudio,
+                volume: 0,
+                duration: 250,
+                ease: 'Power2',
+                onComplete: () => {
+                    if (this.currentCityAudio) {
+                        this.currentCityAudio.stop();
+                        this.currentCityAudio = null;
+                    }
+                }
+            });
+        } else if (this.currentCityAudio) {
+            this.currentCityAudio.stop();
+            this.currentCityAudio = null;
+        }
+        
+        // Stop speech synthesis
+        if (this.speechSynthesis && this.currentUtterance) {
+            this.speechSynthesis.cancel();
+            this.currentUtterance = null;
+        }
+    }
+
+    /**
+     * Handle marker pointer out - stop animations and audio
+     */
+    onMarkerOut(markerContainer) {
+        if (this.currentHoveredMarker !== markerContainer) {
+            return;
+        }
+
+        this.currentHoveredMarker = null;
+
+        // Stop hover animation
+        const hoverTween = markerContainer.getData('hoverTween');
+        if (hoverTween) {
+            this.tweens.killTweensOf(markerContainer);
+        }
+
+        // Remove glow effect
+        const glow = markerContainer.getData('glow');
+        if (glow) {
+            this.tweens.add({
+                targets: glow,
+                alpha: 0,
+                duration: 200,
+                onComplete: () => {
+                    if (glow && glow.active) {
+                        glow.destroy();
+                    }
+                }
+            });
+            markerContainer.setData('glow', null);
+        }
+
+        // Scale back down
+        this.tweens.add({
+            targets: markerContainer,
+            scaleX: 1,
+            scaleY: 1,
+            duration: 200,
+            ease: 'Power2',
+            onComplete: () => {
+                // Restart idle animation
+                const city = markerContainer.getData('city');
+                if (city) {
+                    const idleTween = this.tweens.add({
+                        targets: markerContainer,
+                        scaleX: 0.95,
+                        scaleY: 0.95,
+                        duration: 1000,
+                        yoyo: true,
+                        repeat: -1,
+                        ease: 'Sine.easeInOut'
+                    });
+                    markerContainer.setData('idleTween', idleTween);
+                }
+            }
+        });
+
+        // Scale down name label
+        const nameLabel = markerContainer.getData('nameLabel');
+        if (nameLabel) {
+            this.tweens.add({
+                targets: nameLabel,
+                scaleX: 1,
+                scaleY: 1,
+                duration: 200,
+                ease: 'Power2'
+            });
+        }
+
+        // Hide blur overlay
+        if (this.blurOverlay) {
+            this.tweens.add({
+                targets: [this.blurOverlay, this.highlightMask],
+                alpha: 0,
+                duration: 300,
+                ease: 'Power2',
+                onComplete: () => {
+                    if (this.blurOverlay) {
+                        this.blurOverlay.setVisible(false);
+                        this.blurOverlay.clear();
+                    }
+                    if (this.highlightMask) {
+                        this.highlightMask.setVisible(false);
+                        this.highlightMask.clear();
+                    }
+                }
+            });
+        }
+
+        // Fade out and stop speech
+        this.stopCityDescription();
+    }
+
+    /**
+     * Handle marker click - navigate to city screen
+     */
+    onMarkerClick(markerContainer, city) {
+        console.log(`Clicked on city: ${city.name}`, city);
+        
+        // Navigate to city screen if screenKey exists
+        if (city.screenKey) {
+            // Play click sound if available
+            if (this.cache.audio.exists('voice_city_click')) {
+                this.sound.play('voice_city_click', { volume: 0.7 });
+            }
+            
+            // Stop menu BGM
+            this.stopMenuBGM();
+            
+            // Stop any playing city description
+            this.stopCityDescription();
+            
+            // Navigate to city screen
+            this.scene.start(city.screenKey);
+        } else {
+            console.warn(`City ${city.name} has no screenKey configured`);
+        }
+    }
+
     shutdown() {
         // Stop BGM on shutdown
         if (this.menuBGM) {
             this.menuBGM.stop();
+        }
+
+        // Stop speech synthesis
+        if (this.speechSynthesis) {
+            this.speechSynthesis.cancel();
+        }
+        
+        // Stop city audio
+        if (this.currentCityAudio) {
+            this.currentCityAudio.stop();
+            this.currentCityAudio = null;
         }
         
         // Cleanup behavior systems when scene is destroyed
@@ -1107,6 +1660,14 @@ class MenuScreen extends Phaser.Scene {
         this.birds = [];
         this.magicParticles = [];
         this.sparkles = [];
+        this.cityMarkers = [];
+        this.currentHoveredMarker = null;
+        
+        // Cleanup highlight mask
+        if (this.highlightMask) {
+            this.highlightMask.destroy();
+            this.highlightMask = null;
+        }
     }
 }
 

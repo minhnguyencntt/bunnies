@@ -1,10 +1,10 @@
-# 🐰 Bé Thỏ và Rừng Tri Thức
+# 🐰 Bunnies và thế giới tri thức
 
 Game giáo dục offline HTML5 cho trẻ em 4-10 tuổi, được xây dựng bằng Phaser 3.
 
 ## 📋 Tổng Quan
 
-"Bé Thỏ và Rừng Tri Thức" là một game giáo dục phiêu lưu với phong cách hoạt hình đáng yêu, giúp trẻ em học toán học, chữ cái và màu sắc thông qua các thử thách vui nhộn.
+"Bunnies và thế giới tri thức" là một game giáo dục phiêu lưu với phong cách hoạt hình đáng yêu, giúp trẻ em học toán học, chữ cái và màu sắc thông qua các thử thách vui nhộn.
 
 ### Đặc Điểm
 

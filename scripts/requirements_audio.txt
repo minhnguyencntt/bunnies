@@ -1,0 +1,10 @@
+# Requirements for generating audio files
+# Cài đặt: pip install -r scripts/requirements_audio.txt
+
+# Option 1: Microsoft Edge TTS (khuyến nghị - chất lượng tốt, miễn phí)
+edge-tts>=6.1.0
+
+# Option 2: Google TTS (cần internet)
+gtts>=2.5.0
+pydub>=0.25.1
+

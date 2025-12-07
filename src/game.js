@@ -1,5 +1,5 @@
 /**
- * Bé Thỏ và Rừng Tri Thức
+ * Bunnies và thế giới tri thức
  * Main Game Configuration
  * Phaser 3.70.0
  */
@@ -39,8 +39,8 @@
     // Game Configuration
     const config = {
         type: Phaser.AUTO,
-        width: 800,
-        height: 600,
+        width: 1280,
+        height: 720,
         parent: 'game-container',
         backgroundColor: '#87CEEB', // Sky blue background
         scale: {

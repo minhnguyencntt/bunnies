@@ -17,15 +17,24 @@ class MirrorCityScreen extends Phaser.Scene {
         this.magicParticles = [];
         this.dialogueIndex = 0;
         this.currentVoice = null;
-        this.hintsRemaining = 3;
+        this.hintsRemaining = Infinity; // Unlimited hints
         this.isInChallengeView = false;
         this.challengeContainer = null;
+        this.levelBGM = null;
     }
 
     preload() {
         // Load Mirror City assets
         this.load.image('mirror_city_bg', 'screens/mirror_city/assets/backgrounds/l2_bg_1.png');
-        // Note: Mirror City currently has no audio (BGM and voice disabled)
+        
+        // Load Mirror City audio
+        this.load.audio('bgm_mirror_city', 'screens/mirror_city/assets/audio/bgm/level2_bgm.wav');
+        this.load.audio('voice_intro_1', 'screens/mirror_city/assets/audio/voice/intro_1.mp3');
+        this.load.audio('voice_intro_2', 'screens/mirror_city/assets/audio/voice/intro_2.mp3');
+        this.load.audio('voice_intro_3', 'screens/mirror_city/assets/audio/voice/intro_3.mp3');
+        this.load.audio('voice_correct', 'screens/mirror_city/assets/audio/voice/correct_answer.mp3');
+        this.load.audio('voice_wrong', 'screens/mirror_city/assets/audio/voice/wrong_answer.mp3');
+        this.load.audio('voice_complete', 'screens/mirror_city/assets/audio/voice/level_complete.mp3');
     }
 
     create() {
@@ -36,8 +45,8 @@ class MirrorCityScreen extends Phaser.Scene {
         // Ensure clean audio state (stop any sounds from previous scenes)
         this.sound.stopAll();
         
-        // NOTE: Level 2 currently runs WITHOUT audio
-        // BGM and voice will be added in future update
+        // Play Mirror City BGM
+        this.playLevelBGM();
 
         // Create Mirror City background
         this.createMirrorCityBackground();
@@ -76,7 +85,7 @@ class MirrorCityScreen extends Phaser.Scene {
         const width = this.cameras.main.width;
         const height = this.cameras.main.height;
 
-        // Use Mirror City background image if available
+        // Use Mirror City background image
         if (this.textures.exists('mirror_city_bg')) {
             const bg = this.add.image(width / 2, height / 2, 'mirror_city_bg');
             bg.setDisplaySize(width, height);
@@ -86,40 +95,40 @@ class MirrorCityScreen extends Phaser.Scene {
             // Fallback: Create magical crystal city background
             const bgGraphics = this.add.graphics();
         
-        // Night sky gradient with stars
-        bgGraphics.fillGradientStyle(0x1a0a2e, 0x1a0a2e, 0x16213e, 0x16213e, 1);
-        bgGraphics.fillRect(0, 0, width, height * 0.6);
-        
-        // Ground - crystalline floor
-        bgGraphics.fillGradientStyle(0x2d1b4e, 0x2d1b4e, 0x1f1147, 0x1f1147, 1);
-        bgGraphics.fillRect(0, height * 0.6, width, height * 0.4);
-        
-        // Reflective floor effect
-        bgGraphics.fillStyle(0xFFFFFF, 0.05);
-        bgGraphics.fillRect(0, height * 0.6, width, height * 0.4);
-        
-        bgGraphics.setDepth(0);
-
-        // Add stars in the sky
-        for (let i = 0; i < 50; i++) {
-            const starX = Phaser.Math.Between(0, width);
-            const starY = Phaser.Math.Between(0, height * 0.5);
-            const starSize = Phaser.Math.Between(1, 3);
-            const star = this.add.graphics();
-            star.fillStyle(0xFFFFFF, Phaser.Math.FloatBetween(0.3, 1));
-            star.fillCircle(starX, starY, starSize);
-            star.setDepth(1);
+            // Night sky gradient with stars
+            bgGraphics.fillGradientStyle(0x1a0a2e, 0x1a0a2e, 0x16213e, 0x16213e, 1);
+            bgGraphics.fillRect(0, 0, width, height * 0.6);
             
-            // Twinkling animation
-            this.tweens.add({
-                targets: star,
-                alpha: Phaser.Math.FloatBetween(0.2, 0.5),
-                duration: Phaser.Math.Between(1000, 3000),
-                yoyo: true,
-                repeat: -1,
-                ease: 'Sine.easeInOut'
-            });
-        }
+            // Ground - crystalline floor
+            bgGraphics.fillGradientStyle(0x2d1b4e, 0x2d1b4e, 0x1f1147, 0x1f1147, 1);
+            bgGraphics.fillRect(0, height * 0.6, width, height * 0.4);
+            
+            // Reflective floor effect
+            bgGraphics.fillStyle(0xFFFFFF, 0.05);
+            bgGraphics.fillRect(0, height * 0.6, width, height * 0.4);
+            
+            bgGraphics.setDepth(0);
+
+            // Add stars in the sky
+            for (let i = 0; i < 50; i++) {
+                const starX = Phaser.Math.Between(0, width);
+                const starY = Phaser.Math.Between(0, height * 0.5);
+                const starSize = Phaser.Math.Between(1, 3);
+                const star = this.add.graphics();
+                star.fillStyle(0xFFFFFF, Phaser.Math.FloatBetween(0.3, 1));
+                star.fillCircle(starX, starY, starSize);
+                star.setDepth(1);
+                
+                // Twinkling animation
+                this.tweens.add({
+                    targets: star,
+                    alpha: Phaser.Math.FloatBetween(0.2, 0.5),
+                    duration: Phaser.Math.Between(1000, 3000),
+                    yoyo: true,
+                    repeat: -1,
+                    ease: 'Sine.easeInOut'
+                });
+            }
 
             // Crystal towers in background
             this.createCrystalTowers(width, height);
@@ -193,26 +202,39 @@ class MirrorCityScreen extends Phaser.Scene {
         const height = this.cameras.main.height;
         this.mirrors = [];
 
-        // Position mirrors in 2 rows (5 + 5 arrangement)
-        const mirrorWidth = 65;
-        const mirrorHeight = 85;
-        const spacingX = 75;
-        const spacingY = 100;
-        const startY = height * 0.35;
+        // Position mirrors in 2 rows (5 + 5 arrangement) - adjusted to prevent overlap including glow effects
+        const mirrorWidth = 80;
+        const mirrorHeight = 100;
+        const glowSize = Math.max(mirrorWidth, mirrorHeight) * 1.2; // Glow extends beyond mirror (matches drawMirrorGlow)
+        const spacingX = Math.max(glowSize * 1.4, 140); // Ensure glow effects don't overlap with safe margin
+        const spacingY = Math.max(glowSize * 1.4, 160); // Ensure vertical glow effects don't overlap with safe margin
+        
+        // Center the gallery horizontally
+        const totalWidth = 4 * spacingX; // 5 mirrors = 4 gaps
+        const startX = (width - totalWidth) / 2; // Center horizontally
+        const startY = height * 0.38; // Vertical position
 
-        // Calculate positions for semi-circular arrangement
+        // Mirror frame types for variety
+        const mirrorTypes = [
+            'goldOval', 'crystalRect', 'rainbowCircle', 'gothicArch', 'heartFloral',
+            'silverDiamond', 'ovalTeal', 'ovalCrystals', 'hexagon', 'shield', 'star', 'swirlOval'
+        ];
+
+        // Calculate positions for balanced arrangement
         for (let i = 0; i < this.totalMirrors; i++) {
             const row = Math.floor(i / 5);
             const col = i % 5;
-            const x = width * 0.18 + col * spacingX;
+            const x = startX + col * spacingX;
             const y = startY + row * spacingY;
             
-            const mirror = this.createMirror(x, y, mirrorWidth, mirrorHeight, i);
+            const mirrorType = mirrorTypes[i % mirrorTypes.length];
+            const mirror = this.createBeautifulMirror(x, y, mirrorWidth, mirrorHeight, i, mirrorType);
             this.mirrors.push(mirror);
         }
     }
 
-    createMirror(x, y, width, height, index) {
+
+    createBeautifulMirror(x, y, width, height, index, mirrorType) {
         const mirror = {
             x: x,
             y: y,
@@ -222,74 +244,75 @@ class MirrorCityScreen extends Phaser.Scene {
             isRestored: false,
             container: null,
             graphics: null,
+            sparkles: [],
             glowEffect: null,
-            numberText: null
+            mirrorType: mirrorType
         };
 
         // Create container
         const container = this.add.container(x, y);
         mirror.container = container;
 
-        // Create darkened mirror (covered in shadow)
+        // Create beautiful mirror graphics
         const mirrorGraphics = this.add.graphics();
-        
-        // Outer ornate frame
-        mirrorGraphics.fillStyle(0x8B4513, 1);
-        mirrorGraphics.fillRoundedRect(-width/2 - 8, -height/2 - 8, width + 16, height + 16, 8);
-        
-        // Golden inner frame
-        mirrorGraphics.fillStyle(0xDAA520, 1);
-        mirrorGraphics.fillRoundedRect(-width/2 - 4, -height/2 - 4, width + 8, height + 8, 6);
-        
-        // Mirror surface (darkened)
-        mirrorGraphics.fillGradientStyle(0x2d1b4e, 0x2d1b4e, 0x1a0a2e, 0x1a0a2e, 0.9);
-        mirrorGraphics.fillRoundedRect(-width/2, -height/2, width, height, 4);
-        
-        // Dark fog overlay
-        mirrorGraphics.fillStyle(0x000000, 0.6);
-        mirrorGraphics.fillRoundedRect(-width/2, -height/2, width, height, 4);
-        
-        // Magical energy pulse (indicates it's interactive)
-        mirrorGraphics.lineStyle(2, 0x9370DB, 0.5);
-        mirrorGraphics.strokeRoundedRect(-width/2, -height/2, width, height, 4);
-        
+        this.drawMirrorFrame(mirrorGraphics, width, height, mirrorType, false);
         container.add(mirrorGraphics);
         mirror.graphics = mirrorGraphics;
 
-        // Mirror number
-        const numberText = this.add.text(0, height/2 + 15, (index + 1).toString(), {
-            fontSize: '16px',
-            fill: '#FFD700',
-            fontFamily: 'Comic Sans MS, Arial',
-            fontStyle: 'bold',
-            stroke: '#000000',
-            strokeThickness: 2
-        }).setOrigin(0.5);
-        container.add(numberText);
-        mirror.numberText = numberText;
-
-        // Pulsing glow effect
+        // Create magical glow effect
         const glowEffect = this.add.graphics();
-        glowEffect.fillStyle(0x9370DB, 0.2);
-        glowEffect.fillRoundedRect(-width/2 - 10, -height/2 - 10, width + 20, height + 20, 10);
+        this.drawMirrorGlow(glowEffect, width, height, mirrorType, false);
         container.add(glowEffect);
         container.sendToBack(glowEffect);
         mirror.glowEffect = glowEffect;
 
+        // Animate glow with twinkling effect (nhấp nháy ma mị)
         this.tweens.add({
             targets: glowEffect,
-            alpha: 0.4,
-            scaleX: 1.05,
-            scaleY: 1.05,
-            duration: 1500,
+            alpha: { from: 0.2, to: 0.7 },
+            scaleX: { from: 0.95, to: 1.15 },
+            scaleY: { from: 0.95, to: 1.15 },
+            duration: Phaser.Math.Between(1500, 2500),
             yoyo: true,
             repeat: -1,
             ease: 'Sine.easeInOut'
         });
 
+        // Add additional twinkling effect with random intervals for mystical feel
+        const createTwinkleFlash = () => {
+            if (glowEffect && !mirror.isRestored) {
+                this.tweens.add({
+                    targets: glowEffect,
+                    alpha: { from: glowEffect.alpha, to: 1.0 },
+                    duration: 200,
+                    yoyo: true,
+                    repeat: 1,
+                    ease: 'Power2',
+                    onComplete: () => {
+                        if (glowEffect && !mirror.isRestored) {
+                            this.time.addEvent({
+                                delay: Phaser.Math.Between(800, 2000),
+                                callback: createTwinkleFlash,
+                                loop: false
+                            });
+                        }
+                    }
+                });
+            }
+        };
+        
+        this.time.addEvent({
+            delay: Phaser.Math.Between(800, 2000),
+            callback: createTwinkleFlash,
+            loop: true
+        });
+
+        // Create sparkles
+        this.createMirrorSparkles(container, width, height, mirror);
+
         // Make interactive
-        const hitArea = new Phaser.Geom.Rectangle(-width/2 - 8, -height/2 - 8, width + 16, height + 16);
-        container.setSize(width + 16, height + 16);
+        const hitArea = new Phaser.Geom.Rectangle(-width/2 - 10, -height/2 - 10, width + 20, height + 20);
+        container.setSize(width + 20, height + 20);
         container.setInteractive(hitArea, Phaser.Geom.Rectangle.Contains, { useHandCursor: true });
         
         container.on('pointerdown', () => {
@@ -300,19 +323,759 @@ class MirrorCityScreen extends Phaser.Scene {
 
         container.on('pointerover', () => {
             if (!mirror.isRestored && !this.isInChallengeView) {
-                container.setScale(1.1);
+                container.setScale(1.15);
+                glowEffect.setAlpha(0.8);
             }
         });
 
         container.on('pointerout', () => {
             if (!mirror.isRestored) {
                 container.setScale(1);
+                glowEffect.setAlpha(0.5);
             }
         });
 
         container.setDepth(50);
 
         return mirror;
+    }
+
+    drawMirrorFrame(graphics, width, height, mirrorType, isRestored) {
+        const w = width;
+        const h = height;
+        const centerX = 0;
+        const centerY = 0;
+
+        // Draw mirror surface (dark cosmic pattern)
+        if (!isRestored) {
+            // Dark swirling cosmic pattern
+            graphics.fillGradientStyle(0x2d1b4e, 0x2d1b4e, 0x1a0a2e, 0x1a0a2e, 1);
+        } else {
+            // Bright rainbow gradient when restored
+            graphics.fillGradientStyle(0xFF69B4, 0xFFD700, 0x87CEEB, 0x90EE90, 1);
+        }
+
+        // Draw frame based on type
+        switch (mirrorType) {
+            case 'goldOval':
+                this.drawGoldOvalFrame(graphics, centerX, centerY, w, h, isRestored);
+                break;
+            case 'crystalRect':
+                this.drawCrystalRectFrame(graphics, centerX, centerY, w, h, isRestored);
+                break;
+            case 'rainbowCircle':
+                this.drawRainbowCircleFrame(graphics, centerX, centerY, w, h, isRestored);
+                break;
+            case 'gothicArch':
+                this.drawGothicArchFrame(graphics, centerX, centerY, w, h, isRestored);
+                break;
+            case 'heartFloral':
+                this.drawHeartFloralFrame(graphics, centerX, centerY, w, h, isRestored);
+                break;
+            case 'silverDiamond':
+                this.drawSilverDiamondFrame(graphics, centerX, centerY, w, h, isRestored);
+                break;
+            case 'ovalTeal':
+                this.drawOvalTealFrame(graphics, centerX, centerY, w, h, isRestored);
+                break;
+            case 'ovalCrystals':
+                this.drawOvalCrystalsFrame(graphics, centerX, centerY, w, h, isRestored);
+                break;
+            case 'hexagon':
+                this.drawHexagonFrame(graphics, centerX, centerY, w, h, isRestored);
+                break;
+            case 'shield':
+                this.drawShieldFrame(graphics, centerX, centerY, w, h, isRestored);
+                break;
+            case 'star':
+                this.drawStarFrame(graphics, centerX, centerY, w, h, isRestored);
+                break;
+            case 'swirlOval':
+                this.drawSwirlOvalFrame(graphics, centerX, centerY, w, h, isRestored);
+                break;
+            default:
+                this.drawGoldOvalFrame(graphics, centerX, centerY, w, h, isRestored);
+        }
+
+        // Add stars inside mirror
+        this.addMirrorStars(graphics, centerX, centerY, w * 0.7, h * 0.7, isRestored);
+        
+        // Add diagonal reflections
+        this.addMirrorReflections(graphics, centerX, centerY, w * 0.7, h * 0.7);
+    }
+
+    drawGoldOvalFrame(graphics, x, y, w, h, isRestored) {
+        const frameColor = isRestored ? 0xFFD700 : 0xDAA520;
+        const frameThickness = 8;
+        
+        // Outer ornate frame
+        graphics.fillStyle(0x8B4513, 1);
+        graphics.fillEllipse(x, y, w + 16, h + 16);
+        
+        // Golden frame with scrollwork
+        graphics.fillStyle(frameColor, 1);
+        graphics.fillEllipse(x, y, w + 8, h + 8);
+        
+        // Inner decorative border
+        graphics.lineStyle(3, frameColor, 0.8);
+        graphics.strokeEllipse(x, y, w + 4, h + 4);
+        
+        // Mirror surface
+        if (!isRestored) {
+            graphics.fillGradientStyle(0x2d1b4e, 0x2d1b4e, 0x1a0a2e, 0x1a0a2e, 0.9);
+        } else {
+            graphics.fillGradientStyle(0xFF69B4, 0xFFD700, 0x87CEEB, 0x90EE90, 1);
+        }
+        graphics.fillEllipse(x, y, w, h);
+        
+        // Dark overlay for unrestored
+        if (!isRestored) {
+            graphics.fillStyle(0x000000, 0.5);
+            graphics.fillEllipse(x, y, w, h);
+        }
+    }
+
+    drawCrystalRectFrame(graphics, x, y, w, h, isRestored) {
+        const crystalColor = isRestored ? 0xE1BEE7 : 0x9370DB;
+        
+        // Crystal shard frame
+        const shardSize = 12;
+        const corners = [
+            { x: x - w/2, y: y - h/2 },
+            { x: x + w/2, y: y - h/2 },
+            { x: x + w/2, y: y + h/2 },
+            { x: x - w/2, y: y + h/2 }
+        ];
+        
+        corners.forEach((corner, i) => {
+            const angle = (i * Math.PI / 2);
+            for (let j = 0; j < 3; j++) {
+                const offsetX = Math.cos(angle) * (w/2 + j * shardSize);
+                const offsetY = Math.sin(angle) * (h/2 + j * shardSize);
+                graphics.fillStyle(crystalColor, 0.8 - j * 0.2);
+                graphics.fillTriangle(
+                    corner.x + offsetX, corner.y + offsetY,
+                    corner.x + offsetX + Math.cos(angle + Math.PI/3) * shardSize, corner.y + offsetY + Math.sin(angle + Math.PI/3) * shardSize,
+                    corner.x + offsetX + Math.cos(angle - Math.PI/3) * shardSize, corner.y + offsetY + Math.sin(angle - Math.PI/3) * shardSize
+                );
+            }
+        });
+        
+        // Mirror surface
+        if (!isRestored) {
+            graphics.fillGradientStyle(0x2d1b4e, 0x2d1b4e, 0x1a0a2e, 0x1a0a2e, 0.9);
+        } else {
+            graphics.fillGradientStyle(0xFF69B4, 0xFFD700, 0x87CEEB, 0x90EE90, 1);
+        }
+        graphics.fillRoundedRect(x - w/2, y - h/2, w, h, 8);
+        
+        if (!isRestored) {
+            graphics.fillStyle(0x000000, 0.5);
+            graphics.fillRoundedRect(x - w/2, y - h/2, w, h, 8);
+        }
+    }
+
+    drawRainbowCircleFrame(graphics, x, y, w, h, isRestored) {
+        const radius = Math.min(w, h) / 2;
+        const rainbowColors = [0xFF0000, 0xFFA500, 0xFFFF00, 0x00FF00, 0x0000FF, 0x4B0082, 0x9400D3];
+        
+        // Rainbow crystal ring
+        const crystalCount = 14;
+        for (let i = 0; i < crystalCount; i++) {
+            const angle = (i / crystalCount) * Math.PI * 2;
+            const outerRadius = radius + 15;
+            const innerRadius = radius + 8;
+            const color = rainbowColors[i % rainbowColors.length];
+            
+            graphics.fillStyle(color, 0.9);
+            const x1 = x + Math.cos(angle) * innerRadius;
+            const y1 = y + Math.sin(angle) * innerRadius;
+            const x2 = x + Math.cos(angle + Math.PI/crystalCount) * innerRadius;
+            const y2 = y + Math.sin(angle + Math.PI/crystalCount) * innerRadius;
+            const x3 = x + Math.cos(angle + Math.PI/crystalCount/2) * outerRadius;
+            const y3 = y + Math.sin(angle + Math.PI/crystalCount/2) * outerRadius;
+            graphics.fillTriangle(x1, y1, x2, y2, x3, y3);
+        }
+        
+        // Mirror surface
+        if (!isRestored) {
+            graphics.fillGradientStyle(0x2d1b4e, 0x2d1b4e, 0x1a0a2e, 0x1a0a2e, 0.9);
+        } else {
+            graphics.fillGradientStyle(0xFF69B4, 0xFFD700, 0x87CEEB, 0x90EE90, 1);
+        }
+        graphics.fillCircle(x, y, radius);
+        
+        if (!isRestored) {
+            graphics.fillStyle(0x000000, 0.5);
+            graphics.fillCircle(x, y, radius);
+        }
+    }
+
+    drawGothicArchFrame(graphics, x, y, w, h, isRestored) {
+        const frameColor = isRestored ? 0xC0C0C0 : 0x808080;
+        
+        // Gothic arch shape - use polygon instead of quadraticCurveTo
+        graphics.fillStyle(frameColor, 1);
+        const points = [];
+        // Left side
+        points.push({ x: x - w/2, y: y + h/2 });
+        points.push({ x: x - w/2, y: y - h/3 });
+        // Top arch (approximate with multiple points)
+        for (let i = 0; i <= 8; i++) {
+            const t = i / 8;
+            const px = Phaser.Math.Interpolation.Linear([x - w/2, x, x + w/2], t);
+            const py = Phaser.Math.Interpolation.Bezier([y - h/3, y - h/2 - 10, y - h/3], t);
+            points.push({ x: px, y: py });
+        }
+        // Right side
+        points.push({ x: x + w/2, y: y + h/2 });
+        graphics.fillPoints(points, true);
+        
+        // Crystals at base
+        const crystalColors = [0xFFA500, 0x0000FF, 0xFF1493];
+        [-1, 1].forEach(side => {
+            crystalColors.forEach((color, i) => {
+                graphics.fillStyle(color, 0.8);
+                graphics.fillTriangle(
+                    x + side * w/3, y + h/2 - i * 8,
+                    x + side * w/3 - 5, y + h/2 - i * 8 - 10,
+                    x + side * w/3 + 5, y + h/2 - i * 8 - 10
+                );
+            });
+        });
+        
+        // Mirror surface
+        if (!isRestored) {
+            graphics.fillGradientStyle(0x2d1b4e, 0x2d1b4e, 0x1a0a2e, 0x1a0a2e, 0.9);
+        } else {
+            graphics.fillGradientStyle(0xFF69B4, 0xFFD700, 0x87CEEB, 0x90EE90, 1);
+        }
+        const innerPoints = [];
+        // Left side
+        innerPoints.push({ x: x - w/2 + 4, y: y + h/2 - 4 });
+        innerPoints.push({ x: x - w/2 + 4, y: y - h/3 });
+        // Top arch (approximate with multiple points)
+        for (let i = 0; i <= 8; i++) {
+            const t = i / 8;
+            const px = Phaser.Math.Interpolation.Linear([x - w/2 + 4, x, x + w/2 - 4], t);
+            const py = Phaser.Math.Interpolation.Bezier([y - h/3, y - h/2 + 5, y - h/3], t);
+            innerPoints.push({ x: px, y: py });
+        }
+        // Right side
+        innerPoints.push({ x: x + w/2 - 4, y: y + h/2 - 4 });
+        graphics.fillPoints(innerPoints, true);
+        
+        if (!isRestored) {
+            graphics.fillStyle(0x000000, 0.5);
+            graphics.fillPath();
+        }
+    }
+
+    drawHeartFloralFrame(graphics, x, y, w, h, isRestored) {
+        const leafColor = isRestored ? 0x90EE90 : 0x228B22;
+        const crystalColor = isRestored ? 0xFF69B4 : 0x9370DB;
+        
+        // Heart shape frame
+        graphics.fillStyle(0xC0C0C0, 1);
+        this.drawHeartShape(graphics, x, y, w, h);
+        
+        // Vines and leaves
+        for (let i = 0; i < 8; i++) {
+            const angle = (i / 8) * Math.PI * 2;
+            const dist = Math.min(w, h) / 2 + 8;
+            const leafX = x + Math.cos(angle) * dist;
+            const leafY = y + Math.sin(angle) * dist;
+            graphics.fillStyle(leafColor, 0.7);
+            graphics.fillEllipse(leafX, leafY, 6, 10);
+        }
+        
+        // Small crystals
+        for (let i = 0; i < 6; i++) {
+            const angle = (i / 6) * Math.PI * 2;
+            const dist = Math.min(w, h) / 2 + 5;
+            const crystalX = x + Math.cos(angle) * dist;
+            const crystalY = y + Math.sin(angle) * dist;
+            graphics.fillStyle(crystalColor, 0.9);
+            graphics.fillCircle(crystalX, crystalY, 3);
+        }
+        
+        // Mirror surface
+        if (!isRestored) {
+            graphics.fillGradientStyle(0x2d1b4e, 0x2d1b4e, 0x1a0a2e, 0x1a0a2e, 0.9);
+        } else {
+            graphics.fillGradientStyle(0xFF69B4, 0xFFD700, 0x87CEEB, 0x90EE90, 1);
+        }
+        this.drawHeartShape(graphics, x, y, w * 0.85, h * 0.85);
+        
+        if (!isRestored) {
+            graphics.fillStyle(0x000000, 0.5);
+            this.drawHeartShape(graphics, x, y, w * 0.85, h * 0.85);
+        }
+    }
+
+    drawHeartShape(graphics, x, y, w, h) {
+        // Draw heart shape using points
+        const points = [];
+        const centerY = y + h/3;
+        
+        // Create heart shape with bezier approximation using points
+        for (let i = 0; i <= 20; i++) {
+            const t = i / 20;
+            let px, py;
+            
+            if (t < 0.5) {
+                // Left side of heart
+                const t2 = t * 2;
+                px = Phaser.Math.Interpolation.Bezier([x, x - w/2, x - w, x], t2);
+                py = Phaser.Math.Interpolation.Bezier([centerY, y - h/3, y + h/6, y + h/2], t2);
+            } else {
+                // Right side of heart
+                const t2 = (t - 0.5) * 2;
+                px = Phaser.Math.Interpolation.Bezier([x, x + w, x + w/2, x], t2);
+                py = Phaser.Math.Interpolation.Bezier([y + h/2, y + h/6, y - h/3, centerY], t2);
+            }
+            
+            points.push({ x: px, y: py });
+        }
+        
+        graphics.fillPoints(points, true);
+    }
+
+    drawSilverDiamondFrame(graphics, x, y, w, h, isRestored) {
+        const frameColor = isRestored ? 0xE0E0E0 : 0xC0C0C0;
+        
+        // Diamond frame
+        graphics.fillStyle(frameColor, 1);
+        graphics.fillTriangle(x, y - h/2, x - w/2, y, x + w/2, y);
+        graphics.fillTriangle(x, y + h/2, x - w/2, y, x + w/2, y);
+        
+        // Scrollwork details
+        graphics.lineStyle(2, frameColor, 0.6);
+        graphics.strokeTriangle(x, y - h/2, x - w/2, y, x + w/2, y);
+        graphics.strokeTriangle(x, y + h/2, x - w/2, y, x + w/2, y);
+        
+        // Mirror surface
+        if (!isRestored) {
+            graphics.fillGradientStyle(0x2d1b4e, 0x2d1b4e, 0x1a0a2e, 0x1a0a2e, 0.9);
+        } else {
+            graphics.fillGradientStyle(0xFF69B4, 0xFFD700, 0x87CEEB, 0x90EE90, 1);
+        }
+        graphics.fillTriangle(x, y - h/2 + 4, x - w/2 + 4, y, x + w/2 - 4, y);
+        graphics.fillTriangle(x, y + h/2 - 4, x - w/2 + 4, y, x + w/2 - 4, y);
+        
+        if (!isRestored) {
+            graphics.fillStyle(0x000000, 0.5);
+            graphics.fillTriangle(x, y - h/2 + 4, x - w/2 + 4, y, x + w/2 - 4, y);
+            graphics.fillTriangle(x, y + h/2 - 4, x - w/2 + 4, y, x + w/2 - 4, y);
+        }
+    }
+
+    drawOvalTealFrame(graphics, x, y, w, h, isRestored) {
+        const tealColor = isRestored ? 0x40E0D0 : 0x008080;
+        
+        // Silver frame
+        graphics.fillStyle(0xC0C0C0, 1);
+        graphics.fillEllipse(x, y, w + 8, h + 8);
+        
+        // Teal crystals at top and bottom
+        [-1, 1].forEach(side => {
+            for (let i = 0; i < 3; i++) {
+                const crystalX = x + (i - 1) * 15;
+                const crystalY = y + side * h/2;
+                graphics.fillStyle(tealColor, 0.9);
+                graphics.fillTriangle(
+                    crystalX, crystalY - side * 8,
+                    crystalX - 6, crystalY,
+                    crystalX + 6, crystalY
+                );
+            }
+        });
+        
+        // Mirror surface
+        if (!isRestored) {
+            graphics.fillGradientStyle(0x2d1b4e, 0x2d1b4e, 0x1a0a2e, 0x1a0a2e, 0.9);
+        } else {
+            graphics.fillGradientStyle(0xFF69B4, 0xFFD700, 0x87CEEB, 0x90EE90, 1);
+        }
+        graphics.fillEllipse(x, y, w, h);
+        
+        if (!isRestored) {
+            graphics.fillStyle(0x000000, 0.5);
+            graphics.fillEllipse(x, y, w, h);
+        }
+    }
+
+    drawOvalCrystalsFrame(graphics, x, y, w, h, isRestored) {
+        const crystalColors = isRestored ? [0xFFD700, 0xFFA500, 0x9370DB] : [0xFFA500, 0x9370DB, 0x0000FF];
+        
+        // Silver frame
+        graphics.fillStyle(0xC0C0C0, 1);
+        graphics.fillEllipse(x, y, w + 8, h + 8);
+        
+        // Large crystals at top
+        crystalColors.forEach((color, i) => {
+            const crystalX = x + (i - 1) * 20;
+            const crystalY = y - h/2 - 5;
+            graphics.fillStyle(color, 0.9);
+            graphics.fillTriangle(
+                crystalX, crystalY + 15,
+                crystalX - 8, crystalY,
+                crystalX + 8, crystalY
+            );
+        });
+        
+        // Small crystals along sides
+        for (let i = 0; i < 4; i++) {
+            const angle = (i / 4) * Math.PI;
+            const dist = Math.min(w, h) / 2 + 4;
+            const crystalX = x + Math.cos(angle) * dist;
+            const crystalY = y + Math.sin(angle) * dist;
+            graphics.fillStyle(crystalColors[i % crystalColors.length], 0.7);
+            graphics.fillCircle(crystalX, crystalY, 4);
+        }
+        
+        // Mirror surface
+        if (!isRestored) {
+            graphics.fillGradientStyle(0x2d1b4e, 0x2d1b4e, 0x1a0a2e, 0x1a0a2e, 0.9);
+        } else {
+            graphics.fillGradientStyle(0xFF69B4, 0xFFD700, 0x87CEEB, 0x90EE90, 1);
+        }
+        graphics.fillEllipse(x, y, w, h);
+        
+        if (!isRestored) {
+            graphics.fillStyle(0x000000, 0.5);
+            graphics.fillEllipse(x, y, w, h);
+        }
+    }
+
+    drawHexagonFrame(graphics, x, y, w, h, isRestored) {
+        const frameColor = isRestored ? 0xE0E0E0 : 0xC0C0C0;
+        const radius = Math.min(w, h) / 2;
+        
+        // Hexagon frame
+        graphics.fillStyle(frameColor, 1);
+        this.drawHexagon(graphics, x, y, radius + 8);
+        
+        // Beveled inner border
+        graphics.lineStyle(3, frameColor, 0.8);
+        this.drawHexagon(graphics, x, y, radius + 4, true);
+        
+        // Mirror surface
+        if (!isRestored) {
+            graphics.fillGradientStyle(0x2d1b4e, 0x2d1b4e, 0x1a0a2e, 0x1a0a2e, 0.9);
+        } else {
+            graphics.fillGradientStyle(0xFF69B4, 0xFFD700, 0x87CEEB, 0x90EE90, 1);
+        }
+        this.drawHexagon(graphics, x, y, radius);
+        
+        if (!isRestored) {
+            graphics.fillStyle(0x000000, 0.5);
+            this.drawHexagon(graphics, x, y, radius);
+        }
+    }
+
+    drawHexagon(graphics, x, y, radius, strokeOnly = false) {
+        graphics.beginPath();
+        for (let i = 0; i < 6; i++) {
+            const angle = (i / 6) * Math.PI * 2 - Math.PI / 2;
+            const px = x + Math.cos(angle) * radius;
+            const py = y + Math.sin(angle) * radius;
+            if (i === 0) graphics.moveTo(px, py);
+            else graphics.lineTo(px, py);
+        }
+        graphics.closePath();
+        if (strokeOnly) {
+            graphics.strokePath();
+        } else {
+            graphics.fillPath();
+        }
+    }
+
+    drawShieldFrame(graphics, x, y, w, h, isRestored) {
+        const frameColor = isRestored ? 0xE0E0E0 : 0xC0C0C0;
+        
+        // Shield shape - use polygon with curved approximation
+        graphics.fillStyle(frameColor, 1);
+        const points = [];
+        // Top point
+        points.push({ x: x, y: y - h/2 });
+        // Left curve (top to middle)
+        for (let i = 0; i <= 4; i++) {
+            const t = i / 4;
+            const px = Phaser.Math.Interpolation.Bezier([x, x - w/2, x - w/2], t);
+            const py = Phaser.Math.Interpolation.Bezier([y - h/2, y - h/4, y], t);
+            points.push({ x: px, y: py });
+        }
+        // Left curve (middle to bottom)
+        for (let i = 0; i <= 4; i++) {
+            const t = i / 4;
+            const px = Phaser.Math.Interpolation.Bezier([x - w/2, x - w/2, x], t);
+            const py = Phaser.Math.Interpolation.Bezier([y, y + h/4, y + h/2], t);
+            points.push({ x: px, y: py });
+        }
+        // Bottom point
+        points.push({ x: x, y: y + h/2 });
+        // Right curve (bottom to middle)
+        for (let i = 0; i <= 4; i++) {
+            const t = i / 4;
+            const px = Phaser.Math.Interpolation.Bezier([x, x + w/2, x + w/2], t);
+            const py = Phaser.Math.Interpolation.Bezier([y + h/2, y + h/4, y], t);
+            points.push({ x: px, y: py });
+        }
+        // Right curve (middle to top)
+        for (let i = 0; i <= 4; i++) {
+            const t = i / 4;
+            const px = Phaser.Math.Interpolation.Bezier([x + w/2, x + w/2, x], t);
+            const py = Phaser.Math.Interpolation.Bezier([y, y - h/4, y - h/2], t);
+            points.push({ x: px, y: py });
+        }
+        graphics.fillPoints(points, true);
+        
+        // Crown at top
+        graphics.fillStyle(0xFFD700, 1);
+        graphics.fillTriangle(x - 8, y - h/2, x + 8, y - h/2, x, y - h/2 - 12);
+        graphics.fillRect(x - 6, y - h/2, 12, 4);
+        
+        // Mirror surface
+        if (!isRestored) {
+            graphics.fillGradientStyle(0x2d1b4e, 0x2d1b4e, 0x1a0a2e, 0x1a0a2e, 0.9);
+        } else {
+            graphics.fillGradientStyle(0xFF69B4, 0xFFD700, 0x87CEEB, 0x90EE90, 1);
+        }
+        const innerPoints = [];
+        // Top point
+        innerPoints.push({ x: x, y: y - h/2 + 4 });
+        // Left curve (top to middle)
+        for (let i = 0; i <= 4; i++) {
+            const t = i / 4;
+            const px = Phaser.Math.Interpolation.Bezier([x, x - w/2 + 4, x - w/2 + 4], t);
+            const py = Phaser.Math.Interpolation.Bezier([y - h/2 + 4, y - h/4, y], t);
+            innerPoints.push({ x: px, y: py });
+        }
+        // Left curve (middle to bottom)
+        for (let i = 0; i <= 4; i++) {
+            const t = i / 4;
+            const px = Phaser.Math.Interpolation.Bezier([x - w/2 + 4, x - w/2 + 4, x], t);
+            const py = Phaser.Math.Interpolation.Bezier([y, y + h/4, y + h/2 - 4], t);
+            innerPoints.push({ x: px, y: py });
+        }
+        // Bottom point
+        innerPoints.push({ x: x, y: y + h/2 - 4 });
+        // Right curve (bottom to middle)
+        for (let i = 0; i <= 4; i++) {
+            const t = i / 4;
+            const px = Phaser.Math.Interpolation.Bezier([x, x + w/2 - 4, x + w/2 - 4], t);
+            const py = Phaser.Math.Interpolation.Bezier([y + h/2 - 4, y + h/4, y], t);
+            innerPoints.push({ x: px, y: py });
+        }
+        // Right curve (middle to top)
+        for (let i = 0; i <= 4; i++) {
+            const t = i / 4;
+            const px = Phaser.Math.Interpolation.Bezier([x + w/2 - 4, x + w/2 - 4, x], t);
+            const py = Phaser.Math.Interpolation.Bezier([y, y - h/4, y - h/2 + 4], t);
+            innerPoints.push({ x: px, y: py });
+        }
+        graphics.fillPoints(innerPoints, true);
+        
+        if (!isRestored) {
+            graphics.fillStyle(0x000000, 0.5);
+            graphics.fillPath();
+        }
+    }
+
+    drawStarFrame(graphics, x, y, w, h, isRestored) {
+        const frameColor = isRestored ? 0xE0E0E0 : 0xC0C0C0;
+        const radius = Math.min(w, h) / 2;
+        
+        // Star frame
+        graphics.fillStyle(frameColor, 1);
+        this.drawStar(graphics, x, y, radius + 8, 5, frameColor);
+        
+        // Mirror surface
+        if (!isRestored) {
+            graphics.fillGradientStyle(0x2d1b4e, 0x2d1b4e, 0x1a0a2e, 0x1a0a2e, 0.9);
+        } else {
+            graphics.fillGradientStyle(0xFF69B4, 0xFFD700, 0x87CEEB, 0x90EE90, 1);
+        }
+        this.drawStar(graphics, x, y, radius, 5, 0x000000);
+        
+        if (!isRestored) {
+            graphics.fillStyle(0x000000, 0.5);
+            this.drawStar(graphics, x, y, radius, 5, 0x000000);
+        }
+    }
+
+    drawStar(graphics, x, y, radius, points, color) {
+        graphics.fillStyle(color, 1);
+        graphics.beginPath();
+        for (let i = 0; i < points * 2; i++) {
+            const r = i % 2 === 0 ? radius : radius * 0.5;
+            const angle = (i * Math.PI / points) - Math.PI / 2;
+            const px = x + Math.cos(angle) * r;
+            const py = y + Math.sin(angle) * r;
+            if (i === 0) graphics.moveTo(px, py);
+            else graphics.lineTo(px, py);
+        }
+        graphics.closePath();
+        graphics.fillPath();
+    }
+
+    drawSwirlOvalFrame(graphics, x, y, w, h, isRestored) {
+        const frameColor = isRestored ? 0xE0E0E0 : 0xA0A0A0;
+        
+        // Swirling organic frame
+        graphics.fillStyle(frameColor, 1);
+        graphics.beginPath();
+        for (let i = 0; i < 32; i++) {
+            const angle = (i / 32) * Math.PI * 2;
+            const radius = Math.min(w, h) / 2 + 8 + Math.sin(angle * 3) * 4;
+            const px = x + Math.cos(angle) * radius;
+            const py = y + Math.sin(angle) * radius;
+            if (i === 0) graphics.moveTo(px, py);
+            else graphics.lineTo(px, py);
+        }
+        graphics.closePath();
+        graphics.fillPath();
+        
+        // Mirror surface
+        if (!isRestored) {
+            graphics.fillGradientStyle(0x2d1b4e, 0x2d1b4e, 0x1a0a2e, 0x1a0a2e, 0.9);
+        } else {
+            graphics.fillGradientStyle(0xFF69B4, 0xFFD700, 0x87CEEB, 0x90EE90, 1);
+        }
+        graphics.beginPath();
+        for (let i = 0; i < 32; i++) {
+            const angle = (i / 32) * Math.PI * 2;
+            const radius = Math.min(w, h) / 2 + Math.sin(angle * 3) * 2;
+            const px = x + Math.cos(angle) * radius;
+            const py = y + Math.sin(angle) * radius;
+            if (i === 0) graphics.moveTo(px, py);
+            else graphics.lineTo(px, py);
+        }
+        graphics.closePath();
+        graphics.fillPath();
+        
+        if (!isRestored) {
+            graphics.fillStyle(0x000000, 0.5);
+            graphics.fillPath();
+        }
+    }
+
+    drawMirrorGlow(graphics, width, height, mirrorType, isRestored) {
+        const glowColor = isRestored ? 0xFFD700 : 0x9370DB;
+        // Reduced glow size to prevent overlap between mirrors
+        const glowSize = Math.max(width, height) * 1.2; // Reduced from 1.4 to 1.2
+        
+        // Multi-layer glow for more mystical effect
+        // Outer glow (faint)
+        graphics.fillGradientStyle(glowColor, glowColor, 0x000000, 0x000000, 0);
+        graphics.fillCircle(0, 0, glowSize);
+        
+        // Middle glow
+        graphics.fillStyle(glowColor, 0.15);
+        graphics.fillCircle(0, 0, glowSize * 0.75);
+        
+        // Inner glow (brighter)
+        graphics.fillStyle(glowColor, 0.3);
+        graphics.fillCircle(0, 0, glowSize * 0.45);
+        
+        // Add sparkle points around the glow (fewer to reduce overlap)
+        const sparkleCount = 6; // Reduced from 8
+        for (let i = 0; i < sparkleCount; i++) {
+            const angle = (i / sparkleCount) * Math.PI * 2;
+            const dist = glowSize * 0.55; // Slightly closer to center
+            const sparkleX = Math.cos(angle) * dist;
+            const sparkleY = Math.sin(angle) * dist;
+            graphics.fillStyle(glowColor, 0.6);
+            graphics.fillCircle(sparkleX, sparkleY, 2.5); // Slightly smaller
+            graphics.fillStyle(0xFFFFFF, 0.8);
+            graphics.fillCircle(sparkleX, sparkleY, 1.2);
+        }
+    }
+
+    addMirrorStars(graphics, x, y, w, h, isRestored) {
+        const starCount = isRestored ? 20 : 15;
+        const starColor = isRestored ? 0xFFD700 : 0xFFFFFF;
+        
+        for (let i = 0; i < starCount; i++) {
+            const starX = x + Phaser.Math.Between(-w/2, w/2);
+            const starY = y + Phaser.Math.Between(-h/2, h/2);
+            const starSize = Phaser.Math.Between(1, 3);
+            graphics.fillStyle(starColor, Phaser.Math.FloatBetween(0.6, 1));
+            graphics.fillCircle(starX, starY, starSize);
+        }
+    }
+
+    addMirrorReflections(graphics, x, y, w, h) {
+        // Diagonal white reflections
+        graphics.fillStyle(0xFFFFFF, 0.4);
+        graphics.fillRect(x - w/2, y - h/2, w * 0.3, h);
+        graphics.fillRect(x + w/2 - w * 0.3, y - h/2, w * 0.3, h);
+    }
+
+    createMirrorSparkles(container, width, height, mirror) {
+        const sparkleCount = 8; // Reduced to prevent overlap
+        for (let i = 0; i < sparkleCount; i++) {
+            const sparkle = this.add.graphics();
+            const angle = (i / sparkleCount) * Math.PI * 2;
+            const dist = Math.max(width, height) / 2 + 8; // Closer to mirror to prevent overlap
+            const x = Math.cos(angle) * dist;
+            const y = Math.sin(angle) * dist;
+            
+            sparkle.fillStyle(0xFFFFFF, 0.9);
+            sparkle.fillCircle(0, 0, 2.5);
+            sparkle.fillStyle(0xFFD700, 0.7);
+            sparkle.fillCircle(0, 0, 1.2);
+            
+            sparkle.x = x;
+            sparkle.y = y;
+            container.add(sparkle);
+            mirror.sparkles.push(sparkle);
+            
+            // Twinkling animation with random timing for mystical effect
+            const baseDelay = i * 150;
+            const randomDelay = Phaser.Math.Between(0, 300);
+            this.tweens.add({
+                targets: sparkle,
+                alpha: { from: 0.2, to: 1 },
+                scale: { from: 0.5, to: 1.5 },
+                duration: Phaser.Math.Between(800, 1800),
+                yoyo: true,
+                repeat: -1,
+                ease: 'Sine.easeInOut',
+                delay: baseDelay + randomDelay
+            });
+            
+            // Add occasional bright flash for mystical twinkling
+            const createSparkleFlash = () => {
+                if (sparkle && !mirror.isRestored) {
+                    this.tweens.add({
+                        targets: sparkle,
+                        alpha: 1.5,
+                        scale: 2,
+                        duration: 150,
+                        yoyo: true,
+                        repeat: 1,
+                        ease: 'Power2',
+                        onComplete: () => {
+                            if (sparkle && !mirror.isRestored) {
+                                this.time.addEvent({
+                                    delay: Phaser.Math.Between(2000, 5000),
+                                    callback: createSparkleFlash,
+                                    loop: false
+                                });
+                            }
+                        }
+                    });
+                }
+            };
+            
+            this.time.addEvent({
+                delay: Phaser.Math.Between(2000, 5000),
+                callback: createSparkleFlash,
+                loop: true
+            });
+        }
     }
 
     selectMirror(mirrorIndex) {
@@ -353,23 +1116,39 @@ class MirrorCityScreen extends Phaser.Scene {
         challengeBg.fillRect(0, 0, width, height);
         this.challengeContainer.add(challengeBg);
 
-        // Title
+        // Calculate layout positions to avoid overlap
+        // Header: y=40, height=80, ends at y=120
+        const headerBottom = 120;
+        
+        // Title - positioned below header with spacing
+        const titleY = headerBottom + 25; // 25px spacing from header
         const puzzle = this.currentPuzzle;
-        const titleText = this.add.text(width / 2, 55, `Gương ${this.currentMirrorIndex + 1}: ${this.getCategoryName(puzzle.category)}`, {
-            fontSize: '22px',
+        const titleText = this.add.text(width / 2, titleY, `Gương ${this.currentMirrorIndex + 1}: ${this.getCategoryName(puzzle.category)}`, {
+            fontSize: '24px',
             fill: '#FFD700',
             fontFamily: 'Comic Sans MS, Arial',
             fontStyle: 'bold',
             stroke: '#000000',
-            strokeThickness: 2
+            strokeThickness: 3,
+            shadow: {
+                offsetX: 2,
+                offsetY: 2,
+                color: '#000000',
+                blur: 4,
+                stroke: true,
+                fill: true
+            }
         }).setOrigin(0.5);
         this.challengeContainer.add(titleText);
+        
+        // Title takes approximately 35px height (24px font + padding)
+        const titleBottom = titleY + 35;
 
-        // Create two image panels (original and reflection)
-        this.createImagePanels(width, height);
+        // Create two image panels (original and reflection) - positioned below title
+        this.createImagePanels(width, height, titleBottom);
 
-        // Instruction text
-        const instructionText = this.add.text(width / 2, height - 70, 'Tìm điểm khác biệt giữa hai hình!', {
+        // Instruction text - positioned above buttons
+        const instructionText = this.add.text(width / 2, height - 100, 'Tìm điểm khác biệt giữa hai hình!', {
             fontSize: '18px',
             fill: '#FFFFFF',
             fontFamily: 'Comic Sans MS, Arial',
@@ -408,11 +1187,22 @@ class MirrorCityScreen extends Phaser.Scene {
         return names[category] || category;
     }
 
-    createImagePanels(width, height) {
+    createImagePanels(width, height, titleBottom) {
         const puzzle = this.currentPuzzle;
         const panelWidth = width * 0.38;
-        const panelHeight = height * 0.55;
-        const panelY = height * 0.42;
+        
+        // Calculate available space
+        // Top: titleBottom (end of title)
+        // Bottom: instruction text at height - 100, buttons at height - 50
+        // Reserve space: 100px for instruction + buttons at bottom
+        const availableHeight = height - titleBottom - 100;
+        
+        // Panel height should fit in available space with some margin
+        const panelHeight = Math.min(availableHeight * 0.75, height * 0.5);
+        
+        // Center panels vertically in available space
+        const panelY = titleBottom + (availableHeight / 2);
+        
         const gap = 20;
 
         // Left panel (Original)
@@ -883,50 +1673,110 @@ class MirrorCityScreen extends Phaser.Scene {
 
     drawHeart(graphics, x, y, size, color) {
         graphics.fillStyle(color, 1);
-        graphics.beginPath();
-        graphics.moveTo(x, y + size * 0.3);
-        graphics.bezierCurveTo(x - size * 0.5, y - size * 0.3, x - size, y + size * 0.1, x, y + size * 0.5);
-        graphics.bezierCurveTo(x + size, y + size * 0.1, x + size * 0.5, y - size * 0.3, x, y + size * 0.3);
-        graphics.closePath();
-        graphics.fillPath();
+        // Draw heart shape using points
+        const points = [];
+        const centerY = y + size * 0.3;
+        
+        // Create heart shape with bezier approximation using points
+        for (let i = 0; i <= 20; i++) {
+            const t = i / 20;
+            let px, py;
+            
+            if (t < 0.5) {
+                // Left side of heart
+                const t2 = t * 2;
+                px = Phaser.Math.Interpolation.Bezier([x, x - size * 0.5, x - size, x], t2);
+                py = Phaser.Math.Interpolation.Bezier([centerY, y - size * 0.3, y + size * 0.1, y + size * 0.5], t2);
+            } else {
+                // Right side of heart
+                const t2 = (t - 0.5) * 2;
+                px = Phaser.Math.Interpolation.Bezier([x, x + size, x + size * 0.5, x], t2);
+                py = Phaser.Math.Interpolation.Bezier([y + size * 0.5, y + size * 0.1, y - size * 0.3, centerY], t2);
+            }
+            
+            points.push({ x: px, y: py });
+        }
+        
+        graphics.fillPoints(points, true);
     }
 
     createHintButton(width, height) {
-        const hintBtn = this.add.container(width - 80, height - 50);
+        // Position button better - bottom right with proper spacing
+        const btnWidth = 100;
+        const btnHeight = 45;
+        const btnX = width - btnWidth / 2 - 20;
+        const btnY = height - btnHeight / 2 - 15; // Slightly higher to avoid edge
         
+        const hintBtn = this.add.container(btnX, btnY);
+        
+        // Background with gradient effect
         const hintBg = this.add.graphics();
+        // Main fill - bright green
         hintBg.fillStyle(0x4CAF50, 1);
-        hintBg.fillRoundedRect(-40, -20, 80, 40, 10);
-        hintBg.lineStyle(2, 0xFFD700, 1);
-        hintBg.strokeRoundedRect(-40, -20, 80, 40, 10);
+        hintBg.fillRoundedRect(-btnWidth/2, -btnHeight/2, btnWidth, btnHeight, 12);
+        // Border - gold
+        hintBg.lineStyle(3, 0xFFD700, 1);
+        hintBg.strokeRoundedRect(-btnWidth/2, -btnHeight/2, btnWidth, btnHeight, 12);
+        // Inner highlight
+        hintBg.fillStyle(0x66BB6A, 0.5);
+        hintBg.fillRoundedRect(-btnWidth/2 + 2, -btnHeight/2 + 2, btnWidth - 4, btnHeight/2 - 2, 10);
         hintBtn.add(hintBg);
 
-        const hintText = this.add.text(0, 0, `💡 ${this.hintsRemaining}`, {
+        // Icon and text - better spacing
+        const iconText = this.add.text(-25, 0, '💡', {
+            fontSize: '22px',
+        }).setOrigin(0.5, 0.5);
+        hintBtn.add(iconText);
+        
+        const hintText = this.add.text(15, 0, 'HINT', {
             fontSize: '18px',
             fill: '#FFFFFF',
             fontFamily: 'Comic Sans MS, Arial',
-            fontStyle: 'bold'
-        }).setOrigin(0.5);
+            fontStyle: 'bold',
+            stroke: '#2E7D32',
+            strokeThickness: 2
+        }).setOrigin(0.5, 0.5);
         hintBtn.add(hintText);
         this.hintButtonText = hintText;
 
-        hintBtn.setSize(80, 40);
+        hintBtn.setSize(btnWidth, btnHeight);
         hintBtn.setInteractive({ useHandCursor: true });
         
         hintBtn.on('pointerdown', () => {
-            if (this.hintsRemaining > 0) {
-                this.useHint();
-            }
+            // Always allow hints (unlimited)
+            this.useHint();
         });
 
-        hintBtn.on('pointerover', () => hintBtn.setScale(1.1));
-        hintBtn.on('pointerout', () => hintBtn.setScale(1));
+        // Better hover effect
+        hintBtn.on('pointerover', () => {
+            hintBtn.setScale(1.05);
+            hintBg.clear();
+            // Brighter on hover
+            hintBg.fillStyle(0x66BB6A, 1);
+            hintBg.fillRoundedRect(-btnWidth/2, -btnHeight/2, btnWidth, btnHeight, 12);
+            hintBg.lineStyle(3, 0xFFD700, 1);
+            hintBg.strokeRoundedRect(-btnWidth/2, -btnHeight/2, btnWidth, btnHeight, 12);
+            hintBg.fillStyle(0x81C784, 0.5);
+            hintBg.fillRoundedRect(-btnWidth/2 + 2, -btnHeight/2 + 2, btnWidth - 4, btnHeight/2 - 2, 10);
+        });
+        
+        hintBtn.on('pointerout', () => {
+            hintBtn.setScale(1);
+            hintBg.clear();
+            hintBg.fillStyle(0x4CAF50, 1);
+            hintBg.fillRoundedRect(-btnWidth/2, -btnHeight/2, btnWidth, btnHeight, 12);
+            hintBg.lineStyle(3, 0xFFD700, 1);
+            hintBg.strokeRoundedRect(-btnWidth/2, -btnHeight/2, btnWidth, btnHeight, 12);
+            hintBg.fillStyle(0x66BB6A, 0.5);
+            hintBg.fillRoundedRect(-btnWidth/2 + 2, -btnHeight/2 + 2, btnWidth - 4, btnHeight/2 - 2, 10);
+        });
 
         this.challengeContainer.add(hintBtn);
     }
 
     createBackButton(width, height) {
-        const backBtn = this.add.container(80, height - 50);
+        // Position button - bottom left with proper spacing (aligned with hint button)
+        const backBtn = this.add.container(80, height - 15);
         
         const backBg = this.add.graphics();
         backBg.fillStyle(0xE91E63, 1);
@@ -957,13 +1807,8 @@ class MirrorCityScreen extends Phaser.Scene {
     }
 
     useHint() {
-        if (this.hintsRemaining <= 0) return;
+        // Unlimited hints - no check needed
         
-        this.hintsRemaining--;
-        if (this.hintButtonText) {
-            this.hintButtonText.setText(`💡 ${this.hintsRemaining}`);
-        }
-
         // Show hint from Wise Owl
         const puzzle = this.currentPuzzle;
         if (this.wiseOwl) {
@@ -1001,7 +1846,7 @@ class MirrorCityScreen extends Phaser.Scene {
         // Play correct answer effects
         this.createMagicalSparkles(this.cameras.main.width / 2, this.cameras.main.height / 2);
         
-        // Show Wise Owl celebration (no voice - text only)
+        // Show Wise Owl celebration with voice
         if (this.wiseOwl) {
             this.wiseOwl.cheer();
             const messages = [
@@ -1013,7 +1858,8 @@ class MirrorCityScreen extends Phaser.Scene {
             ];
             const message = messages[Phaser.Math.Between(0, messages.length - 1)];
             this.wiseOwl.showDialogue(message, 3000);
-            // Voice disabled for Level 2
+            // Play correct answer voice
+            this.playVoice('voice_correct');
         }
 
         // Restore the mirror
@@ -1062,7 +1908,7 @@ class MirrorCityScreen extends Phaser.Scene {
             }
         });
 
-        // Wise Owl encouragement (no voice - text only)
+        // Wise Owl encouragement with voice
         if (this.wiseOwl) {
             this.wiseOwl.showSadness();
             const messages = [
@@ -1074,7 +1920,8 @@ class MirrorCityScreen extends Phaser.Scene {
             ];
             const message = messages[Phaser.Math.Between(0, messages.length - 1)];
             this.wiseOwl.showDialogue(message, 3000);
-            // Voice disabled for Level 2
+            // Play wrong answer voice
+            this.playVoice('voice_wrong');
             
             this.time.delayedCall(3500, () => {
                 this.wiseOwl.returnToIdle();
@@ -1124,45 +1971,43 @@ class MirrorCityScreen extends Phaser.Scene {
         if (mirror.graphics) {
             mirror.graphics.destroy();
         }
+        if (mirror.glowEffect) {
+            mirror.glowEffect.destroy();
+        }
 
-        // Create restored mirror (bright, shiny)
+        // Create restored mirror graphics (bright and beautiful)
         const restoredGraphics = this.add.graphics();
-        
-        // Ornate outer frame (golden)
-        restoredGraphics.fillStyle(0xFFD700, 1);
-        restoredGraphics.fillRoundedRect(-width/2 - 8, -height/2 - 8, width + 16, height + 16, 8);
-        
-        // Inner frame
-        restoredGraphics.fillGradientStyle(0xDAA520, 0xDAA520, 0xFFD700, 0xFFD700, 1);
-        restoredGraphics.fillRoundedRect(-width/2 - 4, -height/2 - 4, width + 8, height + 8, 6);
-        
-        // Mirror surface (bright, reflective)
-        restoredGraphics.fillGradientStyle(0xE0FFFF, 0xE0FFFF, 0x87CEEB, 0x87CEEB, 1);
-        restoredGraphics.fillRoundedRect(-width/2, -height/2, width, height, 4);
-        
-        // Shimmer effect
-        restoredGraphics.fillStyle(0xFFFFFF, 0.4);
-        restoredGraphics.fillRoundedRect(-width/2 + 5, -height/2 + 5, width * 0.4, height * 0.3, 3);
-        
-        // Magical sparkle border
-        restoredGraphics.lineStyle(3, 0xFFD700, 1);
-        restoredGraphics.strokeRoundedRect(-width/2, -height/2, width, height, 4);
-        
+        this.drawMirrorFrame(restoredGraphics, width, height, mirror.mirrorType, true);
         container.add(restoredGraphics);
         mirror.graphics = restoredGraphics;
 
-        // Update glow effect to bright
-        if (mirror.glowEffect) {
-            mirror.glowEffect.clear();
-            mirror.glowEffect.fillStyle(0xFFD700, 0.4);
-            mirror.glowEffect.fillRoundedRect(-width/2 - 15, -height/2 - 15, width + 30, height + 30, 12);
-        }
+        // Create bright glow effect
+        const brightGlow = this.add.graphics();
+        this.drawMirrorGlow(brightGlow, width, height, mirror.mirrorType, true);
+        container.add(brightGlow);
+        container.sendToBack(brightGlow);
+        mirror.glowEffect = brightGlow;
 
-        // Star indicator
-        const star = this.add.text(width/2 - 5, -height/2 + 5, '⭐', {
-            fontSize: '16px'
-        }).setOrigin(0.5);
-        container.add(star);
+        // Animate bright glow
+        this.tweens.add({
+            targets: brightGlow,
+            alpha: { from: 0.5, to: 0.9 },
+            scaleX: { from: 1.0, to: 1.2 },
+            scaleY: { from: 1.0, to: 1.2 },
+            duration: 1500,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
+        });
+
+        // Update sparkles to be brighter
+        mirror.sparkles.forEach(sparkle => {
+            sparkle.clear();
+            sparkle.fillStyle(0xFFD700, 1);
+            sparkle.fillCircle(0, 0, 4);
+            sparkle.fillStyle(0xFFFFFF, 0.8);
+            sparkle.fillCircle(0, 0, 2);
+        });
 
         // Pop animation
         container.setScale(0.5);
@@ -1207,28 +2052,34 @@ class MirrorCityScreen extends Phaser.Scene {
     }
 
     showIntroductionDialogue() {
-        // Level 2 dialogues - NO VOICE (text only)
+        // Level 2 dialogues with voice
         const dialogues = [
             {
                 text: "Chào mừng đến Thành Phố Gương! Nơi này từng sáng rực như ngàn vì sao.",
+                voiceKey: 'voice_intro_1',
                 duration: 4000
             },
             {
                 text: "10 tấm gương thiêng đã bị làm mờ bởi phép thuật đen tối.",
+                voiceKey: 'voice_intro_2',
                 duration: 3500
             },
             {
                 text: "Hãy dùng đôi mắt tinh tường để tìm điểm khác biệt và giải cứu ánh sáng!",
+                voiceKey: 'voice_intro_3',
                 duration: 4500
             }
         ];
         
-        this.showDialogueSequence(dialogues, () => {
+        this.showDialogueSequenceWithVoice(dialogues, () => {
             // Ready to play
             console.log('Introduction complete, ready to play');
         });
     }
 
+    /**
+     * Show dialogue sequence WITH voice (follows CountingForestScreen pattern)
+     */
     showDialogueSequenceWithVoice(dialogues, onComplete) {
         if (this.dialogueIndex >= dialogues.length) {
             this.dialogueIndex = 0;
@@ -1237,22 +2088,28 @@ class MirrorCityScreen extends Phaser.Scene {
         }
         
         const dialogue = dialogues[this.dialogueIndex];
+        const text = dialogue.text;
+        const voiceKey = dialogue.voiceKey;
+        const duration = dialogue.duration || 4000;
         
+        // Show text dialogue
         if (this.wiseOwl) {
-            this.wiseOwl.showDialogue(dialogue.text, dialogue.duration);
+            this.wiseOwl.showDialogue(text, duration);
         }
         
-        // Voice disabled for Level 2
-        // this.playVoice(dialogue.voiceKey);
+        // Play voice audio
+        if (voiceKey) {
+            this.playVoice(voiceKey);
+        }
         
         this.dialogueIndex++;
-        this.time.delayedCall(dialogue.duration + 500, () => {
+        this.time.delayedCall(duration + 500, () => {
             this.showDialogueSequenceWithVoice(dialogues, onComplete);
         });
     }
 
     /**
-     * Show dialogue sequence WITHOUT voice (text only)
+     * Show dialogue sequence WITHOUT voice (text only) - fallback
      */
     showDialogueSequence(dialogues, onComplete) {
         if (this.dialogueIndex >= dialogues.length) {
@@ -1262,45 +2119,87 @@ class MirrorCityScreen extends Phaser.Scene {
         }
         
         const dialogue = dialogues[this.dialogueIndex];
+        const text = typeof dialogue === 'string' ? dialogue : dialogue.text;
+        const duration = dialogue.duration || 4000;
         
         if (this.wiseOwl) {
-            this.wiseOwl.showDialogue(dialogue.text, dialogue.duration);
+            this.wiseOwl.showDialogue(text, duration);
         }
         
-        // No voice - text only
-        
         this.dialogueIndex++;
-        this.time.delayedCall(dialogue.duration + 500, () => {
+        this.time.delayedCall(duration + 500, () => {
             this.showDialogueSequence(dialogues, onComplete);
         });
     }
 
     // ==========================================
-    // AUDIO METHODS - DISABLED FOR LEVEL 2
-    // Will be implemented in future update
+    // AUDIO METHODS
     // ==========================================
     
     playLevelBGM() {
-        // BGM disabled for Level 2 - will be added later
-        console.log('Level 2: BGM disabled');
+        if (this.cache.audio.exists('bgm_mirror_city') && window.gameData?.musicEnabled !== false) {
+            // Stop any existing sounds (but keep voice audio capability)
+            this.sound.stopAll();
+            
+            // Create and play Mirror City BGM
+            this.levelBGM = this.sound.add('bgm_mirror_city', {
+                volume: 0.65, // Increased volume for better presence
+                loop: true
+            });
+            this.levelBGM.play();
+            console.log('🎵 Playing Mirror City BGM');
+        }
     }
 
     stopLevelBGM() {
-        // BGM disabled for Level 2
+        if (this.levelBGM) {
+            // Fade out BGM
+            this.tweens.add({
+                targets: this.levelBGM,
+                volume: 0,
+                duration: 500,
+                onComplete: () => {
+                    if (this.levelBGM) {
+                        this.levelBGM.stop();
+                    }
+                }
+            });
+        }
     }
 
     playVoice(voiceKey) {
-        // Voice disabled for Level 2
-        return null;
+        // Stop current voice if playing
+        if (this.currentVoice) {
+            this.currentVoice.stop();
+            this.currentVoice = null;
+        }
+        
+        // Check if audio exists and play
+        if (this.cache.audio.exists(voiceKey)) {
+            this.currentVoice = this.sound.add(voiceKey, { volume: 0.35 }); // Lower volume for Wise Owl
+            this.currentVoice.play();
+            console.log('Playing voice:', voiceKey);
+            return this.currentVoice;
+        } else {
+            console.warn('Voice audio not found:', voiceKey);
+            return null;
+        }
     }
 
     playVoiceWithFallback(primaryKey, fallbackKey) {
-        // Voice disabled for Level 2
+        if (this.cache.audio.exists(primaryKey)) {
+            return this.playVoice(primaryKey);
+        } else if (fallbackKey && this.cache.audio.exists(fallbackKey)) {
+            return this.playVoice(fallbackKey);
+        }
         return null;
     }
 
     stopVoice() {
-        // Voice disabled for Level 2
+        if (this.currentVoice) {
+            this.currentVoice.stop();
+            this.currentVoice = null;
+        }
     }
 
     createAmbientCreatures() {
@@ -1411,11 +2310,12 @@ class MirrorCityScreen extends Phaser.Scene {
             });
         }
 
-        // Wise Owl final celebration (no voice - text only)
+        // Wise Owl final celebration with voice
         if (this.wiseOwl) {
             this.wiseOwl.celebrate();
             this.wiseOwl.showDialogue("Phi thường! Tất cả 10 tấm gương đã sáng rực rỡ! Thành Phố Gương đã được giải cứu!", 6000);
-            // Voice disabled for Level 2
+            // Play level complete voice
+            this.playVoice('voice_complete');
         }
 
         // Show reward after delay
@@ -1540,6 +2440,8 @@ class MirrorCityScreen extends Phaser.Scene {
 
     shutdown() {
         // Stop all sounds (ensures clean state when leaving scene)
+        this.stopLevelBGM();
+        this.stopVoice();
         this.sound.stopAll();
         
         // Cleanup Wise Owl

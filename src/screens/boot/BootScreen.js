@@ -10,8 +10,8 @@ class BootScreen extends Phaser.Scene {
     }
 
     preload() {
-        // Load boot screen background
-        this.load.image('boot_bg', 'screens/boot/assets/backgrounds/garden_bg_1.png');
+        // Load boot screen background - World of Knowledge map
+        this.load.image('boot_bg', 'screens/boot/assets/backgrounds/bunnies_world.jpg');
         
         // Load boot screen BGM
         this.load.audio('bgm_boot', 'screens/boot/assets/audio/bgm/boot_bgm.wav');

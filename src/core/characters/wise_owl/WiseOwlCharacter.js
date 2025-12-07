@@ -502,15 +502,19 @@ class WiseOwlCharacter {
         }
         
         if (this.speechBubble) {
+            const bubbleToDestroy = this.speechBubble;
+            this.speechBubble = null; // Set to null first to prevent double destroy
+            
             this.scene.tweens.add({
-                targets: this.speechBubble,
+                targets: bubbleToDestroy,
                 scaleX: 0,
                 scaleY: 0,
                 alpha: 0,
                 duration: 200,
                 onComplete: () => {
-                    this.speechBubble.destroy();
-                    this.speechBubble = null;
+                    if (bubbleToDestroy && !bubbleToDestroy.destroyed) {
+                        bubbleToDestroy.destroy();
+                    }
                 }
             });
         }

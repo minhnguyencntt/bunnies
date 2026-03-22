@@ -8,3 +8,7 @@ edge-tts>=6.1.0
 gtts>=2.5.0
 pydub>=0.25.1
 
+# BGM + TTS: scripts/generate_audio.py (bgm / tts / bundle) + scripts/bgm/screen_bgm_presets.json
+numpy>=1.22.0
+scipy>=1.8.0
+

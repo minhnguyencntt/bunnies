@@ -14,7 +14,11 @@ Các file âm thanh tiếng Việt cần thiết cho menu screen:
    - Độ dài: ~6-8 giây
    - Giọng nói: Thân thiện, dễ hiểu cho trẻ em
 
-3. **city_click.mp3**
+3. **city_4_doi_phep_tru.mp3**
+   - Nội dung: "Đồi Phép Trừ. Tìm kết quả phép trừ để giúp cáo tìm đồ. Chủ đề: Phép trừ."
+   - `python3 scripts/generate_audio.py bundle menu` (Edge `vi-VN-HoaiMyNeural`; hoặc `tts` từng file)
+
+4. **city_click.mp3**
    - Nội dung: Âm thanh khi click vào marker (ví dụ: "Bắt đầu!", "Đi thôi!", hoặc sound effect vui nhộn)
    - Độ dài: ~1-2 giây
    - Giọng nói hoặc sound effect: Vui nhộn, kích thích
@@ -30,7 +34,7 @@ Các file âm thanh tiếng Việt cần thiết cho menu screen:
 3. Export thành MP3 với format trên
 
 ## Lưu ý:
-- File sẽ được load tự động khi MenuScreen khởi tạo
+- File được load khi `menu_screen.js` (scene MenuScreen) preload
 - Nếu file không tồn tại, hệ thống sẽ fallback về Web Speech API
 - File sẽ phát khi hover vào marker tương ứng
 
@@ -38,11 +42,12 @@ Các file âm thanh tiếng Việt cần thiết cho menu screen:
 Các file đã được tạo tự động bằng script Python sử dụng Microsoft Edge TTS:
 - ✅ city_1_khu_rung_dem_so.mp3 (47KB)
 - ✅ city_2_thanh_pho_guong.mp3 (47KB)
+- ✅ city_4_doi_phep_tru.mp3
 - ✅ city_click.mp3 (8.3KB)
 
 Để tạo lại hoặc tạo file mới, chạy:
 ```bash
-python scripts/generate_menu_audio.py
+python3 scripts/generate_audio.py bundle menu
 ```
 
 Xem thêm: `scripts/README_AUDIO.md`

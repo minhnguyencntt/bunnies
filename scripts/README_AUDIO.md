@@ -1,5 +1,7 @@
 # Hướng dẫn tạo file âm thanh cho Game
 
+Cấu trúc thư mục menu / màn chơi và `story.md`: xem **README.md** (mục chuẩn thư mục Menu & từng màn chơi).
+
 ## Menu Screen Audio
 
 ### Cách 1: Sử dụng script Python (Tự động)
@@ -17,20 +19,47 @@ pip install gtts pydub
 #### Bước 2: Chạy script
 
 ```bash
-python scripts/generate_menu_audio.py
+python3 scripts/generate_audio.py bundle menu
+# Ghi đè file cũ: thêm --force
 ```
 
-Script sẽ tự động tạo 3 file:
+Script sẽ tự động tạo các file (bỏ qua file đã tồn tại):
 - `city_1_khu_rung_dem_so.mp3`
 - `city_2_thanh_pho_guong.mp3`
+- `city_4_doi_phep_tru.mp3`
 - `city_click.mp3`
+
+## BGM màn hình (một pipeline cho mọi screen)
+
+Engine: `scripts/bgm/layered_engine.py` (numpy/scipy — bass, hợp âm, giai điệu, sparkle, pad).  
+Cấu hình: `scripts/bgm/screen_bgm_presets.json` (thêm preset mới = thêm object trong `presets`).
+
+```bash
+pip install numpy scipy
+python3 scripts/generate_audio.py bgm --list
+python3 scripts/generate_audio.py bgm all
+python3 scripts/generate_audio.py bgm mirror_city_level2
+```
+
+Một màn chơi mới **chỉ cần JSON** (không sửa Python):
+
+```bash
+python3 scripts/generate_audio.py bgm --definition path/to/my_screen_bgm.json
+```
+
+**TTS một dòng (prompt = nội dung đọc):**
+
+```bash
+python3 scripts/generate_audio.py tts --text "Câu thoại" --out src/screens/.../voice/foo.mp3
+python3 scripts/generate_audio.py tts --prompt-file kich_ban.txt --out .../intro_1.mp3 --force
+```
 
 ## Mirror City Screen Audio
 
 ### Voice Files (Tự động bằng script):
 
 ```bash
-python scripts/generate_mirror_city_audio.py
+python3 scripts/generate_audio.py bundle mirror-city
 ```
 
 Script sẽ tự động tạo 6 file voice:
@@ -43,8 +72,7 @@ Script sẽ tự động tạo 6 file voice:
 
 ### Background Music (BGM):
 
-BGM cần tạo thủ công. Xem hướng dẫn chi tiết trong:
-- `src/screens/mirror_city/assets/audio/voice/README.md`
+Xem mục **BGM màn hình** ở trên (`generate_audio.py bgm`). Thay BGM bằng file tải từ AI/Freesound: export WAV 44100 Hz, đặt đúng đường dẫn trong `preload` của scene.
 
 ## Cách 2: Sử dụng công cụ online
 
@@ -72,7 +100,12 @@ BGM cần tạo thủ công. Xem hướng dẫn chi tiết trong:
 "Thành phố Gương Kỳ Ảo. Tìm điểm khác nhau giữa hai bức tranh ma thuật. Chủ đề: Tìm điểm khác biệt."
 ```
 
-### 3. city_click.mp3
+### 3. city_4_doi_phep_tru.mp3
+```
+"Đồi Phép Trừ. Tìm kết quả phép trừ để giúp cáo tìm đồ. Chủ đề: Phép trừ."
+```
+
+### 4. city_click.mp3
 ```
 "Bắt đầu!"
 ```

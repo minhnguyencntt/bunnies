@@ -38,7 +38,7 @@ Các file âm thanh tiếng Việt cần thiết cho Mirror City screen:
 
 ## Background Music (BGM):
 
-### level2_bgm.wav
+### bgm.wav (thư mục `bgm/`)
 - **Thể loại**: Nhạc nền ma thuật, huyền bí, phù hợp với chủ đề "Thành Phố Gương"
 - **Tính chất**: 
   - Mystical, magical atmosphere
@@ -60,7 +60,7 @@ Các file âm thanh tiếng Việt cần thiết cho Mirror City screen:
 
 ### Voice Files (Tự động bằng script):
 ```bash
-python scripts/generate_mirror_city_audio.py
+python3 scripts/generate_audio.py bundle mirror-city
 ```
 
 Script sẽ tự động tạo 6 file voice bằng TTS (Text-to-Speech).
@@ -88,7 +88,7 @@ Prompt gợi ý: "Mystical magical mirror city background music, ambient, ethere
 - **GarageBand**: (macOS/iOS)
 
 ## Lưu ý:
-- Voice files sẽ được load tự động khi MirrorCityScreen khởi tạo
+- Voice files được load từ `mirror_city/screen.js`
 - BGM sẽ phát khi scene bắt đầu và loop liên tục
 - Nếu file không tồn tại, hệ thống sẽ bỏ qua (không có lỗi)
 - File BGM nên có fade in/out để mượt mà hơn
@@ -104,7 +104,7 @@ Các file voice đã được tạo tự động bằng script Python sử dụn
 
 Để tạo lại hoặc tạo file mới, chạy:
 ```bash
-python scripts/generate_mirror_city_audio.py
+python3 scripts/generate_audio.py bundle mirror-city
 ```
 
 Xem thêm: `scripts/README_AUDIO.md`

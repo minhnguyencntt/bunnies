@@ -1,0 +1,111 @@
+{
+  "version": 1,
+  "presets": {
+    "mirror_city_level2": {
+      "description": "Thành phố Gương — ambient mystical (layered numpy/scipy)",
+      "output": "src/screens/mirror_city/assets/audio/bgm/bgm.wav",
+      "duration_sec": 90,
+      "chords": {
+        "mode": "once",
+        "steps": [
+          { "notes": ["C3", "E3", "G3"], "sec": 8 },
+          { "notes": ["D3", "F3", "A3"], "sec": 8 },
+          { "notes": ["E3", "G3", "B3"], "sec": 8 },
+          { "notes": ["C3", "E3", "G3"], "sec": 8 },
+          { "notes": ["F3", "A3", "C4"], "sec": 8 },
+          { "notes": ["G3", "B3", "D4"], "sec": 8 },
+          { "notes": ["C3", "E3", "G3"], "sec": 8 },
+          { "notes": ["A3", "C4", "E4"], "sec": 8 },
+          { "notes": ["C3", "E3", "G3"], "sec": 8 },
+          { "notes": ["D3", "F3", "A3"], "sec": 8 },
+          { "notes": ["G3", "B3", "D4"], "sec": 4 },
+          { "notes": ["C3", "E3", "G3"], "sec": 2 }
+        ]
+      },
+      "melody_patterns": [
+        ["C4", "E4", "G4", "C5", "G4", "E4", "C4", "D4", "F4", "A4", "D5", "A4", "F4", "D4"],
+        ["E4", "G4", "B4", "E5", "B4", "G4", "E4", "F4", "A4", "C5", "F5", "C5", "A4", "F4"],
+        ["G4", "B4", "D5", "G5", "D5", "B4", "G4", "A4", "C5", "E5", "A5", "E5", "C5", "A4"]
+      ],
+      "melody_note_gain": 0.12,
+      "sparkle_interval": 3.0,
+      "sparkle_gain": 0.15,
+      "normalize_peak": 0.85
+    },
+    "counting_forest_level1": {
+      "description": "Khu rừng đếm số — vui, I–V–vi–IV lặp",
+      "output": "src/screens/counting_forest/assets/audio/bgm/bgm.wav",
+      "duration_sec": 78,
+      "chords": {
+        "mode": "repeat",
+        "steps": [
+          { "notes": ["C3", "E3", "G3"], "sec": 6 },
+          { "notes": ["G3", "B3", "D4"], "sec": 6 },
+          { "notes": ["A3", "C4", "E4"], "sec": 6 },
+          { "notes": ["F3", "A3", "C4"], "sec": 6 }
+        ]
+      },
+      "melody_patterns": [
+        ["C4", "E4", "G4", "C5", "G4", "E4", "C4", "D4", "F4", "A4", "C5", "A4", "F4", "D4"],
+        ["E4", "G4", "B4", "D5", "B4", "G4", "E4", "F4", "A4", "C5", "F5", "C5", "A4", "F4"],
+        ["G4", "C5", "E5", "G5", "E5", "C5", "G4", "A4", "C5", "E5", "A5", "E5", "C5", "A4"]
+      ],
+      "melody_note_gain": 0.13,
+      "sparkle_interval": 2.8,
+      "sparkle_gain": 0.14
+    },
+    "subtraction_hill_gameplay": {
+      "description": "Đồi Phép Trừ — gameplay (hợp âm mystical lặp, giai điệu nhẹ)",
+      "output": "src/screens/subtraction_hill/assets/audio/bgm/bgm.wav",
+      "duration_sec": 72,
+      "chords": {
+        "mode": "repeat",
+        "steps": [
+          { "notes": ["C3", "E3", "G3"], "sec": 8 },
+          { "notes": ["D3", "F3", "A3"], "sec": 8 },
+          { "notes": ["E3", "G3", "B3"], "sec": 8 },
+          { "notes": ["C3", "E3", "G3"], "sec": 8 },
+          { "notes": ["F3", "A3", "C4"], "sec": 8 },
+          { "notes": ["G3", "B3", "D4"], "sec": 8 },
+          { "notes": ["C3", "E3", "G3"], "sec": 8 },
+          { "notes": ["A3", "C4", "E4"], "sec": 8 },
+          { "notes": ["C3", "E3", "G3"], "sec": 8 },
+          { "notes": ["D3", "F3", "A3"], "sec": 8 },
+          { "notes": ["G3", "B3", "D4"], "sec": 4 },
+          { "notes": ["C3", "E3", "G3"], "sec": 2 }
+        ]
+      },
+      "melody_patterns": [
+        ["C4", "D4", "E4", "G4", "E4", "D4", "C4", "G3", "A3", "C4", "E4", "C4", "A3", "G3"],
+        ["E4", "G4", "A4", "C5", "A4", "G4", "E4", "F4", "G4", "A4", "C5", "A4", "G4", "F4"],
+        ["G4", "A4", "C5", "E5", "C5", "A4", "G4", "E4", "G4", "C5", "G4", "E4", "D4", "C4"]
+      ],
+      "melody_note_gain": 0.095,
+      "sparkle_interval": 3.4,
+      "sparkle_gain": 0.12,
+      "normalize_peak": 0.82
+    },
+    "subtraction_hill_celebration": {
+      "description": "Đồi Phép Trừ — ăn mừng tìm đủ đồ",
+      "output": "src/screens/subtraction_hill/assets/audio/bgm/bgm_celebration.wav",
+      "duration_sec": 68,
+      "chords": {
+        "mode": "repeat",
+        "steps": [
+          { "notes": ["C3", "E3", "G3"], "sec": 6 },
+          { "notes": ["G3", "B3", "D4"], "sec": 6 },
+          { "notes": ["A3", "C4", "E4"], "sec": 6 },
+          { "notes": ["F3", "A3", "C4"], "sec": 6 }
+        ]
+      },
+      "melody_patterns": [
+        ["C5", "E5", "G5", "C6", "G5", "E5", "C5", "D5", "F5", "A5", "F5", "D5", "C5", "G4"],
+        ["E5", "G5", "A5", "C6", "A5", "G5", "E5", "F5", "A5", "C6", "A5", "F5", "E5", "C5"],
+        ["G5", "A5", "C6", "E5", "C6", "A5", "G5", "E5", "G5", "C6", "G5", "E5", "D5", "C5"]
+      ],
+      "melody_note_gain": 0.14,
+      "sparkle_interval": 2.2,
+      "sparkle_gain": 0.18
+    }
+  }
+}

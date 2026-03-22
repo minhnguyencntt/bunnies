@@ -31,6 +31,10 @@
         console.error('MirrorCityScreen not defined!');
         return;
     }
+    if (typeof SubtractionHillScreen === 'undefined') {
+        console.error('SubtractionHillScreen not defined!');
+        return;
+    }
     if (typeof UIScreen === 'undefined') {
         console.error('UIScreen not defined!');
         return;
@@ -67,6 +71,7 @@
             MenuScreen,
             CountingForestScreen,
             MirrorCityScreen,
+            SubtractionHillScreen,
             UIScreen
         ],
         input: {

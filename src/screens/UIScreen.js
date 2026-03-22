@@ -1,5 +1,6 @@
 /**
- * UIScene - UI overlay cho gameplay
+ * UIScreen — HUD overlay (top bar, home button, star counter).
+ * Launched by game screens via scene.launch('UIScreen').
  */
 class UIScreen extends Phaser.Scene {
     constructor() {
@@ -7,130 +8,73 @@ class UIScreen extends Phaser.Scene {
     }
 
     create() {
-        const width = this.cameras.main.width;
-        const height = this.cameras.main.height;
-
-        // Set this scene to not block input from other scenes
         this.input.setTopOnly(false);
-
-        // Top HUD bar
         this.createHUD();
-
-        // Home button
         this.createHomeButton();
     }
 
     createHUD() {
-        const width = this.cameras.main.width;
-        const height = this.cameras.main.height;
+        const w = this.cameras.main.width;
+        const hudH = 60;
 
-        // HUD background with better styling and transparency
-        const hudBg = this.add.graphics();
-        // Semi-transparent dark background
-        hudBg.fillStyle(0x2C1810, 0.85); // Dark brown with high opacity
-        hudBg.fillRect(0, 0, width, 80);
-        // Border at bottom to separate from content
-        hudBg.lineStyle(3, 0xFFD700, 0.6);
-        hudBg.lineBetween(0, 80, width, 80);
-        hudBg.generateTexture('hudBg', width, 80);
-        hudBg.destroy();
+        const hud = this.add.graphics().setDepth(100);
+        hud.fillStyle(0x2C1810, 0.82);
+        hud.fillRect(0, 0, w, hudH);
+        hud.lineStyle(2, 0xFFD700, 0.5);
+        hud.lineBetween(0, hudH, w, hudH);
 
-        const hudImage = this.add.image(width / 2, 40, 'hudBg');
-        hudImage.setDepth(100); // Ensure it's above background but below question panel
-
-        // Determine current level from active scenes using GameFlowConfig
-        let levelTitle = 'Level 1: Cầu Toán Học';
-        
+        let levelTitle = 'Màn chơi';
         if (typeof GameFlowConfig !== 'undefined') {
-            // Check which screen is active and get its info
-            const screenOrder = GameFlowConfig.screenOrder || [];
-            for (const screenKey of screenOrder) {
-                if (this.scene.isActive(screenKey)) {
-                    const screenInfo = GameFlowConfig.getScreenInfo(screenKey);
-                    const position = GameFlowConfig.getScreenPosition(screenKey);
-                    if (screenInfo) {
-                        levelTitle = `Màn ${position}: ${screenInfo.subtitle || screenInfo.name}`;
-                    }
+            const order = GameFlowConfig.screenOrder || [];
+            for (const key of order) {
+                if (this.scene.isActive(key)) {
+                    const info = GameFlowConfig.getScreenInfo(key);
+                    const pos = GameFlowConfig.getScreenPosition(key);
+                    if (info) levelTitle = `Màn ${pos}: ${info.subtitle || info.name}`;
                     break;
                 }
             }
-        } else {
-            // Fallback without config
-            if (this.scene.isActive('Level2Scene')) {
-                levelTitle = 'Level 2: Thành Phố Gương';
-            }
         }
 
-        // Level title with better positioning and styling
-        const levelText = this.add.text(120, 40, levelTitle, {
-            fontSize: '24px',
-            fill: '#FFD700',
-            fontFamily: 'Comic Sans MS, Arial',
-            fontStyle: 'bold',
-            stroke: '#000000',
-            strokeThickness: 2,
-            shadow: {
-                offsetX: 1,
-                offsetY: 1,
-                color: '#000000',
-                blur: 2,
-                stroke: true,
-                fill: true
-            }
-        }).setOrigin(0, 0.5);
-        levelText.setDepth(101);
+        this.add.text(100, hudH / 2, levelTitle, {
+            fontSize: '20px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold',
+            color: '#FFD700', stroke: '#000', strokeThickness: 2,
+        }).setOrigin(0, 0.5).setDepth(101);
 
-        // Star counter with better styling
-        const starIcon = this.add.text(width - 100, 40, '⭐ 0', {
-            fontSize: '24px',
-            fill: '#FFFFFF',
-            fontFamily: 'Comic Sans MS, Arial',
-            fontStyle: 'bold',
-            stroke: '#000000',
-            strokeThickness: 2,
-            shadow: {
-                offsetX: 1,
-                offsetY: 1,
-                color: '#000000',
-                blur: 2,
-                stroke: true,
-                fill: true
-            }
-        }).setOrigin(0.5);
-        starIcon.setDepth(101);
+        const starIcon = this.add.text(w - 80, hudH / 2, '⭐ 0', {
+            fontSize: '20px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold',
+            color: '#fff', stroke: '#000', strokeThickness: 2,
+        }).setOrigin(0.5).setDepth(101);
+
+        const syncStars = () => {
+            const n = window.gameData?.stars || 0;
+            starIcon.setText(`⭐ ${n}`);
+        };
+        syncStars();
+        this.time.addEvent({ delay: 500, loop: true, callback: syncStars });
     }
 
     createHomeButton() {
-        const width = this.cameras.main.width;
+        const hudH = 60;
+        const btnR = 20;
+        const btnX = 40;
+        const btnY = hudH / 2;
 
-        // Home button with proper depth
-        const homeBtn = this.add.circle(50, 40, 24, 0x4A90E2)
+        const homeBtn = this.add.circle(btnX, btnY, btnR, 0x4A90E2)
             .setInteractive({ useHandCursor: true })
-            .setDepth(101) // Above HUD background
+            .setDepth(101)
             .on('pointerdown', () => {
-                // Stop any active level scenes
-                if (this.scene.isActive('Level1Scene')) {
-                    this.scene.stop('Level1Scene');
-                }
-                if (this.scene.isActive('Level2Scene')) {
-                    this.scene.stop('Level2Scene');
-                }
+                const keys = typeof GameFlowConfig !== 'undefined' && GameFlowConfig.screenOrder
+                    ? GameFlowConfig.screenOrder
+                    : ['CountingForestScreen', 'MirrorCityScreen', 'SubtractionHillScreen'];
+                keys.forEach(k => { if (this.scene.isActive(k)) this.scene.stop(k); });
+                this.sound.stopAll();
                 this.scene.stop();
-                this.scene.start('MenuScene');
+                this.scene.start('MenuScreen');
             })
-            .on('pointerover', () => {
-                homeBtn.setScale(1.2);
-                homeBtn.setFillStyle(0x90EE90);
-            })
-            .on('pointerout', () => {
-                homeBtn.setScale(1);
-                homeBtn.setFillStyle(0x4A90E2);
-            });
+            .on('pointerover', () => { homeBtn.setScale(1.15).setFillStyle(0x90EE90); })
+            .on('pointerout', () => { homeBtn.setScale(1).setFillStyle(0x4A90E2); });
 
-        const homeIcon = this.add.text(50, 40, '🏠', {
-            fontSize: '20px'
-        }).setOrigin(0.5);
-        homeIcon.setDepth(102); // Above button
+        this.add.text(btnX, btnY, '🏠', { fontSize: '18px' }).setOrigin(0.5).setDepth(102);
     }
 }
-

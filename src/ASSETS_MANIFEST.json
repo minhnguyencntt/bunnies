@@ -307,7 +307,7 @@
         },
         {
           "key": "bgm_level1",
-          "file": "assets/audio/bgm/level1_bgm.wav",
+          "file": "screens/counting_forest/assets/audio/bgm/bgm.wav",
           "format": "WAV",
           "duration": "90s",
           "loop": true,

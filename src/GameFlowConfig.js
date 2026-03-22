@@ -14,8 +14,9 @@ const GameFlowConfig = {
      * Available screens:
      * - 'CountingForestScreen' : Counting Forest (Khu Rừng Đếm Số) - Math addition
      * - 'MirrorCityScreen' : Mirror City (Thành Phố Gương) - Spot the difference
+     * - 'SubtractionHillScreen' : Subtraction Hill (Đồi Phép Trừ) - Subtraction 0–10
      */
-    screenOrder: ['CountingForestScreen', 'MirrorCityScreen'],
+    screenOrder: ['CountingForestScreen', 'MirrorCityScreen', 'SubtractionHillScreen'],
 
     /**
      * ============================================
@@ -32,7 +33,7 @@ const GameFlowConfig = {
      * ============================================
      */
     // Skip directly to a specific screen (set to null for normal flow)
-    // Options: null, 'CountingForestScreen', 'MirrorCityScreen'
+    // Options: null, 'CountingForestScreen', 'MirrorCityScreen', 'SubtractionHillScreen'
     skipToScreen: null,
 
     // Show level selection in menu (allows choosing any level)
@@ -69,6 +70,17 @@ const GameFlowConfig = {
             icon: '🪞',
             color: 0x9370DB,
             reward: 'Sức Mạnh Của Quan Sát'
+        },
+        'SubtractionHillScreen': {
+            id: 4,
+            key: 'SubtractionHillScreen',
+            name: 'Đồi Phép Trừ',
+            nameEN: 'Subtraction Hill',
+            subtitle: 'Giúp Cáo Con Tìm Đồ',
+            description: 'Giải phép trừ để thu hồi đồ đạc và giúp cáo con sum họp mẹ',
+            icon: '⛰️',
+            color: 0x7cfc00,
+            reward: 'Kẹo Số Và Ngôi Sao'
         }
     },
 

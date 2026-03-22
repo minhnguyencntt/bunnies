@@ -20,11 +20,20 @@ class CountingForestScreen extends Phaser.Scene {
         this.butterflies = [];
         this.fireflies = [];
         this.magicParticles = [];
+        this.levelBgVideo = null;
     }
 
     preload() {
-        this.load.image('counting_forest_bg', 'screens/counting_forest/assets/backgrounds/bg.png');
-        this.load.audio('bgm_counting_forest', 'screens/counting_forest/assets/audio/bgm/bgm.wav');
+        const bg = typeof CountingForestPuzzle !== 'undefined' ? CountingForestPuzzle.background : null;
+        if (typeof ScreenLevelBackground !== 'undefined' && bg) {
+            ScreenLevelBackground.registerLevelBackground(this, bg, {
+                bgmKey: 'bgm_counting_forest',
+                bgmUrl: 'screens/counting_forest/assets/audio/bgm/bgm.wav',
+            });
+        } else {
+            this.load.image('counting_forest_bg', 'screens/counting_forest/assets/backgrounds/bg.png');
+            this.load.audio('bgm_counting_forest', 'screens/counting_forest/assets/audio/bgm/bgm.wav');
+        }
         this.load.audio('voice_intro_1', 'screens/counting_forest/assets/audio/voice/intro_1.mp3');
         this.load.audio('voice_intro_2', 'screens/counting_forest/assets/audio/voice/intro_2.mp3');
         this.load.audio('voice_intro_3', 'screens/counting_forest/assets/audio/voice/intro_3.mp3');
@@ -75,9 +84,15 @@ class CountingForestScreen extends Phaser.Scene {
     // ════════════════════════════════════════
 
     createBackground(w, h) {
-        if (this.textures.exists('counting_forest_bg')) {
+        const bg = typeof CountingForestPuzzle !== 'undefined' ? CountingForestPuzzle.background : null;
+        let mode = 'none';
+        if (typeof ScreenLevelBackground !== 'undefined' && bg) {
+            mode = ScreenLevelBackground.createLayer(this, w, h, bg, { depth: 0, videoRef: 'levelBgVideo' });
+        } else if (this.textures.exists('counting_forest_bg')) {
             this.add.image(w / 2, h / 2, 'counting_forest_bg').setDisplaySize(w, h).setDepth(0);
-        } else {
+            mode = 'image';
+        }
+        if (mode === 'none') {
             const g = this.add.graphics().setDepth(0);
             g.fillGradientStyle(0x87CEEB, 0x87CEEB, 0xFFE4B5, 0xFFE4B5, 1);
             g.fillRect(0, 0, w, h * 0.65);
@@ -555,6 +570,7 @@ class CountingForestScreen extends Phaser.Scene {
     // ════════════════════════════════════════
 
     playLevelBGM() {
+        if (typeof ScreenLevelBackground !== 'undefined' && ScreenLevelBackground.hasLoadedVideo(this)) return;
         if (this.cache.audio.exists('bgm_counting_forest') && window.gameData?.musicEnabled !== false) {
             this.levelBGM = this.sound.add('bgm_counting_forest', { volume: 0.4, loop: true });
             this.levelBGM.play();
@@ -562,6 +578,12 @@ class CountingForestScreen extends Phaser.Scene {
     }
 
     stopLevelBGM() {
+        if (typeof ScreenLevelBackground !== 'undefined') {
+            ScreenLevelBackground.fadeOutBackgroundMedia(this, {
+                soundProp: 'levelBGM', videoProp: 'levelBgVideo', duration: 400,
+            });
+            return;
+        }
         if (!this.levelBGM) return;
         this.tweens.add({
             targets: this.levelBGM, volume: 0, duration: 400,
@@ -640,6 +662,9 @@ class CountingForestScreen extends Phaser.Scene {
     shutdown() {
         this.sound.stopAll();
         this.stopVoice();
+        if (typeof ScreenLevelBackground !== 'undefined') {
+            ScreenLevelBackground.destroyVideo(this, 'levelBgVideo');
+        }
         if (this.levelBGM) { this.levelBGM.stop(); this.levelBGM = null; }
         if (this.wiseOwl) this.wiseOwl.destroy();
         this.clearQuestionUI();

@@ -85,6 +85,29 @@
       "sparkle_gain": 0.12,
       "normalize_peak": 0.82
     },
+    "orientation_forest_gameplay": {
+      "description": "Khu Rừng Định Hướng — rừng vui, hợp âm xanh lặp",
+      "output": "src/screens/orientation_forest/assets/audio/bgm/bgm.wav",
+      "duration_sec": 75,
+      "chords": {
+        "mode": "repeat",
+        "steps": [
+          { "notes": ["C3", "E3", "G3"], "sec": 6 },
+          { "notes": ["A3", "C4", "E4"], "sec": 6 },
+          { "notes": ["F3", "A3", "C4"], "sec": 6 },
+          { "notes": ["G3", "B3", "D4"], "sec": 6 }
+        ]
+      },
+      "melody_patterns": [
+        ["C4", "E4", "G4", "C5", "G4", "E4", "C4", "D4", "F4", "A4", "C5", "A4", "F4", "D4"],
+        ["E4", "G4", "A4", "C5", "A4", "G4", "E4", "F4", "G4", "A4", "C5", "A4", "G4", "E4"],
+        ["G4", "A4", "C5", "E5", "C5", "A4", "G4", "E4", "D4", "E4", "G4", "E4", "D4", "C4"]
+      ],
+      "melody_note_gain": 0.11,
+      "sparkle_interval": 3.0,
+      "sparkle_gain": 0.13,
+      "normalize_peak": 0.84
+    },
     "subtraction_hill_celebration": {
       "description": "Đồi Phép Trừ — ăn mừng tìm đủ đồ",
       "output": "src/screens/subtraction_hill/assets/audio/bgm/bgm_celebration.wav",

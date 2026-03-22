@@ -1646,8 +1646,18 @@ function reorderToAvoidDuplicateCategories(puzzles) {
     return result;
 }
 
+/** Cấu hình màn Thành phố Gương (nền + theme). */
+const MirrorCityPuzzle = {
+    version: 1,
+    background: {
+        type: 'image',
+        imageKey: 'mirror_city_bg',
+        imageUrl: 'screens/mirror_city/assets/backgrounds/bg.png',
+    },
+};
+
 // Export for use in other files
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { MIRROR_PUZZLES, selectMirrorPuzzles };
+    module.exports = { MIRROR_PUZZLES, selectMirrorPuzzles, MirrorCityPuzzle };
 }
 

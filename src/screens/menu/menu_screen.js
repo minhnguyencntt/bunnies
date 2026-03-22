@@ -32,6 +32,7 @@ class MenuScreen extends Phaser.Scene {
         this.load.audio('voice_city_1', 'screens/menu/assets/audio/voice/city_1_khu_rung_dem_so.mp3');
         this.load.audio('voice_city_2', 'screens/menu/assets/audio/voice/city_2_thanh_pho_guong.mp3');
         this.load.audio('voice_city_4', 'screens/menu/assets/audio/voice/city_4_doi_phep_tru.mp3');
+        this.load.audio('voice_city_26', 'screens/menu/assets/audio/voice/city_26_khu_rung_dinh_huong.mp3');
         this.load.audio('voice_city_click', 'screens/menu/assets/audio/voice/city_click.mp3');
     }
 

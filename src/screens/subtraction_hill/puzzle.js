@@ -5,6 +5,12 @@
 const SubtractionHillPuzzle = {
     version: 1,
 
+    background: {
+        type: 'image',
+        imageKey: 'subtraction_hill_bg',
+        imageUrl: 'screens/subtraction_hill/assets/backgrounds/bg.png',
+    },
+
     lostItemPool: [
         { id: 'toy', emoji: '🧸', labelVi: 'Thú bông' },
         { id: 'book', emoji: '📘', labelVi: 'Sách nhỏ' },

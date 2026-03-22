@@ -239,7 +239,8 @@ const WORLD_MAP_CITIES = [
         y: 740,
         description: 'Nhận biết trái – phải – trước – sau.',
         puzzleTheme: 'Định hướng',
-        visible: false
+        screenKey: 'OrientationForestScreen',
+        visible: true
     },
     {
         id: 27,

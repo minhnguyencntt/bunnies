@@ -20,14 +20,21 @@ class MirrorCityScreen extends Phaser.Scene {
         this.isInChallengeView = false;
         this.challengeContainer = null;
         this.levelBGM = null;
+        this.levelBgVideo = null;
+        this.theme = typeof MirrorCityPuzzle !== 'undefined' ? MirrorCityPuzzle : null;
     }
 
     preload() {
-        // Load Mirror City assets
-        this.load.image('mirror_city_bg', 'screens/mirror_city/assets/backgrounds/bg.png');
-        
-        // Load Mirror City audio
-        this.load.audio('bgm_mirror_city', 'screens/mirror_city/assets/audio/bgm/bgm.wav');
+        const bg = this.theme?.background;
+        if (typeof ScreenLevelBackground !== 'undefined' && bg) {
+            ScreenLevelBackground.registerLevelBackground(this, bg, {
+                bgmKey: 'bgm_mirror_city',
+                bgmUrl: 'screens/mirror_city/assets/audio/bgm/bgm.wav',
+            });
+        } else {
+            this.load.image('mirror_city_bg', 'screens/mirror_city/assets/backgrounds/bg.png');
+            this.load.audio('bgm_mirror_city', 'screens/mirror_city/assets/audio/bgm/bgm.wav');
+        }
         this.load.audio('voice_intro_1', 'screens/mirror_city/assets/audio/voice/intro_1.mp3');
         this.load.audio('voice_intro_2', 'screens/mirror_city/assets/audio/voice/intro_2.mp3');
         this.load.audio('voice_intro_3', 'screens/mirror_city/assets/audio/voice/intro_3.mp3');
@@ -84,13 +91,22 @@ class MirrorCityScreen extends Phaser.Scene {
         const width = this.cameras.main.width;
         const height = this.cameras.main.height;
 
-        // Use Mirror City background image
-        if (this.textures.exists('mirror_city_bg')) {
-            const bg = this.add.image(width / 2, height / 2, 'mirror_city_bg');
-            bg.setDisplaySize(width, height);
-            bg.setDepth(0);
+        const bgCfg = this.theme?.background;
+        let bgMode = 'none';
+        if (typeof ScreenLevelBackground !== 'undefined' && bgCfg) {
+            bgMode = ScreenLevelBackground.createLayer(this, width, height, bgCfg, {
+                depth: 0,
+                videoRef: 'levelBgVideo',
+            });
+            if (bgMode !== 'none') {
+                console.log('Mirror City background:', bgMode);
+            }
+        } else if (this.textures.exists('mirror_city_bg')) {
+            this.add.image(width / 2, height / 2, 'mirror_city_bg').setDisplaySize(width, height).setDepth(0);
             console.log('Mirror City background image displayed');
-        } else {
+            bgMode = 'image';
+        }
+        if (bgMode === 'none') {
             // Fallback: Create magical crystal city background
             const bgGraphics = this.add.graphics();
         
@@ -2111,6 +2127,7 @@ class MirrorCityScreen extends Phaser.Scene {
     // ==========================================
     
     playLevelBGM() {
+        if (typeof ScreenLevelBackground !== 'undefined' && ScreenLevelBackground.hasLoadedVideo(this)) return;
         if (this.cache.audio.exists('bgm_mirror_city') && window.gameData?.musicEnabled !== false) {
             // Stop any existing sounds (but keep voice audio capability)
             this.sound.stopAll();
@@ -2126,8 +2143,13 @@ class MirrorCityScreen extends Phaser.Scene {
     }
 
     stopLevelBGM() {
+        if (typeof ScreenLevelBackground !== 'undefined') {
+            ScreenLevelBackground.fadeOutBackgroundMedia(this, {
+                soundProp: 'levelBGM', videoProp: 'levelBgVideo', duration: 500,
+            });
+            return;
+        }
         if (this.levelBGM) {
-            // Fade out BGM
             this.tweens.add({
                 targets: this.levelBGM,
                 volume: 0,
@@ -2409,8 +2431,10 @@ class MirrorCityScreen extends Phaser.Scene {
     }
 
     shutdown() {
-        // Stop all sounds (ensures clean state when leaving scene)
         this.stopLevelBGM();
+        if (typeof ScreenLevelBackground !== 'undefined') {
+            ScreenLevelBackground.destroyVideo(this, 'levelBgVideo');
+        }
         this.stopVoice();
         this.sound.stopAll();
         

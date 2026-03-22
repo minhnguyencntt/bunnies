@@ -15,8 +15,9 @@ const GameFlowConfig = {
      * - 'CountingForestScreen' : Counting Forest (Khu Rừng Đếm Số) - Math addition
      * - 'MirrorCityScreen' : Mirror City (Thành Phố Gương) - Spot the difference
      * - 'SubtractionHillScreen' : Subtraction Hill (Đồi Phép Trừ) - Subtraction 0–10
+     * - 'OrientationForestScreen' : Khu Rừng Định Hướng — trái/phải/trước/sau
      */
-    screenOrder: ['CountingForestScreen', 'MirrorCityScreen', 'SubtractionHillScreen'],
+    screenOrder: ['CountingForestScreen', 'MirrorCityScreen', 'SubtractionHillScreen', 'OrientationForestScreen'],
 
     /**
      * ============================================
@@ -33,7 +34,7 @@ const GameFlowConfig = {
      * ============================================
      */
     // Skip directly to a specific screen (set to null for normal flow)
-    // Options: null, 'CountingForestScreen', 'MirrorCityScreen', 'SubtractionHillScreen'
+    // Options: null, 'CountingForestScreen', 'MirrorCityScreen', 'SubtractionHillScreen', 'OrientationForestScreen'
     skipToScreen: null,
 
     // Show level selection in menu (allows choosing any level)
@@ -81,6 +82,17 @@ const GameFlowConfig = {
             icon: '⛰️',
             color: 0x7cfc00,
             reward: 'Kẹo Số Và Ngôi Sao'
+        },
+        'OrientationForestScreen': {
+            id: 26,
+            key: 'OrientationForestScreen',
+            name: 'Khu Rừng Định Hướng',
+            nameEN: 'Orientation Forest',
+            subtitle: 'Giúp Sóc Tìm Biển Chỉ Dẫn',
+            description: 'Chọn trái, phải, trước, sau để Sóc tìm lại đường',
+            icon: '🌳',
+            color: 0x228b22,
+            reward: 'Mũi Tên Vàng'
         }
     },
 

@@ -28,11 +28,20 @@ class SubtractionHillScreen extends Phaser.Scene {
         this.magicParticles = [];
         this.theme = typeof SubtractionHillPuzzle !== 'undefined' ? SubtractionHillPuzzle : null;
         this.usesArtBackground = false;
+        this.levelBgVideo = null;
     }
 
     preload() {
-        this.load.image('subtraction_hill_bg', 'screens/subtraction_hill/assets/backgrounds/bg.png');
-        this.load.audio('bgm_subtraction_hill', 'screens/subtraction_hill/assets/audio/bgm/bgm.wav');
+        const bg = this.theme?.background;
+        if (typeof ScreenLevelBackground !== 'undefined' && bg) {
+            ScreenLevelBackground.registerLevelBackground(this, bg, {
+                bgmKey: 'bgm_subtraction_hill',
+                bgmUrl: 'screens/subtraction_hill/assets/audio/bgm/bgm.wav',
+            });
+        } else {
+            this.load.image('subtraction_hill_bg', 'screens/subtraction_hill/assets/backgrounds/bg.png');
+            this.load.audio('bgm_subtraction_hill', 'screens/subtraction_hill/assets/audio/bgm/bgm.wav');
+        }
         this.load.audio('voice_intro_1', 'screens/subtraction_hill/assets/audio/voice/intro_1.mp3');
         this.load.audio('voice_intro_2', 'screens/subtraction_hill/assets/audio/voice/intro_2.mp3');
         this.load.audio('voice_intro_3', 'screens/subtraction_hill/assets/audio/voice/intro_3.mp3');
@@ -81,10 +90,16 @@ class SubtractionHillScreen extends Phaser.Scene {
     // ════════════════════════════════════════
 
     createBackground(w, h) {
-        if (this.textures.exists('subtraction_hill_bg')) {
+        const bg = this.theme?.background;
+        let mode = 'none';
+        if (typeof ScreenLevelBackground !== 'undefined' && bg) {
+            mode = ScreenLevelBackground.createLayer(this, w, h, bg, { depth: 0, videoRef: 'levelBgVideo' });
+        } else if (this.textures.exists('subtraction_hill_bg')) {
             this.add.image(w / 2, h / 2, 'subtraction_hill_bg').setDisplaySize(w, h).setDepth(0);
-            this.usesArtBackground = true;
-        } else {
+            mode = 'image';
+        }
+        this.usesArtBackground = mode === 'image' || mode === 'video';
+        if (mode === 'none') {
             const g = this.add.graphics().setDepth(0);
             g.fillGradientStyle(0x87CEEB, 0x87CEEB, 0xFFA07A, 0xFFA07A, 1);
             g.fillRect(0, 0, w, h * 0.6);
@@ -416,7 +431,11 @@ class SubtractionHillScreen extends Phaser.Scene {
         this.checkingAnswer = true;
         this.emitThemeEvent(this.theme?.events?.levelComplete || 'SubtractionHillScreen:LevelComplete');
 
-        if (this.levelBGM) {
+        if (typeof ScreenLevelBackground !== 'undefined') {
+            ScreenLevelBackground.fadeOutBackgroundMedia(this, {
+                soundProp: 'levelBGM', videoProp: 'levelBgVideo', duration: 450,
+            });
+        } else if (this.levelBGM) {
             this.tweens.add({
                 targets: this.levelBGM, volume: 0, duration: 450,
                 onComplete: () => { if (this.levelBGM) { this.levelBGM.stop(); this.levelBGM.destroy(); this.levelBGM = null; } },
@@ -557,6 +576,7 @@ class SubtractionHillScreen extends Phaser.Scene {
     // ════════════════════════════════════════
 
     playLevelBGM() {
+        if (typeof ScreenLevelBackground !== 'undefined' && ScreenLevelBackground.hasLoadedVideo(this)) return;
         if (this.cache.audio.exists('bgm_subtraction_hill') && window.gameData?.musicEnabled !== false) {
             this.levelBGM = this.sound.add('bgm_subtraction_hill', { volume: 0.44, loop: true });
             this.levelBGM.play();
@@ -635,6 +655,9 @@ class SubtractionHillScreen extends Phaser.Scene {
     shutdown() {
         this.sound.stopAll();
         if (this.currentVoice) { this.currentVoice.stop(); this.currentVoice = null; }
+        if (typeof ScreenLevelBackground !== 'undefined') {
+            ScreenLevelBackground.destroyVideo(this, 'levelBgVideo');
+        }
         if (this.levelBGM) { this.levelBGM.stop(); this.levelBGM = null; }
         this.clearRoundUI();
     }

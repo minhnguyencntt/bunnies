@@ -35,6 +35,10 @@
         console.error('SubtractionHillScreen not defined!');
         return;
     }
+    if (typeof OrientationForestScreen === 'undefined') {
+        console.error('OrientationForestScreen not defined!');
+        return;
+    }
     if (typeof UIScreen === 'undefined') {
         console.error('UIScreen not defined!');
         return;
@@ -72,6 +76,7 @@
             CountingForestScreen,
             MirrorCityScreen,
             SubtractionHillScreen,
+            OrientationForestScreen,
             UIScreen
         ],
         input: {

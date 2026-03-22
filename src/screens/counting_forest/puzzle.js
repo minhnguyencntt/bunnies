@@ -5,4 +5,11 @@
 const CountingForestPuzzle = {
     version: 1,
     /** TODO: mảng template câu đố, seed, độ khó — tham chiếu story.md [puzzle] */
+
+    /** Nền: chỉ ảnh + BGM (video nền chỉ dùng ở Khu Rừng Định Hướng). */
+    background: {
+        type: 'image',
+        imageKey: 'counting_forest_bg',
+        imageUrl: 'screens/counting_forest/assets/backgrounds/bg.png',
+    },
 };

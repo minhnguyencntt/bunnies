@@ -52,6 +52,9 @@ MENU_VOICE: dict[str, str] = {
     "city_4_doi_phep_tru.mp3": (
         "Đồi Phép Trừ. Tìm kết quả phép trừ để giúp cáo tìm đồ. Chủ đề: Phép trừ."
     ),
+    "city_26_khu_rung_dinh_huong.mp3": (
+        "Khu Rừng Định Hướng. Nhận biết trái phải trước sau. Chủ đề: Định hướng."
+    ),
     "city_click.mp3": "Bắt đầu!",
 }
 

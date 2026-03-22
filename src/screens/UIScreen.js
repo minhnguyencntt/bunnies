@@ -66,7 +66,7 @@ class UIScreen extends Phaser.Scene {
             .on('pointerdown', () => {
                 const keys = typeof GameFlowConfig !== 'undefined' && GameFlowConfig.screenOrder
                     ? GameFlowConfig.screenOrder
-                    : ['CountingForestScreen', 'MirrorCityScreen', 'SubtractionHillScreen'];
+                    : ['CountingForestScreen', 'MirrorCityScreen', 'SubtractionHillScreen', 'OrientationForestScreen'];
                 keys.forEach(k => { if (this.scene.isActive(k)) this.scene.stop(k); });
                 this.sound.stopAll();
                 this.scene.stop();

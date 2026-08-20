@@ -9,12 +9,36 @@ Game giáo dục offline HTML5 cho trẻ em 4-10 tuổi, được xây dựng b�
 ### Đặc Điểm
 
 - ✅ **Offline hoàn toàn** - Không cần internet
+- ✅ **PWA** - Cài đặt như app thật lên màn hình chính (xem mục bên dưới)
 - ✅ **Không backend** - Chạy 100% trên client
 - ✅ **Không lưu state** - Mỗi lần chơi là mới
 - ✅ **Responsive** - Hỗ trợ mobile (portrait/landscape) và desktop
 - ✅ **Đa input** - Hỗ trợ touch, mouse và keyboard
 - ✅ **Cartoon style** - Đẹp, thân thiện, phù hợp trẻ em
 - ✅ **Tiếng Việt** - Tất cả text trong game đều bằng tiếng Việt
+
+---
+
+## 📲 Cài Đặt Như Ứng Dụng (PWA)
+
+Game là một **Progressive Web App** — mở bằng trình duyệt rồi cài lên màn hình chính để chơi như app thật (fullscreen, có icon riêng, không cần internet sau lần tải đầu).
+
+### Android (Chrome/Edge)
+1. Mở link game bằng Chrome
+2. Bấm menu **⋮** (góc phải trên) → **Cài đặt ứng dụng** / **Add to Home screen**
+3. Icon 🐰 xuất hiện trên màn hình chính — bấm để mở như app
+
+### iPhone/iPad (Safari)
+1. Mở link game bằng Safari
+2. Bấm nút **Chia sẻ** (Share) → **Thêm vào Màn hình chính** (Add to Home Screen)
+3. Icon 🐰 xuất hiện trên màn hình chính
+
+### Máy tính (Chrome/Edge)
+1. Mở link game
+2. Bấm biểu tượng **cài đặt** (⊕ với màn hình) trên thanh địa chỉ, hoặc menu → **Cài đặt Bunnies...**
+3. Game mở trong cửa sổ riêng như ứng dụng desktop
+
+> 💡 Lần đầu cần internet để tải game. Sau đó các màn đã chơi sẽ chạy được **hoàn toàn offline**.
 
 ---
 

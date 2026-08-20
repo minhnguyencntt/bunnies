@@ -54,13 +54,15 @@
         scale: {
             mode: Phaser.Scale.FIT,
             autoCenter: Phaser.Scale.CENTER_BOTH,
+            fullscreenTarget: 'game-container',
+            expandParent: true,
             min: {
                 width: 320,
                 height: 240
             },
             max: {
-                width: 1920,
-                height: 1080
+                width: 2560,
+                height: 1440
             }
         },
         physics: {
@@ -87,7 +89,23 @@
     try {
         // Initialize game
         const game = new Phaser.Game(config);
+        window.game = game; // for debugging / testing
         console.log('Game initialized successfully!');
+
+        // Vào chế độ toàn màn hình ở lần chạm đầu tiên (mobile yêu cầu gesture)
+        const enterFullscreen = () => {
+            try {
+                if (!document.fullscreenElement && game.scale) {
+                    const p = game.scale.startFullscreen();
+                    if (p && p.catch) p.catch(() => {});
+                }
+                if (screen.orientation && screen.orientation.lock) {
+                    screen.orientation.lock('landscape').catch(() => {});
+                }
+            } catch (e) { /* trình duyệt không hỗ trợ — bỏ qua */ }
+        };
+        window.addEventListener('pointerdown', enterFullscreen, { once: true });
+        // Nếu chặn fullscreen (desktop), canvas vẫn fill toàn bộ cửa sổ nhờ CSS
         
         // Global game data
         window.gameData = {

@@ -355,6 +355,12 @@ class OrientationForestScreen extends Phaser.Scene {
             this.time.delayedCall(200, () => this.squirrelCharacter.hopJoy());
         }
 
+        if (typeof RewardFX !== 'undefined') {
+            const clueX = this._clueObj?.active ? this._clueObj.x : this.cameras.main.width / 2;
+            const clueY = this._clueObj?.active ? this._clueObj.y : this.cameras.main.height * 0.4;
+            RewardFX.correctAnswer(this, clueX, clueY);
+        }
+
         this.flyClueToSquirrel(prob.clueEmoji || '⭐');
         const idx = this.solvedCount;
         this.time.delayedCall(400, () => {
@@ -580,26 +586,17 @@ class OrientationForestScreen extends Phaser.Scene {
     /* ─── Intro (voice is primary — bubbles use emoji) ─── */
 
     showIntroductionDialogue() {
-        const dialogues = [
-            { text: '😱 🐿️ ❓', voiceKey: 'voice_intro_1', duration: 5000 },
-            { text: '🪧 ← → ↑ ↓ ❌', voiceKey: 'voice_intro_2', duration: 5000 },
-            { text: '👆 🐿️ ✨', voiceKey: 'voice_intro_3', duration: 5000 },
-        ];
-        this.dialogueIndex = 0;
-        this.showDialogueSequenceWithVoice(dialogues, () => this.startRound());
-    }
-
-    showDialogueSequenceWithVoice(dialogues, onComplete) {
-        if (this.dialogueIndex >= dialogues.length) {
-            this.dialogueIndex = 0;
-            if (onComplete) onComplete();
-            return;
+        if (typeof IntroHelper !== 'undefined') {
+            IntroHelper.play(this, {
+                text: '🐿️ lạc đường! 👆 đúng hướng để dẫn đường nhé! ← → ↑ ↓',
+                voiceKey: 'voice_intro_1',
+                voiceRate: 1.3,
+                showText: (t, ms) => this.showSquirrelBubble(t, ms),
+                onComplete: () => this.startRound(),
+            });
+        } else {
+            this.startRound();
         }
-        const d = dialogues[this.dialogueIndex];
-        this.showSquirrelBubble(d.text, d.duration);
-        this.playVoice(d.voiceKey);
-        this.dialogueIndex++;
-        this.time.delayedCall(d.duration + 500, () => this.showDialogueSequenceWithVoice(dialogues, onComplete));
     }
 
     /* ─── Audio ─── */

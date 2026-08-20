@@ -1,14 +1,15 @@
 /**
  * world_map_data.js — WORLD_MAP_CITIES (bản đồ 30 thành phố).
- * Tọa độ pixel, nền 1920×1080. Xem thêm `map.md` và `story.md` trong cùng thư mục.
+ * Tọa độ pixel, nền 1344×768 (đúng kích thước bunnies_world.jpg).
+ * Xem thêm `map.md` và `story.md` trong cùng thư mục.
  */
 
 const WORLD_MAP_CITIES = [
     {
         id: 1,
         name: 'Khu rừng đếm số',
-        x: 240,
-        y: 310,
+        x: 226,
+        y: 178,
         description: 'Đếm số lượng vật thể trong rừng để hoàn thành nhiệm vụ.',
         puzzleTheme: 'Đếm số',
         screenKey: 'CountingForestScreen', // Có thể map với screen hiện có
@@ -17,8 +18,8 @@ const WORLD_MAP_CITIES = [
     {
         id: 2,
         name: 'Thành phố Gương Kỳ Ảo',
-        x: 380,
-        y: 260,
+        x: 580,
+        y: 448,
         description: 'Tìm điểm khác nhau giữa hai bức tranh ma thuật.',
         puzzleTheme: 'Tìm điểm khác biệt',
         screenKey: 'MirrorCityScreen', // Map với screen hiện có
@@ -36,8 +37,8 @@ const WORLD_MAP_CITIES = [
     {
         id: 4,
         name: 'Đồi Phép Trừ',
-        x: 640,
-        y: 350,
+        x: 271,
+        y: 528,
         description: 'Tìm kết quả phép trừ để mở khóa các chú thỏ tinh nghịch.',
         puzzleTheme: 'Phép trừ',
         screenKey: 'SubtractionHillScreen',
@@ -235,8 +236,8 @@ const WORLD_MAP_CITIES = [
     {
         id: 26,
         name: 'Khu Rừng Định Hướng',
-        x: 1020,
-        y: 740,
+        x: 1140,
+        y: 528,
         description: 'Nhận biết trái – phải – trước – sau.',
         puzzleTheme: 'Định hướng',
         screenKey: 'OrientationForestScreen',
@@ -280,7 +281,7 @@ const WORLD_MAP_CITIES = [
     }
 ];
 
-// Background dimensions
-const WORLD_MAP_WIDTH = 1920;
-const WORLD_MAP_HEIGHT = 1080;
+// Background dimensions (kích thước thật của bunnies_world.jpg)
+const WORLD_MAP_WIDTH = 1344;
+const WORLD_MAP_HEIGHT = 768;
 

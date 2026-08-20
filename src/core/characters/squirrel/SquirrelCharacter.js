@@ -1,5 +1,8 @@
 /**
- * SquirrelCharacter — Sóc con (Khu Rừng Định Hướng). Vector Graphics + idle / turn / hopJoy.
+ * SquirrelCharacter — Sóc con (Khu Rừng Định Hướng).
+ * Vector vẽ tay nhiều lớp: đuôi xoăn bông, má hồng, mắt to long lanh.
+ * Quay hướng bằng cách đổi view (trái/phải = nghiêng, trước = quay lưng, sau = quay mặt)
+ * thay vì xoay cả thân như kim đồng hồ.
  */
 class SquirrelCharacter {
     /**
@@ -9,21 +12,24 @@ class SquirrelCharacter {
         this.scene = scene;
         /** @type {Phaser.GameObjects.Container | null} */
         this.container = null;
+        /** @type {Record<string, Phaser.GameObjects.Container>} */
+        this.views = null;
         /** @type {'left' | 'right' | 'forward' | 'back' | string} */
         this.facing = 'forward';
+        this._idleTween = null;
     }
 
-    /**
-     * Góc nhìn (độ): phía trước = lên màn hình.
-     */
-    static angleForDirection(id) {
-        switch (id) {
-            case 'left': return -180;
-            case 'right': return 0;
-            case 'forward': return -90;
-            case 'back': return 90;
-            default: return -90;
-        }
+    // Bảng màu lông sóc
+    static get COLORS() {
+        return {
+            fur: 0xC96F2E,       // nâu cam chính
+            furDark: 0x9C4F1C,   // viền/đậm
+            furLight: 0xE39A55,  // sáng
+            cream: 0xF7E3C0,     // bụng/má
+            blush: 0xF2A0A8,     // má hồng
+            dark: 0x3A2410,      // mắt/mũi
+            white: 0xFFFFFF,
+        };
     }
 
     /**
@@ -34,58 +40,292 @@ class SquirrelCharacter {
         const { width, height, usesArtBackground = false, depth = 26 } = layout;
         const sx = usesArtBackground ? width * 0.16 : width * 0.22;
         const sy = usesArtBackground ? height * 0.68 : height * 0.64;
-        this.container = SquirrelCharacter.buildContainer(this.scene, sx, sy, { depth });
-        this.facing = 'forward';
-        this.container.setAngle(SquirrelCharacter.angleForDirection('forward'));
-        this.startIdleMotion();
-        return this.container;
-    }
 
-    /**
-     * @param {Phaser.Scene} scene
-     * @param {number} x
-     * @param {number} y
-     * @param {{ depth?: number }} [opts]
-     * @returns {Phaser.GameObjects.Container}
-     */
-    static buildContainer(scene, x, y, opts = {}) {
-        const depth = opts.depth ?? 26;
-        const sq = scene.add.container(x, y);
-        const tail = scene.add.graphics();
-        tail.fillStyle(0x8b5a2b, 1);
-        tail.fillEllipse(-22, 10, 26, 16);
-        tail.fillStyle(0xa0522d, 0.9);
-        tail.fillEllipse(-20, 8, 18, 12);
-        const body = scene.add.graphics();
-        body.fillStyle(0xc68642, 1);
-        body.fillEllipse(0, 6, 36, 28);
-        body.fillStyle(0xe8c9a0, 1);
-        body.fillEllipse(8, 10, 18, 14);
-        body.fillStyle(0x1a1a1a, 1);
-        body.fillCircle(14, 6, 2.5);
-        body.fillCircle(20, 6, 2.5);
-        body.fillStyle(0xffa07a, 1);
-        body.fillEllipse(22, 9, 6, 4);
-        const earL = scene.add.graphics();
-        earL.fillStyle(0xb87333, 1);
-        earL.fillTriangle(-8, -12, -14, -26, -2, -20);
-        earL.fillStyle(0xffe4c4, 0.85);
-        earL.fillTriangle(-9, -14, -12, -22, -3, -19);
-        const earR = scene.add.graphics();
-        earR.fillStyle(0xb87333, 1);
-        earR.fillTriangle(8, -12, 14, -26, 2, -20);
-        earR.fillStyle(0xffe4c4, 0.85);
-        earR.fillTriangle(9, -14, 12, -22, 3, -19);
-        sq.add([tail, body, earL, earR]);
+        const sq = this.scene.add.container(sx, sy);
         sq.setDepth(depth);
-        sq.setScale(1.08);
-        sq.setAlpha(0.96);
+
+        this.views = {
+            side: SquirrelCharacter.buildSideView(this.scene),
+            front: SquirrelCharacter.buildFrontView(this.scene),
+            back: SquirrelCharacter.buildBackView(this.scene),
+        };
+        sq.add([this.views.back, this.views.front, this.views.side]);
+
+        this.container = sq;
+        this.facing = 'forward';
+        this.applyFacing(false);
+        this.startIdleMotion();
         return sq;
     }
 
+    /** View hiển thị theo hướng: left/right = nghiêng, forward = quay lưng, back = quay mặt */
+    applyFacing(animate = true) {
+        if (!this.container || !this.views) return;
+        const f = this.facing;
+        this.views.side.setVisible(f === 'left' || f === 'right');
+        this.views.front.setVisible(f === 'back');
+        this.views.back.setVisible(f === 'forward');
+        // View nghiêng mặc định quay phải; trái thì lật ngang
+        this.views.side.setScale(f === 'left' ? -1 : 1, 1);
+
+        if (animate) {
+            // Nén nhẹ rồi bung — cảm giác sóc nhảy xoay người
+            this.scene.tweens.add({
+                targets: this.container,
+                scaleY: 0.82,
+                scaleX: 1.12,
+                duration: 110,
+                yoyo: true,
+                ease: 'Quad.easeOut',
+            });
+        }
+    }
+
+    // ════════════════════════════════════════
+    //  Vẽ 3 góc nhìn
+    // ════════════════════════════════════════
+
+    /** Nhìn nghiêng (mặc định quay sang phải) */
+    static buildSideView(scene) {
+        const C = SquirrelCharacter.COLORS;
+        const v = scene.add.container(0, 0);
+
+        const g = scene.add.graphics();
+
+        // ── Đuôi bông xoăn vểnh cao phía sau (bên trái)
+        g.fillStyle(C.furDark, 1);
+        g.fillCircle(-22, -34, 13);   // chóp đuôi
+        g.fillCircle(-32, -16, 14);   // lưng đuôi
+        g.fillCircle(-30, 4, 11);     // giữa đuôi
+        g.fillCircle(-20, 14, 8);     // gốc đuôi
+        g.fillStyle(C.fur, 1);
+        g.fillCircle(-21, -33, 10);
+        g.fillCircle(-30, -16, 11);
+        g.fillCircle(-28, 4, 8.5);
+        g.fillCircle(-19, 13, 6);
+        g.fillStyle(C.furLight, 1);
+        g.fillCircle(-19, -31, 5);    // vệt sáng
+        g.fillCircle(-28, -16, 5);
+        g.fillCircle(-26, 2, 3.5);
+
+        // ── Chân sau (đùi tròn + bàn chân)
+        g.fillStyle(C.furDark, 1);
+        g.fillEllipse(-4, 12, 20, 18);
+        g.fillStyle(C.fur, 1);
+        g.fillEllipse(-3, 11, 16, 14);
+        g.fillStyle(C.furDark, 1);
+        g.fillEllipse(4, 22, 13, 6);
+        g.fillStyle(C.fur, 1);
+        g.fillEllipse(5, 21, 10, 5);
+
+        // ── Thân ngồi
+        g.fillStyle(C.fur, 1);
+        g.fillEllipse(2, 4, 28, 28);
+        // bụng kem
+        g.fillStyle(C.cream, 1);
+        g.fillEllipse(9, 8, 13, 16);
+
+        // ── Tay trước ôm hạt dẻ trước ngực
+        g.fillStyle(C.fur, 1);
+        g.fillEllipse(14, 6, 7, 9);
+        // hạt dẻ
+        g.fillStyle(0x8B5A2B, 1);
+        g.fillEllipse(18.5, 8, 6.5, 7.5);
+        g.fillStyle(0x6B3E12, 1);
+        g.fillEllipse(18.5, 5, 7.5, 3.8);   // nón hạt
+        g.fillCircle(18.5, 2, 1.1);         // cuống
+
+        // ── Đầu (tách rõ khỏi thân)
+        g.fillStyle(C.fur, 1);
+        g.fillCircle(15, -15, 12);
+        // má kem
+        g.fillStyle(C.cream, 1);
+        g.fillEllipse(22, -10, 10, 7.5);
+        // má hồng
+        g.fillStyle(C.blush, 0.75);
+        g.fillEllipse(21, -7, 4.5, 2.8);
+        // mũi
+        g.fillStyle(C.dark, 1);
+        g.fillCircle(27, -12, 2.2);
+        // mắt to long lanh
+        g.fillStyle(C.white, 1);
+        g.fillCircle(16, -17, 4.4);
+        g.fillStyle(C.dark, 1);
+        g.fillCircle(17.2, -17, 2.5);
+        g.fillStyle(C.white, 1);
+        g.fillCircle(18.2, -18.2, 1.1);
+        // lông mày
+        g.lineStyle(1.6, C.furDark, 0.9);
+        g.beginPath();
+        g.moveTo(12, -23);
+        g.lineTo(19, -24);
+        g.strokePath();
+
+        // ── Tai có chùm lông
+        g.fillStyle(C.furDark, 1);
+        g.fillTriangle(8, -24, 10, -36, 16, -25);
+        g.fillStyle(C.fur, 1);
+        g.fillTriangle(9, -25, 10.5, -33, 15, -25.5);
+        g.fillStyle(C.cream, 0.9);
+        g.fillTriangle(10, -26, 11, -31, 14, -26.5);
+        g.fillStyle(C.furDark, 1);
+        g.fillCircle(10, -35.5, 2.2);  // chùm lông chóp tai
+
+        v.add(g);
+        return v;
+    }
+
+    /** Quay mặt về phía người xem */
+    static buildFrontView(scene) {
+        const C = SquirrelCharacter.COLORS;
+        const v = scene.add.container(0, 0);
+        const g = scene.add.graphics();
+
+        // ── Đuôi bông vểnh sau lưng (nhô lên trên đầu)
+        g.fillStyle(C.furDark, 1);
+        g.fillCircle(0, -34, 14);
+        g.fillCircle(-14, -24, 12);
+        g.fillCircle(14, -24, 12);
+        g.fillStyle(C.fur, 1);
+        g.fillCircle(0, -33, 11);
+        g.fillCircle(-13, -23, 9.5);
+        g.fillCircle(13, -23, 9.5);
+        g.fillStyle(C.furLight, 1);
+        g.fillCircle(0, -31, 5.5);
+
+        // ── Chân
+        g.fillStyle(C.furDark, 1);
+        g.fillEllipse(-10, 21, 11, 7);
+        g.fillEllipse(10, 21, 11, 7);
+        g.fillStyle(C.fur, 1);
+        g.fillEllipse(-10, 20, 9, 6);
+        g.fillEllipse(10, 20, 9, 6);
+
+        // ── Thân + bụng
+        g.fillStyle(C.fur, 1);
+        g.fillEllipse(0, 8, 30, 28);
+        g.fillStyle(C.cream, 1);
+        g.fillEllipse(0, 11, 19, 18);
+
+        // ── Tay nhỏ hai bên bụng
+        g.fillStyle(C.fur, 1);
+        g.fillEllipse(-11, 6, 7, 11);
+        g.fillEllipse(11, 6, 7, 11);
+
+        // ── Đầu
+        g.fillStyle(C.fur, 1);
+        g.fillCircle(0, -10, 14);
+        // tai + chùm lông
+        [-1, 1].forEach((s) => {
+            g.fillStyle(C.furDark, 1);
+            g.fillTriangle(s * 7, -20, s * 10, -33, s * 15, -21);
+            g.fillStyle(C.fur, 1);
+            g.fillTriangle(s * 8, -21, s * 10.5, -30, s * 14, -21.5);
+            g.fillStyle(C.cream, 0.9);
+            g.fillTriangle(s * 9, -22, s * 10.5, -28, s * 13, -22.5);
+            g.fillStyle(C.furDark, 1);
+            g.fillCircle(s * 10, -32.5, 2.2);
+        });
+        // má kem
+        g.fillStyle(C.cream, 1);
+        g.fillEllipse(-6, -4, 9, 7);
+        g.fillEllipse(6, -4, 9, 7);
+        // má hồng
+        g.fillStyle(C.blush, 0.75);
+        g.fillEllipse(-9, -2, 4.5, 2.8);
+        g.fillEllipse(9, -2, 4.5, 2.8);
+        // mắt to long lanh
+        [-1, 1].forEach((s) => {
+            g.fillStyle(C.white, 1);
+            g.fillCircle(s * 6, -12, 4.8);
+            g.fillStyle(C.dark, 1);
+            g.fillCircle(s * 6, -12, 2.7);
+            g.fillStyle(C.white, 1);
+            g.fillCircle(s * 6 + 1.1, -13.2, 1.2);
+        });
+        // mũi + miệng
+        g.fillStyle(C.dark, 1);
+        g.fillTriangle(-2, -6.5, 2, -6.5, 0, -4);
+        g.lineStyle(1.6, C.dark, 0.9);
+        g.beginPath();
+        g.moveTo(0, -4);
+        g.lineTo(0, -2.4);
+        g.moveTo(0, -2.4);
+        g.lineTo(-2.4, -1);
+        g.moveTo(0, -2.4);
+        g.lineTo(2.4, -1);
+        g.strokePath();
+        // răng thỏ/sóc
+        g.fillStyle(C.white, 1);
+        g.fillRect(-1.6, -2.2, 3.2, 3.2);
+        g.lineStyle(0.8, C.dark, 0.6);
+        g.lineBetween(0, -2.2, 0, 1);
+
+        v.add(g);
+        return v;
+    }
+
+    /** Quay lưng lại (đi về phía trước) */
+    static buildBackView(scene) {
+        const C = SquirrelCharacter.COLORS;
+        const v = scene.add.container(0, 0);
+        const g = scene.add.graphics();
+
+        // ── Đuôi bông lớn ở giữa (đặc trưng sóc quay lưng)
+        g.fillStyle(C.furDark, 1);
+        g.fillCircle(0, -30, 15);
+        g.fillCircle(-12, -16, 13);
+        g.fillCircle(12, -16, 13);
+        g.fillCircle(0, -6, 12);
+        g.fillStyle(C.fur, 1);
+        g.fillCircle(0, -29, 12);
+        g.fillCircle(-11, -15, 10.5);
+        g.fillCircle(11, -15, 10.5);
+        g.fillCircle(0, -6, 9.5);
+        g.fillStyle(C.furLight, 1);
+        g.fillCircle(0, -27, 6);
+        g.fillCircle(-8, -14, 4.5);
+        g.fillCircle(8, -14, 4.5);
+
+        // ── Chân
+        g.fillStyle(C.furDark, 1);
+        g.fillEllipse(-10, 21, 11, 7);
+        g.fillEllipse(10, 21, 11, 7);
+        g.fillStyle(C.fur, 1);
+        g.fillEllipse(-10, 20, 9, 6);
+        g.fillEllipse(10, 20, 9, 6);
+
+        // ── Thân (lưng)
+        g.fillStyle(C.fur, 1);
+        g.fillEllipse(0, 9, 30, 28);
+        // vệt lưng sáng
+        g.fillStyle(C.furLight, 0.8);
+        g.fillEllipse(0, 8, 14, 18);
+
+        // ── Gáy + tai (không thấy mặt)
+        g.fillStyle(C.fur, 1);
+        g.fillCircle(0, -8, 13);
+        [-1, 1].forEach((s) => {
+            g.fillStyle(C.furDark, 1);
+            g.fillTriangle(s * 7, -18, s * 10, -30, s * 14, -19);
+            g.fillStyle(C.fur, 1);
+            g.fillTriangle(s * 8, -19, s * 10.5, -27, s * 13, -19.5);
+            g.fillStyle(C.furDark, 1);
+            g.fillCircle(s * 10, -29.5, 2);
+        });
+
+        v.add(g);
+        return v;
+    }
+
+    // ════════════════════════════════════════
+    //  Chuyển động
+    // ════════════════════════════════════════
+
     startIdleMotion() {
         if (!this.container) return;
-        this.scene.tweens.add({
+        if (this._idleTween) this._idleTween.stop();
+        this._idleTween = this.scene.tweens.add({
             targets: this.container,
             y: this.container.y - 2,
             duration: 2000,
@@ -101,42 +341,24 @@ class SquirrelCharacter {
     turnTo(directionId) {
         this.facing = directionId;
         if (!this.container) return;
-        this.scene.tweens.killTweensOf(this.container);
-        const target = SquirrelCharacter.angleForDirection(directionId);
-        this.scene.tweens.add({
-            targets: this.container,
-            angle: target,
-            duration: 280,
-            ease: 'Cubic.easeOut',
-            onComplete: () => this.startIdleMotion()
-        });
+        this.applyFacing(true);
     }
 
     /**
-     * Quay nhẹ sai hướng rồi trở lại hướng đang đối thoại.
-     * @param {'left' | 'right' | 'forward' | 'back' | string} wrongGuessId
+     * Rùng mình khi đoán sai (lắc nhẹ trái/phải, giữ nguyên hướng).
      */
-    turnWrong(wrongGuessId) {
+    turnWrong() {
         if (!this.container) return;
-        this.scene.tweens.killTweensOf(this.container);
-        const base = SquirrelCharacter.angleForDirection(this.facing);
-        const wrong = SquirrelCharacter.angleForDirection(wrongGuessId);
-        const bump = wrong + (wrong > base ? -22 : 22);
+        const ox = this.container.x;
         this.scene.tweens.add({
             targets: this.container,
-            angle: bump,
-            duration: 120,
+            x: ox - 7,
+            duration: 70,
             yoyo: true,
-            repeat: 2,
+            repeat: 3,
             ease: 'Sine.easeInOut',
             onComplete: () => {
-                this.scene.tweens.add({
-                    targets: this.container,
-                    angle: base,
-                    duration: 200,
-                    ease: 'Quad.easeOut',
-                    onComplete: () => this.startIdleMotion()
-                });
+                if (this.container) this.container.x = ox;
             }
         });
     }
@@ -144,15 +366,23 @@ class SquirrelCharacter {
     hopJoy() {
         if (!this.container) return;
         this.scene.tweens.killTweensOf(this.container);
+        const oy = this.container.y;
         this.scene.tweens.add({
             targets: this.container,
-            angle: { from: this.container.angle, to: this.container.angle + 10 },
-            y: this.container.y - 20,
-            duration: 200,
+            y: oy - 18,
+            scaleY: 1.08,
+            scaleX: 0.94,
+            duration: 180,
             yoyo: true,
             repeat: 3,
             ease: 'Sine.easeInOut',
-            onComplete: () => this.startIdleMotion()
+            onComplete: () => {
+                if (this.container) {
+                    this.container.y = oy;
+                    this.container.setScale(1);
+                }
+                this.startIdleMotion();
+            }
         });
     }
 }

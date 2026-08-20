@@ -1,0 +1,36 @@
+{
+    "name": "Bunnies và thế giới tri thức",
+    "short_name": "Bunnies",
+    "description": "Game giáo dục phiêu lưu cho trẻ em 4-10 tuổi — học toán, định hướng, quan sát trong thế giới cổ tích diệu kỳ.",
+    "lang": "vi",
+    "dir": "ltr",
+    "id": "./",
+    "start_url": "./index.html",
+    "scope": "./",
+    "display": "standalone",
+    "display_override": ["standalone", "fullscreen", "minimal-ui"],
+    "orientation": "landscape",
+    "background_color": "#1a0f2e",
+    "theme_color": "#7c5cbf",
+    "categories": ["education", "games", "kids"],
+    "icons": [
+        {
+            "src": "icons/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "icons/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "icons/icon-512-maskable.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ]
+}

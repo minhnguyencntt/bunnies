@@ -72,14 +72,14 @@ const IntroHelper = {
         // Nút bỏ qua — góc phải dưới, dễ chạm
         skipBtn = scene.add.container(w - 92, h - 34).setDepth(900);
         const btnBg = scene.add.graphics();
-        btnBg.fillStyle(0xFF5C8A, 0.95);
+        btnBg.fillStyle(0x9B7EDE, 0.95);
         btnBg.fillRoundedRect(-78, -24, 156, 48, 24);
         btnBg.lineStyle(3, 0xFFFFFF, 0.95);
         btnBg.strokeRoundedRect(-78, -24, 156, 48, 24);
         skipBtn.add(btnBg);
         skipBtn.add(scene.add.text(0, 0, 'Bỏ qua ⏭', {
             fontSize: '20px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold',
-            color: '#FFFFFF', stroke: '#B03060', strokeThickness: 2,
+            color: '#FFFFFF', stroke: '#5C3A8C', strokeThickness: 2,
         }).setOrigin(0.5));
         skipBtn.setSize(156, 48);
         skipBtn.setInteractive({ useHandCursor: true });

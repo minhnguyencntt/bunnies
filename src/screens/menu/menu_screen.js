@@ -428,6 +428,10 @@ class MenuScreen extends Phaser.Scene {
             const bunny = this.add.image(pos.x, pos.y, 'spr_bunny_idle');
             bunny.setOrigin(0.5, 1); // chân đứng trên mặt đất
             bunny.setScale(baseScale);
+            // Tint pastel nhẹ để các thỏ có màu sắc dịu khác nhau (trắng/hồng/xanh/kem)
+            const tints = [0xFFFFFF, 0xFFD9E8, 0xD9ECFF, 0xFFF3C4];
+            const tint = tints[i % tints.length];
+            if (tint !== 0xFFFFFF) bunny.setTint(tint);
             bunny.setDepth(50);
             bunny.setInteractive({ useHandCursor: true });
             bunny.setData('baseScale', baseScale);

@@ -34,8 +34,8 @@ const RewardFX = {
             });
         }
 
-        // Mưa hạt sáng bắn tứ phía
-        const colors = [0xFFD700, 0xFF69B4, 0x87CEEB, 0x90EE90, 0x9370DB, 0xFFA500];
+        // Mưa hạt sáng bắn tứ phía — bảng màu pastel dịu cho trẻ nhỏ
+        const colors = [0xFFD166, 0xF48FB1, 0x87CEFA, 0x7FE3C3, 0xB39DDB, 0xFFB74D];
         for (let i = 0; i < 22; i++) {
             const p = scene.add.graphics().setDepth(DEPTH);
             p.fillStyle(colors[i % colors.length], 0.95);
@@ -80,8 +80,8 @@ const RewardFX = {
         const praise = this.PRAISES[Phaser.Math.Between(0, this.PRAISES.length - 1)];
         const praiseText = scene.add.text(x, Math.max(70, y - 80), `${praise} 🌟`, {
             fontSize: '38px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold',
-            color: '#FFD700', stroke: '#FFFFFF', strokeThickness: 6,
-            shadow: { offsetX: 2, offsetY: 3, color: '#B03060', blur: 4, fill: true },
+            color: '#FFD166', stroke: '#FFFFFF', strokeThickness: 6,
+            shadow: { offsetX: 2, offsetY: 3, color: '#7E57C2', blur: 4, fill: true },
         }).setOrigin(0.5).setDepth(DEPTH + 2).setScale(0);
         scene.tweens.add({
             targets: praiseText,

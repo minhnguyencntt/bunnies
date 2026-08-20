@@ -278,9 +278,9 @@ class CountingForestScreen extends Phaser.Scene {
         const startX = (l.w - totalW) / 2 + cw / 2;
 
         const palettes = [
-            { fill: 0xFFB6C1, border: 0xFF69B4 },
-            { fill: 0x90EE90, border: 0x32CD32 },
-            { fill: 0x87CEEB, border: 0x4682B4 },
+            { fill: 0xF8BBD0, border: 0xF48FB1 },
+            { fill: 0xB9F6CA, border: 0x69D99A },
+            { fill: 0xB3E5FC, border: 0x64B5F6 },
         ];
 
         q.answers.forEach((val, i) => {

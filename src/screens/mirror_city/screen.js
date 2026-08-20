@@ -830,32 +830,80 @@ class MirrorCityScreen extends Phaser.Scene {
         }
         container.add(baseScene);
 
-        // Hoa trang trí cho cảnh thiên nhiên (vị trí seeded → 2 panel giống nhau)
-        if (category === 'animals' || category === 'nature') {
-            const flowers = ['🌸', '🌼', '🌷', '🌻'];
-            const petalColors = [0xFF9EC7, 0xFFE14D, 0xFF8A80, 0xB39DDB];
-            for (let i = 0; i < 4; i++) {
-                const fx = rng.between(-Math.round(width / 2) + 26, Math.round(width / 2) - 26);
-                const fy = Math.round(height * 0.30) + rng.between(-6, 14);
-                const pick = rng.between(0, 3);
-                if (this.emojiOK !== false) {
-                    const f = this.add.text(fx, fy, flowers[pick], { fontSize: '20px' }).setOrigin(0.5);
-                    container.add(f);
-                } else {
-                    // Fallback vector: hoa 5 cánh
-                    const g = this.add.graphics();
-                    const pc = petalColors[pick];
-                    for (let p = 0; p < 5; p++) {
-                        const a = (p / 5) * Math.PI * 2;
-                        g.fillStyle(pc, 1);
-                        g.fillCircle(fx + Math.cos(a) * 6, fy + Math.sin(a) * 6, 4.5);
+        // Vật thể trang trí rải khắp tranh (seeded → 2 panel giống hệt nhau)
+        this.drawSceneDecor(container, rng, width, height, category);
+    }
+
+    /**
+     * Rải nhiều vật trang trí vào các vùng khác nhau của tranh (trời/giữa/đất).
+     * Cùng seed cho cả 2 panel → giống hệt nhau; vật của đáp án bị loại khỏi pool
+     * và không vật nào đè lên vùng đáp án → chỉ đúng 1 điểm khác biệt.
+     */
+    drawSceneDecor(container, rng, width, height, category) {
+        const puzzle = this.currentPuzzle;
+        const diffX = (puzzle.difference.location.x - 0.5) * width;
+        const diffY = (puzzle.difference.location.y - 0.5) * height;
+        const diffEmoji = this.elementEmoji(puzzle.difference.element);
+
+        const pools = {
+            animals: ['🌳', '🌷', '🍄', '☁️', '🌞', '🌿', '🍓', '🐦', '🦋', '🌼'],
+            nature: ['🌳', '🌸', '☁️', '🌈', '🍄', '🌻', '🦋', '🌿', '⭐'],
+            objects: ['🧸', '🎈', '📚', '🪀', '🧩', '📦', '🖍️', '🪁'],
+            food: ['🍎', '🍪', '🧁', '🍓', '🥛', '🍇', '🍊', '🍩'],
+            vehicles: ['🚲', '🚦', '🌳', '☁️', '🐦', '🎈', '🏠', '🌸'],
+            fantasy: ['⭐', '🌙', '🔮', '☁️', '🌈', '🍄', '🦋'],
+            seasonal: ['🎄', '🎁', '⛄', '❄️', '⭐', '🔔', '🕯️'],
+        };
+        // Loại emoji trùng với vật của đáp án để khỏi gây nhiễu
+        const pool = (pools[category] || pools.nature).filter(e => e && e !== diffEmoji);
+
+        // Màu pastel cho fallback vector
+        const pastel = [0xF48FB1, 0xFFD166, 0x87CEFA, 0x7FE3C3, 0xB39DDB, 0xFFB74D];
+
+        // 3 vùng: trời / giữa / đất — vật xuất hiện khắp tranh
+        const zones = [
+            { yMin: -0.42, yMax: -0.14, count: 3 },
+            { yMin: -0.14, yMax: 0.12, count: 3 },
+            { yMin: 0.14, yMax: 0.42, count: 3 },
+        ];
+        const placed = [{ x: diffX, y: diffY, r: 64 }]; // giữ khoảng trống quanh đáp án
+
+        zones.forEach((z) => {
+            for (let i = 0; i < z.count; i++) {
+                let pos = null;
+                for (let a = 0; a < 14 && !pos; a++) {
+                    const px = rng.between(-Math.round(width / 2) + 32, Math.round(width / 2) - 32);
+                    const py = Math.round((z.yMin + rng.next() * (z.yMax - z.yMin)) * height);
+                    if (placed.every(p => Math.hypot(px - p.x, py - p.y) > p.r)) {
+                        pos = { x: px, y: py };
                     }
-                    g.fillStyle(0xFFD700, 1);
-                    g.fillCircle(fx, fy, 3.5);
+                }
+                if (!pos) continue;
+                placed.push({ x: pos.x, y: pos.y, r: 36 });
+
+                const size = rng.between(22, 32);
+                if (this.emojiOK !== false) {
+                    const emoji = pool[rng.between(0, pool.length - 1)];
+                    container.add(this.add.text(pos.x, pos.y, emoji, { fontSize: `${size}px` }).setOrigin(0.5));
+                } else {
+                    // Fallback vector: hoa/sao pastel
+                    const g = this.add.graphics();
+                    const c = pastel[rng.between(0, pastel.length - 1)];
+                    if (rng.next() < 0.5) {
+                        for (let p = 0; p < 5; p++) {
+                            const a = (p / 5) * Math.PI * 2;
+                            g.fillStyle(c, 1);
+                            g.fillCircle(pos.x + Math.cos(a) * 7, pos.y + Math.sin(a) * 7, 5);
+                        }
+                        g.fillStyle(0xFFF3B0, 1);
+                        g.fillCircle(pos.x, pos.y, 4);
+                    } else {
+                        this.drawStar(g, pos.x, pos.y, 9, 5, c);
+                    }
                     container.add(g);
                 }
             }
-        }
+        });
     }
 
     drawMainElement(container, width, height, puzzle, isOriginal, rng) {
@@ -1321,9 +1369,9 @@ class MirrorCityScreen extends Phaser.Scene {
         const backBtn = this.add.container(btnW / 2 + 20, height - btnH / 2 - 18);
 
         const backBg = this.add.graphics();
-        backBg.fillStyle(0xE91E63, 1);
+        backBg.fillStyle(0x8B7ED8, 1);
         backBg.fillRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, 10);
-        backBg.lineStyle(2, 0xFFD700, 1);
+        backBg.lineStyle(2, 0xFFF3B0, 1);
         backBg.strokeRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, 10);
         backBtn.add(backBg);
 
@@ -1428,7 +1476,7 @@ class MirrorCityScreen extends Phaser.Scene {
     handleWrongAnswer(x, y) {
         // Create wrong answer effect at click position
         const wrongMark = this.add.graphics();
-        wrongMark.lineStyle(4, 0xFF0000, 1);
+        wrongMark.lineStyle(4, 0xFF8A80, 1);
         wrongMark.beginPath();
         wrongMark.moveTo(-10, -10);
         wrongMark.lineTo(10, 10);

@@ -12,9 +12,18 @@ class BootScreen extends Phaser.Scene {
     preload() {
         // Load boot screen background - World of Knowledge map
         this.load.image('boot_bg', 'screens/boot/assets/backgrounds/bunnies_world.jpg');
-        
+
         // Load boot screen BGM
-        this.load.audio('bgm_boot', 'screens/boot/assets/audio/bgm/boot_bgm.wav');
+        this.load.audio('bgm_boot', 'screens/boot/assets/audio/bgm/boot_bgm.mp3');
+
+        // Sprite nhân vật vẽ tay (dùng chung toàn game)
+        const sprites = [
+            'bunny_idle', 'bunny_hop', 'bunny_happy', 'bunny_sad',
+            'squirrel_side', 'squirrel_front', 'squirrel_back', 'squirrel_happy',
+            'owl_idle', 'owl_cheer', 'owl_sad', 'owl_encourage',
+            'fox_idle', 'fox_joy', 'fox_hopeful', 'fox_walk',
+        ];
+        sprites.forEach((n) => this.load.image(`spr_${n}`, `core/characters/assets/${n}.png`));
         
         // Add load event handlers for debugging
         this.load.on('filecomplete-image-boot_bg', () => {
@@ -85,31 +94,90 @@ class BootScreen extends Phaser.Scene {
             ease: 'Sine.easeInOut'
         });
 
-        // Generate bunny textures first (if BunnyCharacter system available)
-        if (typeof generateAllBunnyTextures === 'function') {
-            generateAllBunnyTextures(this);
-        }
-        
-        // Generate ambient creatures (fireflies, birds, particles) for menu
-        if (typeof generateFireflies === 'function') {
-            generateFireflies(this, 6);
-        }
-        if (typeof generateBirds === 'function') {
-            generateBirds(this, 4);
-        }
-        if (typeof generateMagicParticles === 'function') {
-            generateMagicParticles(this, 8);
-        }
-
         // Create stylized loading bar container (magical wooden frame)
         this.createMagicalLoadingBar(width, height);
 
         // Create running bunny for loading bar
         this.createRunningBunny(width, height);
 
-        // Simulate loading progress
-        this.loadingProgress = 0;
-        this.updateLoadingProgress();
+        // Thanh tiến trình fill thật theo từng bước generate
+        this.loadingBarFill = this.add.graphics();
+        this.loadingBarFill.setDepth(5);
+
+        // Chia việc generate texture nặng thành từng bước nhỏ theo frame
+        // → thanh loading chạy mượt, không treo màn hình
+        // (Có sprite vẽ tay rồi thì bỏ qua generate thỏ/cú — vào game nhanh hơn nhiều)
+        const hasBunnyArt = this.textures.exists('spr_bunny_idle');
+        const hasOwlArt = this.textures.exists('spr_owl_idle');
+        this.generationSteps = [];
+        if (!hasBunnyArt && typeof generateAllBunnyTextures === 'function') {
+            this.generationSteps.push(() => generateAllBunnyTextures(this));
+        }
+        if (typeof generateFireflies === 'function') {
+            this.generationSteps.push(() => generateFireflies(this, 6));
+        }
+        if (typeof generateBirds === 'function') {
+            this.generationSteps.push(() => generateBirds(this, 4));
+        }
+        if (typeof generateMagicParticles === 'function') {
+            this.generationSteps.push(() => generateMagicParticles(this, 8));
+        }
+        if (!hasBunnyArt && typeof generateAllBunnyAnimations === 'function') {
+            this.generationSteps.push(() => generateAllBunnyAnimations(this));
+        }
+        if (!hasOwlArt && typeof generateWiseOwlAnimations === 'function') {
+            this.generationSteps.push(() => generateWiseOwlAnimations(this));
+        }
+        this.generationIndex = 0;
+        this.runNextGenerationStep();
+    }
+
+    runNextGenerationStep() {
+        const total = this.generationSteps.length;
+        if (this.generationIndex >= total) {
+            this.setLoadingProgress(1);
+            console.log('BootScreen: Graphics created, starting MenuScreen...');
+            this.stopBootBGM();
+            this.scene.start('MenuScreen');
+            return;
+        }
+        // Nhường 1 frame để thanh loading repaint trước khi làm việc nặng
+        this.time.delayedCall(30, () => {
+            const step = this.generationSteps[this.generationIndex];
+            try {
+                step();
+            } catch (e) {
+                console.warn('BootScreen: generation step failed', e);
+            }
+            this.generationIndex++;
+            this.setLoadingProgress(this.generationIndex / total);
+            this.runNextGenerationStep();
+        });
+    }
+
+    setLoadingProgress(progress) {
+        this.loadingProgress = progress;
+
+        // Fill bar
+        if (this.loadingBarFill) {
+            const w = Math.max(10, (this.loadingBarWidth - 8) * progress);
+            this.loadingBarFill.clear();
+            this.loadingBarFill.fillGradientStyle(0xFFD700, 0xFFB300, 0xFF9E5E, 0xFFD700, 1);
+            this.loadingBarFill.fillRoundedRect(
+                this.loadingBarX - this.loadingBarWidth / 2 + 4,
+                this.loadingBarY - this.loadingBarHeight / 2 + 4,
+                w,
+                this.loadingBarHeight - 8,
+                4
+            );
+        }
+
+        // Bunny chạy theo tiến trình
+        if (this.runningBunny) {
+            const minX = this.loadingBarX - this.loadingBarWidth / 2 + 20;
+            const maxX = this.loadingBarX + this.loadingBarWidth / 2 - 20;
+            this.runningBunny.x = minX + (maxX - minX) * progress;
+        }
     }
 
     createMagicalLoadingBar(width, height) {
@@ -190,6 +258,29 @@ class BootScreen extends Phaser.Scene {
     }
 
     createRunningBunny(width, height) {
+        const startX = this.loadingBarX - this.loadingBarWidth / 2 + 20;
+        const bunnyY = this.loadingBarY;
+
+        // Ưu tiên sprite vẽ tay
+        if (this.textures.exists('spr_bunny_hop')) {
+            const tex = this.textures.get('spr_bunny_hop').getSourceImage();
+            const scale = 56 / tex.height;
+            this.runningBunny = this.add.image(startX, bunnyY, 'spr_bunny_hop');
+            this.runningBunny.setOrigin(0.5, 1);
+            this.runningBunny.setScale(scale);
+            this.runningBunny.setDepth(1000);
+            this.tweens.add({
+                targets: this.runningBunny,
+                y: bunnyY - 6,
+                scaleY: scale * 1.08,
+                duration: 220,
+                yoyo: true,
+                repeat: -1,
+                ease: 'Sine.easeInOut'
+            });
+            return;
+        }
+
         // Use Milo (energetic, cheerful) for the loading screen bunny
         if (typeof BunnyCharacter !== 'undefined' && typeof BUNNY_CHARACTERS !== 'undefined') {
             const milo = new BunnyCharacter(this, { ...BUNNY_CHARACTERS.milo, size: 40 });
@@ -258,61 +349,6 @@ class BootScreen extends Phaser.Scene {
         }
     }
 
-    updateLoadingProgress() {
-        this.loadingProgress += 0.15;
-        if (this.loadingProgress > 1) {
-            this.loadingProgress = 1;
-        }
-
-        const minX = this.loadingBarX - this.loadingBarWidth/2 + 20;
-        const maxX = this.loadingBarX + this.loadingBarWidth/2 - 20;
-        const bunnyX = minX + (maxX - minX) * this.loadingProgress;
-        
-        this.runningBunny.x = Phaser.Math.Clamp(bunnyX, minX, maxX);
-
-        if (Math.random() > 0.7) {
-            const particle = this.add.graphics();
-            particle.fillStyle(0xFFD700, 0.8);
-            particle.fillCircle(0, 0, 3);
-            particle.x = this.runningBunny.x - 10;
-            particle.y = this.runningBunny.y;
-            
-            this.tweens.add({
-                targets: particle,
-                x: particle.x - 20,
-                alpha: 0,
-                scale: 0,
-                duration: 500,
-                ease: 'Power2',
-                onComplete: () => particle.destroy()
-            });
-        }
-
-        if (this.loadingProgress >= 0.99 && this.runningBunny.x >= maxX - 10) {
-            if (this.loadingProgress < 1) {
-                this.runningBunny.x = minX;
-                this.loadingProgress = 0;
-            }
-        }
-
-        if (this.loadingProgress < 1) {
-            this.time.delayedCall(80, () => {
-                this.updateLoadingProgress();
-            });
-        } else {
-            this.runningBunny.x = maxX;
-            this.time.delayedCall(300, () => {
-                console.log('BootScreen: Creating placeholder graphics...');
-                this.createPlaceholderGraphics();
-                console.log('BootScreen: Graphics created, starting MenuScreen...');
-                this.stopBootBGM();
-                this.time.delayedCall(500, () => {
-                    this.scene.start('MenuScreen');
-                });
-            });
-        }
-    }
-
     playBootBGM() {
         if (this.cache.audio.exists('bgm_boot') && window.gameData?.musicEnabled !== false) {
             this.sound.stopAll();
@@ -338,24 +374,5 @@ class BootScreen extends Phaser.Scene {
         }
     }
 
-    createPlaceholderGraphics() {
-        // Generate all bunny character textures
-        if (typeof generateAllBunnyTextures === 'function') {
-            console.log('BootScreen: Generating all bunny character textures...');
-            generateAllBunnyTextures(this);
-        }
-        
-        // Generate all bunny animations
-        if (typeof generateAllBunnyAnimations === 'function') {
-            console.log('BootScreen: Generating all bunny animations...');
-            generateAllBunnyAnimations(this);
-        }
-        
-        // Generate wise owl animations
-        if (typeof generateWiseOwlAnimations === 'function') {
-            console.log('BootScreen: Generating wise owl animations...');
-            generateWiseOwlAnimations(this);
-        }
-    }
 }
 

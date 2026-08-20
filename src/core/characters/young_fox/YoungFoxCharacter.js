@@ -38,6 +38,20 @@ class YoungFoxCharacter {
     static buildContainer(scene, x, y, opts = {}) {
         const depth = opts.depth ?? 26;
         const fox = scene.add.container(x, y);
+
+        // Ưu tiên sprite vẽ tay
+        if (scene.textures.exists('spr_fox_idle')) {
+            const img = scene.add.image(0, 0, 'spr_fox_idle');
+            const tex = scene.textures.get('spr_fox_idle').getSourceImage();
+            img.setScale(92 / tex.height);
+            img.setOrigin(0.5, 0.85);
+            fox.add(img);
+            fox.setData('img', img);
+            fox.setData('spriteArt', true);
+            fox.setDepth(depth);
+            return fox;
+        }
+
         const body = scene.add.graphics();
         body.fillStyle(0xff9f4a, 1);
         body.fillEllipse(0, 4, 40, 32);
@@ -88,6 +102,28 @@ class YoungFoxCharacter {
         this.emotion = emotion;
         if (!this.container) return;
         this.scene.tweens.killTweensOf(this.container);
+
+        // Sprite vẽ tay: đổi texture theo cảm xúc
+        if (this.container.getData('spriteArt')) {
+            const img = this.container.getData('img');
+            const map = {
+                worried: 'spr_fox_hopeful',   // mắt ướt cầu xin hợp cả lo lắng
+                hopeful: 'spr_fox_hopeful',
+                joy: 'spr_fox_joy',
+            };
+            const key = map[emotion] || 'spr_fox_idle';
+            if (this.scene.textures.exists(key) && img) {
+                img.setTexture(key);
+                const tex = this.scene.textures.get(key).getSourceImage();
+                img.setScale(92 / tex.height);
+            }
+            this.container.setScale(emotion === 'joy' ? 1.12 : 1);
+            this.container.setAngle(0);
+            this.container.setAlpha(1);
+            this.startIdleMotion();
+            return;
+        }
+
         this.container.setScale(1.05);
         if (emotion === 'worried') {
             this.container.setAngle(-6);

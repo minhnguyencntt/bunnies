@@ -102,6 +102,23 @@ const ScreenLevelBackground = {
     },
 
     /**
+     * Load BGM sau khi màn chơi đã hiển thị (không chặn preload).
+     * Gọi onReady (thường là playLevelBGM) khi file sẵn sàng.
+     */
+    lazyLoadBGM(scene, key, url, onReady) {
+        if (!key || !url) return;
+        if (scene.cache.audio.exists(key)) {
+            if (onReady) onReady();
+            return;
+        }
+        scene.load.audio(key, url);
+        scene.load.once('complete', () => {
+            if (scene.scene.isActive() && onReady) onReady();
+        });
+        scene.load.start();
+    },
+
+    /**
      * @param {Phaser.Scene} scene
      * @param {{ imageKey: string, videoKey?: string }} bg — videoKey mặc định từ imageKey
      * @param {{ depth?: number, videoRef?: string }} [opts]

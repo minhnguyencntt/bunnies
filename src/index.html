@@ -50,16 +50,32 @@
             height: 100%;
         }
 
-        /* Loading screen */
+        /* Loading screen — hiển thị bản đồ thế giới ngay từ frame đầu tiên */
         #loading {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: white;
-            font-size: 24px;
-            text-align: center;
+            position: fixed;
+            inset: 0;
             z-index: 1000;
+            background: #1a0f2e url('screens/menu/assets/backgrounds/bunnies_world.jpg') center / cover no-repeat;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #loading span {
+            color: #FFD700;
+            font-size: 26px;
+            font-weight: bold;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7), 0 0 2px #000;
+            background: rgba(59, 36, 86, 0.75);
+            border: 2px solid rgba(255, 215, 0, 0.8);
+            border-radius: 999px;
+            padding: 12px 28px;
+            animation: loadingPulse 1.2s ease-in-out infinite;
+        }
+
+        @keyframes loadingPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.65; }
         }
 
         #loading.hidden {
@@ -68,7 +84,7 @@
     </style>
 </head>
 <body>
-    <div id="loading">Đang tải game...</div>
+    <div id="loading"><span>🐰 Đang tải game...</span></div>
     <div id="game-container"></div>
 
     <!-- Phaser 3 Library (local — chạy offline hoàn toàn) -->

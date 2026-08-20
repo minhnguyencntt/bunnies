@@ -26,13 +26,10 @@ class CountingForestScreen extends Phaser.Scene {
     preload() {
         const bg = typeof CountingForestPuzzle !== 'undefined' ? CountingForestPuzzle.background : null;
         if (typeof ScreenLevelBackground !== 'undefined' && bg) {
-            ScreenLevelBackground.registerLevelBackground(this, bg, {
-                bgmKey: 'bgm_counting_forest',
-                bgmUrl: 'screens/counting_forest/assets/audio/bgm/bgm.wav',
-            });
+            // Không load BGM ở preload (file lớn) — lazy load sau khi vào màn
+            ScreenLevelBackground.registerLevelBackground(this, bg, {});
         } else {
             this.load.image('counting_forest_bg', 'screens/counting_forest/assets/backgrounds/bg.png');
-            this.load.audio('bgm_counting_forest', 'screens/counting_forest/assets/audio/bgm/bgm.wav');
         }
         this.load.audio('voice_intro_1', 'screens/counting_forest/assets/audio/voice/intro_1.mp3');
         this.load.audio('voice_intro_2', 'screens/counting_forest/assets/audio/voice/intro_2.mp3');
@@ -46,13 +43,20 @@ class CountingForestScreen extends Phaser.Scene {
         const w = this.cameras.main.width;
         const h = this.cameras.main.height;
         this.sound.stopAll();
-        this.playLevelBGM();
         this.createBackground(w, h);
         this.createBridge(w, h);
         this.createWiseOwl(w, h);
         this.createAmbientCreatures(w, h);
         this.scene.launch('UIScreen');
         this.time.delayedCall(500, () => this.showIntroductionDialogue());
+
+        // BGM load nền, tự phát khi sẵn sàng
+        if (typeof ScreenLevelBackground !== 'undefined') {
+            ScreenLevelBackground.lazyLoadBGM(this, 'bgm_counting_forest',
+                'screens/counting_forest/assets/audio/bgm/bgm.mp3', () => this.playLevelBGM());
+        } else {
+            this.playLevelBGM();
+        }
     }
 
     // ════════════════════════════════════════
@@ -180,9 +184,14 @@ class CountingForestScreen extends Phaser.Scene {
     createBunnyOnPlank(index) {
         const p = this.bridgePlanks[index];
         if (!p?.container) return;
-        const sz = Math.min(p.w * 0.6, 28);
         let bunny;
-        if (typeof BunnyCharacter !== 'undefined' && typeof BUNNY_CHARACTERS !== 'undefined') {
+        const sz = Math.min(p.w * 0.6, 28);
+        if (this.textures.exists('spr_bunny_happy')) {
+            // Sprite vẽ tay — thỏ vui vẻ đứng trên ván
+            const tex = this.textures.get('spr_bunny_happy').getSourceImage();
+            bunny = this.add.image(0, -p.h / 2, 'spr_bunny_happy').setOrigin(0.5, 1);
+            bunny.setScale(46 / tex.height);
+        } else if (typeof BunnyCharacter !== 'undefined' && typeof BUNNY_CHARACTERS !== 'undefined') {
             const keys = Object.keys(BUNNY_CHARACTERS);
             const cfg = BUNNY_CHARACTERS[keys[Phaser.Math.Between(0, keys.length - 1)]];
             const tex = new BunnyCharacter(this, { ...cfg, size: sz }).generateTexture('jumping');

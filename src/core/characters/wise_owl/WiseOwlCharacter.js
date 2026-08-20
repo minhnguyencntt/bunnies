@@ -25,11 +25,15 @@ class WiseOwlCharacter {
      * Ensure all owl animations are generated
      */
     ensureAnimationsGenerated() {
+        // Sprite vẽ tay đã có → không cần generate (tiết kiệm thời gian boot)
+        if (this.scene.textures.exists('spr_owl_idle')) {
+            return;
+        }
         // Check if animations already exist
         if (this.scene.textures.exists('wise_owl_idle_sheet')) {
             return; // Already generated
         }
-        
+
         // Generate all animations using the animation generator
         if (typeof generateWiseOwlAnimations === 'function') {
             generateWiseOwlAnimations(this.scene);
@@ -44,29 +48,57 @@ class WiseOwlCharacter {
     create() {
         // Ensure animations are generated
         this.ensureAnimationsGenerated();
-        
+
+        // Ưu tiên sprite vẽ tay
+        if (this.scene.textures.exists('spr_owl_idle')) {
+            this.useSpriteArt = true;
+            this.sprite = this.scene.add.sprite(this.x, this.y, 'spr_owl_idle');
+            const tex = this.scene.textures.get('spr_owl_idle').getSourceImage();
+            this.sprite.setScale((this.size * 1.35) / tex.height);
+            this.sprite.setOrigin(0.5);
+            this.sprite.setDepth(300);
+
+            this.originalX = this.x;
+            this.originalY = this.y;
+
+            // Thở nhẹ (đung đưa góc) cho sống động
+            this.scene.tweens.add({
+                targets: this.sprite,
+                angle: { from: -2, to: 2 },
+                duration: 1800,
+                yoyo: true,
+                repeat: -1,
+                ease: 'Sine.easeInOut',
+            });
+
+            // Start random movement animations
+            this.startRandomMovements();
+
+            return this.sprite;
+        }
+
         // Use idle sprite sheet as default
         const spriteKey = 'wise_owl_idle_sheet';
-        
+
         if (!this.scene.textures.exists(spriteKey)) {
             console.error('Wise owl sprite sheet not found. Generating animations...');
             this.ensureAnimationsGenerated();
         }
-        
+
         this.sprite = this.scene.add.sprite(this.x, this.y, spriteKey, 0);
         this.sprite.setOrigin(0.5);
         this.sprite.setDepth(300); // Highest depth to always display above all other objects
-        
+
         // Store original position for movement animations
         this.originalX = this.x;
         this.originalY = this.y;
-        
+
         // Play idle animation by default
         this.playAnimation('idle');
-        
+
         // Start random movement animations
         this.startRandomMovements();
-        
+
         return this.sprite;
     }
 
@@ -290,7 +322,38 @@ class WiseOwlCharacter {
             console.warn('Owl sprite not created yet. Call create() first.');
             return;
         }
-        
+
+        // Chế độ sprite vẽ tay: đổi texture theo cảm xúc + pop nhẹ
+        if (this.useSpriteArt) {
+            const map = {
+                idle: 'spr_owl_idle',
+                cheering: 'spr_owl_cheer',
+                celebrating: 'spr_owl_cheer',
+                encouraging: 'spr_owl_encourage',
+                sad: 'spr_owl_sad',
+            };
+            const key = map[animationName] || 'spr_owl_idle';
+            if (this.scene.textures.exists(key)) {
+                this.sprite.setTexture(key);
+                const tex = this.scene.textures.get(key).getSourceImage();
+                const base = (this.size * 1.35) / tex.height;
+                this.sprite.setScale(base);
+                if (animationName !== 'idle') {
+                    // Pop vui khi đổi cảm xúc
+                    this.scene.tweens.add({
+                        targets: this.sprite,
+                        scaleX: base * 1.12,
+                        scaleY: base * 1.12,
+                        duration: 160,
+                        yoyo: true,
+                        ease: 'Back.easeOut',
+                    });
+                }
+            }
+            this.currentAnimation = animationName;
+            return;
+        }
+
         const animKey = `wise_owl_${animationName}`;
         const spriteKey = `wise_owl_${animationName}_sheet`;
         

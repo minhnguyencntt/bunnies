@@ -1053,9 +1053,11 @@ class MenuScreen extends Phaser.Scene {
         markerContainer.setData('nameLabel', nameLabel);
 
         // Vùng chạm tròn lớn, đúng tâm icon (tối thiểu ~88px đường kính)
+        // Lưu ý: hitArea của Container tính từ góc trái-trên của size box
+        // (displayOrigin = width/2, height/2), nên tâm hình tròn ở (hitRadius, hitRadius)
         const hitRadius = Math.max(markerSize * 1.5, 44);
         markerContainer.setSize(hitRadius * 2, hitRadius * 2);
-        markerContainer.setInteractive(new Phaser.Geom.Circle(0, 0, hitRadius), Phaser.Geom.Circle.Contains);
+        markerContainer.setInteractive(new Phaser.Geom.Circle(hitRadius, hitRadius, hitRadius), Phaser.Geom.Circle.Contains);
         markerContainer.input.cursor = 'pointer';
 
         markerContainer.on('pointerover', () => {

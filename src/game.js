@@ -89,6 +89,7 @@
     try {
         // Initialize game
         const game = new Phaser.Game(config);
+        window.game = game; // for debugging / testing
         console.log('Game initialized successfully!');
 
         // Vào chế độ toàn màn hình ở lần chạm đầu tiên (mobile yêu cầu gesture)

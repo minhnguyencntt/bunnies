@@ -217,12 +217,12 @@ class MirrorCityScreen extends Phaser.Scene {
         const height = this.cameras.main.height;
         this.mirrors = [];
 
-        const mirrorWidth = 96;
-        const mirrorHeight = 118;
+        const mirrorWidth = 110;
+        const mirrorHeight = 132;
         const hudH = 80;
         const cols = 5;
-        const spacingX = Math.min(200, (width * 0.78) / cols);
-        const spacingY = 168;
+        const spacingX = Math.min(210, (width * 0.78) / cols);
+        const spacingY = 185;
         const totalWidth = (cols - 1) * spacingX;
         const startX = (width - totalWidth) / 2;
         const startY = Math.max(hudH + mirrorHeight / 2 + 34, height * 0.30);
@@ -262,10 +262,10 @@ class MirrorCityScreen extends Phaser.Scene {
 
         // Hào quang mềm phía sau
         const glowEffect = this.add.graphics();
-        glowEffect.fillStyle(accent, 0.20);
-        glowEffect.fillEllipse(0, 0, width * 1.55, height * 1.45);
         glowEffect.fillStyle(accent, 0.30);
-        glowEffect.fillEllipse(0, 0, width * 1.2, height * 1.12);
+        glowEffect.fillEllipse(0, 0, width * 1.6, height * 1.5);
+        glowEffect.fillStyle(0xFFE9A8, 0.35);
+        glowEffect.fillEllipse(0, 0, width * 1.25, height * 1.15);
         container.add(glowEffect);
         container.sendToBack(glowEffect);
         mirror.glowEffect = glowEffect;
@@ -325,10 +325,11 @@ class MirrorCityScreen extends Phaser.Scene {
         }
 
         // Vùng chạm hình ellipse, lớn hơn gương để trẻ dễ bấm
+        // hitArea của Container tính từ góc trái-trên của size box → tâm ellipse ở (hitW/2, hitH/2)
         const hitW = width + 40;
         const hitH = height + 52;
         container.setSize(hitW, hitH);
-        container.setInteractive(new Phaser.Geom.Ellipse(0, 0, hitW, hitH), Phaser.Geom.Ellipse.Contains, { useHandCursor: true });
+        container.setInteractive(new Phaser.Geom.Ellipse(hitW / 2, hitH / 2, hitW, hitH), Phaser.Geom.Ellipse.Contains, { useHandCursor: true });
 
         container.on('pointerdown', () => {
             if (!mirror.isRestored && !this.isInChallengeView) {
@@ -372,66 +373,73 @@ class MirrorCityScreen extends Phaser.Scene {
      * isRestored=true:  mặt gương sáng rực, khung rực vàng
      */
     drawElegantMirror(graphics, w, h, isRestored, accent) {
-        const gold = isRestored ? 0xFFD700 : 0xFFC94D;
-        const goldDark = isRestored ? 0xDAA520 : 0xB8860B;
+        const gold = isRestored ? 0xFFD700 : 0xFFCE54;
+        const goldDark = isRestored ? 0xE8A90C : 0xC98A1B;
+        const goldLight = 0xFFF3B0;
         const gemColor = isRestored ? 0xFFF3B0 : accent;
 
         // Ngọc trên đỉnh khung
         graphics.fillStyle(gold, 1);
-        graphics.fillCircle(0, -h / 2 - 8, 6);
+        graphics.fillCircle(0, -h / 2 - 9, 7);
         graphics.fillStyle(gemColor, 1);
-        graphics.fillCircle(0, -h / 2 - 8, 3.2);
+        graphics.fillCircle(0, -h / 2 - 9, 4);
         graphics.fillStyle(0xFFFFFF, 0.9);
-        graphics.fillCircle(-1.5, -h / 2 - 9.5, 1.2);
+        graphics.fillCircle(-1.8, -h / 2 - 11, 1.5);
 
-        // Khung ngoài (viền vàng hai lớp)
+        // Khung ngoài (viền vàng dày, sáng)
         graphics.fillStyle(goldDark, 1);
-        graphics.fillEllipse(0, 0, w + 18, h + 18);
+        graphics.fillEllipse(0, 0, w + 24, h + 24);
         graphics.fillStyle(gold, 1);
-        graphics.fillEllipse(0, 0, w + 10, h + 10);
-        graphics.lineStyle(2, 0xFFF3B0, 0.9);
-        graphics.strokeEllipse(0, 0, w + 6, h + 6);
+        graphics.fillEllipse(0, 0, w + 14, h + 14);
+        graphics.lineStyle(3, goldLight, 0.95);
+        graphics.strokeEllipse(0, 0, w + 8, h + 8);
+        // Gờ sáng phía trên khung
+        graphics.lineStyle(2, 0xFFFFFF, 0.5);
+        graphics.strokeEllipse(0, -2, w + 14, h + 12);
 
         // Mặt gương
         if (!isRestored) {
-            graphics.fillGradientStyle(0x4A3791, 0x35266E, 0x1F1147, 0x2D1B5E, 1);
+            // Tím huyền bí nhưng sáng, đọc được trên nền đêm
+            graphics.fillGradientStyle(0x8E6AC8, 0x6D4AA8, 0x4A2F7F, 0x5B3E99, 1);
             graphics.fillEllipse(0, 0, w, h);
             // Vệt sáng chéo kiểu kính
-            graphics.fillStyle(0xFFFFFF, 0.13);
+            graphics.fillStyle(0xFFFFFF, 0.20);
             graphics.fillRect(-w * 0.30, -h / 2, w * 0.16, h);
-            graphics.fillStyle(0xFFFFFF, 0.07);
+            graphics.fillStyle(0xFFFFFF, 0.10);
             graphics.fillRect(w * 0.04, -h / 2, w * 0.10, h);
-            // Sao mờ bên trong (vị trí cố định — đồng nhất giữa các gương)
-            const starSpots = [[-0.22, -0.26, 2.2], [0.18, -0.10, 1.6], [-0.08, 0.14, 1.9], [0.24, 0.28, 1.4], [-0.26, 0.30, 1.5]];
+            // Sao lấp lánh bên trong (vị trí cố định — đồng nhất giữa các gương)
+            const starSpots = [[-0.22, -0.26, 2.6], [0.18, -0.10, 2.0], [-0.08, 0.14, 2.3], [0.24, 0.28, 1.8], [-0.26, 0.30, 1.9]];
             starSpots.forEach(([sx, sy, r]) => {
-                graphics.fillStyle(0xE1BEE7, 0.65);
+                graphics.fillStyle(0xE9D5FF, 0.9);
                 graphics.fillCircle(sx * w, sy * h, r);
-                graphics.fillStyle(0xFFFFFF, 0.8);
+                graphics.fillStyle(0xFFFFFF, 1);
                 graphics.fillCircle(sx * w, sy * h, r * 0.45);
             });
         } else {
             graphics.fillGradientStyle(0xFFF8DC, 0xFFECB3, 0xB3E5FC, 0xE1F5FE, 1);
             graphics.fillEllipse(0, 0, w, h);
             // Tia sáng trên mặt gương đã giải
-            graphics.fillStyle(0xFFFFFF, 0.6);
+            graphics.fillStyle(0xFFFFFF, 0.65);
             graphics.fillRect(-w * 0.26, -h / 2, w * 0.18, h);
             // Sao vàng lấp lánh
-            const starSpots = [[-0.18, -0.22, 2.6], [0.20, 0.05, 2.0], [-0.05, 0.26, 2.2]];
+            const starSpots = [[-0.18, -0.22, 2.8], [0.20, 0.05, 2.2], [-0.05, 0.26, 2.4]];
             starSpots.forEach(([sx, sy, r]) => {
-                graphics.fillStyle(0xFFD700, 0.9);
+                graphics.fillStyle(0xFFD700, 1);
                 graphics.fillCircle(sx * w, sy * h, r);
-                graphics.fillStyle(0xFFFFFF, 0.95);
+                graphics.fillStyle(0xFFFFFF, 1);
                 graphics.fillCircle(sx * w, sy * h, r * 0.45);
             });
         }
 
         // 4 viên đá quý ở 4 phía khung
-        const gemPos = [[-w / 2 - 3, 0], [w / 2 + 3, 0], [0, -h / 2 - 3], [0, h / 2 + 3]];
+        const gemPos = [[-w / 2 - 5, 0], [w / 2 + 5, 0], [0, -h / 2 - 5], [0, h / 2 + 5]];
         gemPos.forEach(([gx, gy]) => {
             graphics.fillStyle(0xFFFFFF, 0.95);
-            graphics.fillCircle(gx, gy, 5);
+            graphics.fillCircle(gx, gy, 6);
             graphics.fillStyle(gemColor, 1);
-            graphics.fillCircle(gx, gy, 3.2);
+            graphics.fillCircle(gx, gy, 3.8);
+            graphics.fillStyle(0xFFFFFF, 0.85);
+            graphics.fillCircle(gx - 1.2, gy - 1.2, 1.2);
         });
     }
 
@@ -653,19 +661,33 @@ class MirrorCityScreen extends Phaser.Scene {
     /** Map tên vật (tiếng Anh trong dữ liệu) → emoji tương ứng */
     elementEmoji(element) {
         const e = (element || '').toLowerCase();
+        // Thứ tự quan trọng: cụm dài/cụ thể trước, cụm ngắn sau
         const map = [
-            ['butterfl', '🦋'], ['bee', '🐝'], ['duck', '🦆'], ['baby bird', '🐤'],
+            ['baby bird', '🐤'], ['shooting star', '🌠'], ['stars on hat', '⭐'],
+            ['sunflower', '🌻'], ['glowing mushroom', '🍄'], ['water bottle', '🍼'],
+            ['yarn', '🧶'], ['balloon', '🎈'], ['big fish', '🐠'], ['big pumpkin', '🎃'],
+            ['big firework', '🎆'], ['baby penguin', '🐧'], ['train car', '🚃'],
+            ['stepping stone', '🪨'], ['compass', '🧭'], ['clock', '🕐'],
+            ['butterfl', '🦋'], ['bee', '🐝'], ['duck', '🦆'], ['chick', '🐥'],
             ['bird', '🐦'], ['fish', '🐠'], ['star', '⭐'], ['heart', '💖'],
-            ['cloud', '☁️'], ['tulip', '🌷'], ['flower', '🌸'], ['acorn', '🌰'],
-            ['apple', '🍎'], ['balloon', '🎈'], ['cand', '🍬'], ['gem', '💎'],
+            ['cloud', '☁️'], ['tulip', '🌷'], ['flower', '🌸'], ['petal', '🌸'],
+            ['acorn', '🌰'], ['apple', '🍎'], ['cand', '🍬'], ['gem', '💎'],
             ['egg', '🥚'], ['carrot', '🥕'], ['mushroom', '🍄'], ['leaf', '🍃'],
-            ['shell', '🐚'], ['ladybug', '🐞'], ['frog', '🐸'], ['snail', '🐌'],
-            ['moon', '🌙'], ['hat', '🎩'], ['crown', '👑'], ['ribbon', '🎀'],
-            ['collar', '🔴'], ['bottle', '🍼'], ['bone', '🦴'], ['ball', '⚽'],
-            ['kite', '🪁'], ['umbrella', '☂️'], ['snow', '❄️'], ['sun', '☀️'],
-            ['penguin', '🐧'], ['owl', '🦉'], ['cat', '🐱'], ['dog', '🐶'],
-            ['bunn', '🐰'], ['car', '🚗'], ['bus', '🚌'], ['train', '🚂'],
-            ['boat', '⛵'], ['rocket', '🚀'], ['cookie', '🍪'], ['cake', '🍰'],
+            ['leaves', '🍃'], ['shell', '🐚'], ['ladybug', '🐞'], ['frog', '🐸'],
+            ['snail', '🐌'], ['moon', '🌙'], ['hat', '🎩'], ['crown', '👑'],
+            ['ribbon', '🎀'], ['collar', '🎀'], ['scarf', '🧣'], ['bottle', '🍼'],
+            ['bone', '🦴'], ['kite', '🪁'], ['umbrella', '☂️'], ['snow', '❄️'],
+            ['sun', '☀️'], ['penguin', '🐧'], ['owl', '🦉'], ['cat', '🐱'],
+            ['dog', '🐶'], ['bunn', '🐰'], ['horse', '🐴'], ['parrot', '🦜'],
+            ['turtle', '🐢'], ['dragon', '🐉'], ['robot', '🤖'], ['dancer', '💃'],
+            ['car', '🚗'], ['bus', '🚌'], ['train', '🚂'], ['boat', '⛵'],
+            ['sail', '⛵'], ['rocket', '🚀'], ['cookie', '🍪'], ['cake', '🍰'],
+            ['pancake', '🥞'], ['pie', '🥧'], ['pepper', '🌶️'], ['sushi', '🍣'],
+            ['marshmallow', '🍡'], ['pencil', '✏️'], ['book', '📚'], ['basket', '🧺'],
+            ['bucket', '🪣'], ['candle', '🕯️'], ['ladder', '🪜'], ['lettuce', '🥬'],
+            ['ornament', '🎄'], ['tower', '🗼'], ['wheel', '🛞'], ['window', '🪟'],
+            ['wand', '🪄'], ['potion', '🧪'], ['waterfall', '💧'], ['flame', '🔥'],
+            ['rainbow', '🌈'], ['ball', '⚽'],
         ];
         for (const [key, emoji] of map) {
             if (e.includes(key)) return emoji;

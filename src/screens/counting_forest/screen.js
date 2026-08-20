@@ -378,6 +378,10 @@ class CountingForestScreen extends Phaser.Scene {
     }
 
     onCorrectAnswer(card, plankIndex, value) {
+        const plank = this.bridgePlanks[plankIndex];
+        const fx = plank ? plank.cx : card.x;
+        const fy = plank ? plank.cy - 30 : card.y;
+
         this.tweens.add({
             targets: card, alpha: 0, scale: 0, duration: 250,
             onComplete: () => card.destroy(true),
@@ -386,18 +390,20 @@ class CountingForestScreen extends Phaser.Scene {
 
         this.restorePlank(plankIndex, value);
 
+        if (typeof RewardFX !== 'undefined') {
+            RewardFX.correctAnswer(this, fx, fy);
+        }
+
         if (this.wiseOwl) {
             this.wiseOwl.cheer();
-            this.wiseOwl.showDialogue('Làm tốt lắm, Bé Thỏ! Một tấm ván nữa đã được khôi phục. Tiếp tục nhé!', 4500);
             this.playVoice('voice_correct');
         }
 
         if (window.gameData) {
             window.gameData.score = (window.gameData.score || 0) + 10;
-            window.gameData.stars = (window.gameData.stars || 0) + 1;
         }
 
-        this.time.delayedCall(5000, () => {
+        this.time.delayedCall(2200, () => {
             this.checkingAnswer = false;
             if (this.wiseOwl) this.wiseOwl.returnToIdle();
             if (this.planksRestored < this.totalPlanks) this.generateNewQuestion();
@@ -462,29 +468,21 @@ class CountingForestScreen extends Phaser.Scene {
     }
 
     // ════════════════════════════════════════
-    //  Introduction dialogue (3-part, with voice)
+    //  Introduction (ngắn 5–10s, có nút bỏ qua)
     // ════════════════════════════════════════
 
     showIntroductionDialogue() {
-        const dialogues = [
-            { text: 'Chào mừng đến Khu Rừng Đếm Số, Bé Thỏ! Con đường ma thuật này đầy những con số đang chờ bạn khám phá.', voiceKey: 'voice_intro_1', duration: 7000 },
-            { text: 'Ồ không! Cây cầu gỗ bị gãy, và bạn không thể băng qua dòng suối. Nhưng đừng lo, mỗi câu trả lời đúng sẽ giúp khôi phục một tấm ván.', voiceKey: 'voice_intro_2', duration: 9000 },
-            { text: 'Giải các bài toán cộng bằng cách chọn số đúng. Kéo nó vào chỗ trống trên cầu. Mỗi câu trả lời đúng sẽ khôi phục một tấm ván. Hãy xem bạn có thể khôi phục cả 10 tấm ván không!', voiceKey: 'voice_intro_3', duration: 12000 },
-        ];
-        this.showDialogueSequenceWithVoice(dialogues, () => this.generateNewQuestion());
-    }
-
-    showDialogueSequenceWithVoice(dialogues, onComplete) {
-        if (this.dialogueIndex >= dialogues.length) {
-            this.dialogueIndex = 0;
-            if (onComplete) onComplete();
-            return;
+        if (typeof IntroHelper !== 'undefined') {
+            IntroHelper.play(this, {
+                text: 'Cây cầu gãy rồi! Kéo đáp án đúng lên cầu để sửa 10 tấm ván nhé!',
+                voiceKey: 'voice_intro_2',
+                voiceRate: 1.5,
+                showText: (t, ms) => { if (this.wiseOwl) this.wiseOwl.showDialogue(t, ms); },
+                onComplete: () => this.generateNewQuestion(),
+            });
+        } else {
+            this.generateNewQuestion();
         }
-        const d = dialogues[this.dialogueIndex];
-        if (this.wiseOwl) this.wiseOwl.showDialogue(d.text, d.duration);
-        this.playVoice(d.voiceKey);
-        this.dialogueIndex++;
-        this.time.delayedCall(d.duration + 500, () => this.showDialogueSequenceWithVoice(dialogues, onComplete));
     }
 
     // ════════════════════════════════════════

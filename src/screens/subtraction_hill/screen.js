@@ -359,6 +359,10 @@ class SubtractionHillScreen extends Phaser.Scene {
         const itemDef = this.lostItemsQueue[itemIndex];
         const emoji = itemDef ? itemDef.emoji : '✨';
 
+        if (typeof RewardFX !== 'undefined') {
+            RewardFX.correctAnswer(this, this.cameras.main.width / 2, this.L().equationY + 10);
+        }
+
         this.flyLostItemToFox(emoji, this.cameras.main.width / 2, this.L().equationY);
         this.time.delayedCall(400, () => { this.fillItemProgressSlot(itemIndex, emoji); this.updateItemProgressTitle(); });
 
@@ -549,26 +553,17 @@ class SubtractionHillScreen extends Phaser.Scene {
     // ════════════════════════════════════════
 
     showIntroductionDialogue() {
-        const dialogues = [
-            { text: 'Hu hu… Cáo con làm rơi đồ đạc khắp Đồi Phép Trừ! Bạn có thể giúp tìm lại không?', voiceKey: 'voice_intro_1', duration: 5500 },
-            { text: 'Mỗi câu trừ đúng sẽ gọi một món đồ bị thất lạc bay về chỗ cáo con.', voiceKey: 'voice_intro_2', duration: 5000 },
-            { text: 'Chỉ có số từ 0 đến 10 thôi — tìm hết đồ, cáo con sẽ được gặp mẹ!', voiceKey: 'voice_intro_3', duration: 5500 },
-        ];
-        this.dialogueIndex = 0;
-        this.showDialogueSequenceWithVoice(dialogues, () => this.startRound());
-    }
-
-    showDialogueSequenceWithVoice(dialogues, onComplete) {
-        if (this.dialogueIndex >= dialogues.length) {
-            this.dialogueIndex = 0;
-            if (onComplete) onComplete();
-            return;
+        if (typeof IntroHelper !== 'undefined') {
+            IntroHelper.play(this, {
+                text: 'Cáo con làm rơi đồ! Chạm đáp án đúng để tìm lại đồ nhé!',
+                voiceKey: 'voice_intro_1',
+                voiceRate: 1.5,
+                showText: (t, ms) => this.showFoxBubble(t, ms),
+                onComplete: () => this.startRound(),
+            });
+        } else {
+            this.startRound();
         }
-        const d = dialogues[this.dialogueIndex];
-        this.showFoxBubble(d.text, d.duration);
-        this.playVoice(d.voiceKey);
-        this.dialogueIndex++;
-        this.time.delayedCall(d.duration + 500, () => this.showDialogueSequenceWithVoice(dialogues, onComplete));
     }
 
     // ════════════════════════════════════════

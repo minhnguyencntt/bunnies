@@ -870,132 +870,40 @@ class MenuScreen extends Phaser.Scene {
     }
 
     /**
-     * Create world map markers for all cities with collision detection
+     * Create world map markers for all visible cities.
+     * Tọa độ trong world_map_data.js theo nền 1344×768; background được
+     * setDisplaySize(width, height) nên scale theo từng trục để khớp landmark.
      */
     createWorldMapMarkers(width, height) {
-        // Check if WorldMapData is available
         if (typeof WORLD_MAP_CITIES === 'undefined') {
             console.warn('WorldMapData not loaded, skipping markers');
             return;
         }
 
-        // Calculate scale factor from 1920x1080 to actual screen size
-        const scaleX = width / 1920;
-        const scaleY = height / 1080;
-        const scale = Math.min(scaleX, scaleY); // Use min to maintain aspect ratio
+        const mapW = (typeof WORLD_MAP_WIDTH !== 'undefined') ? WORLD_MAP_WIDTH : 1344;
+        const mapH = (typeof WORLD_MAP_HEIGHT !== 'undefined') ? WORLD_MAP_HEIGHT : 768;
+        const scaleX = width / mapW;
+        const scaleY = height / mapH;
+        const scale = Math.min(scaleX, scaleY);
 
         // Create blur overlay (initially hidden)
         this.createBlurOverlay(width, height);
 
-        // Calculate button area to avoid (center of screen)
-        const buttonArea = {
-            x: width / 2 - 200,
-            y: height / 2 - 100,
-            width: 400,
-            height: 300
-        };
-
-        // Process cities with collision detection
-        // Chỉ tạo marker cho các thành phố có visible = true
-        const processedPositions = [];
-        const minDistance = 50 * scale; // Minimum distance between markers
-
         WORLD_MAP_CITIES.forEach(city => {
-            // Kiểm tra visible flag - chỉ tạo marker nếu visible !== false
-            // Mặc định visible = true nếu không được định nghĩa (backward compatibility)
             if (city.visible === false) {
-                return; // Bỏ qua thành phố này
+                return;
             }
-            
-            // Calculate base position
-            let baseX = city.x * scale;
-            let baseY = city.y * scale;
-            
-            // Adjust position to avoid overlaps and button area
-            const adjustedPos = this.adjustMarkerPosition(
-                baseX, baseY, 
-                processedPositions, 
-                buttonArea, 
-                minDistance,
-                width, height
-            );
-            
-            const marker = this.createCityMarker(
-                city,
-                adjustedPos.x,
-                adjustedPos.y,
-                width,
-                height,
-                scale
-            );
-            
+
+            const x = Phaser.Math.Clamp(city.x * scaleX, 60, width - 60);
+            const y = Phaser.Math.Clamp(city.y * scaleY, 60, height - 60);
+
+            const marker = this.createCityMarker(city, x, y, width, height, scale);
             if (marker) {
                 this.cityMarkers.push(marker);
-                // Store position for collision detection
-                processedPositions.push({
-                    x: adjustedPos.x,
-                    y: adjustedPos.y,
-                    radius: 40 * scale // Approximate marker radius
-                });
             }
         });
 
-        console.log(`Created ${this.cityMarkers.length} city markers with collision detection`);
-    }
-
-    /**
-     * Adjust marker position to avoid overlaps and button area
-     */
-    adjustMarkerPosition(x, y, existingPositions, buttonArea, minDistance, screenWidth, screenHeight) {
-        let adjustedX = x;
-        let adjustedY = y;
-        let attempts = 0;
-        const maxAttempts = 20;
-        const stepSize = minDistance * 0.5;
-
-        while (attempts < maxAttempts) {
-            // Check if position is in button area
-            const inButtonArea = (
-                adjustedX >= buttonArea.x && 
-                adjustedX <= buttonArea.x + buttonArea.width &&
-                adjustedY >= buttonArea.y && 
-                adjustedY <= buttonArea.y + buttonArea.height
-            );
-
-            // Check collision with existing markers
-            let hasCollision = false;
-            for (const pos of existingPositions) {
-                const distance = Phaser.Math.Distance.Between(adjustedX, adjustedY, pos.x, pos.y);
-                if (distance < minDistance) {
-                    hasCollision = true;
-                    break;
-                }
-            }
-
-            if (!hasCollision && !inButtonArea) {
-                adjustedX = Phaser.Math.Clamp(adjustedX, 50, screenWidth - 50);
-                adjustedY = Phaser.Math.Clamp(adjustedY, 90, screenHeight - 50);
-                return { x: adjustedX, y: adjustedY };
-            }
-
-            // Try different positions in a spiral pattern
-            const angle = (attempts * 45) * Math.PI / 180;
-            const radius = stepSize * (1 + Math.floor(attempts / 8));
-            adjustedX = x + Math.cos(angle) * radius;
-            adjustedY = y + Math.sin(angle) * radius;
-            
-            // Keep within bounds
-            adjustedX = Phaser.Math.Clamp(adjustedX, 50, screenWidth - 50);
-            adjustedY = Phaser.Math.Clamp(adjustedY, 90, screenHeight - 50);
-
-            attempts++;
-        }
-
-        // If all attempts failed, return original position (better than nothing)
-        return {
-            x: Phaser.Math.Clamp(x, 50, screenWidth - 50),
-            y: Phaser.Math.Clamp(y, 90, screenHeight - 50),
-        };
+        console.log(`Created ${this.cityMarkers.length} city markers`);
     }
 
     /**
@@ -1074,205 +982,160 @@ class MenuScreen extends Phaser.Scene {
     }
 
     /**
-     * Create a single city marker with new pastel design
+     * Create a single city marker — cổng phép phát sáng đặt trên landmark.
+     * Label tên chỉ hiện khi hover để khỏi đè lên tên đã vẽ sẵn trong nền.
      */
     createCityMarker(city, x, y, screenWidth, screenHeight, scale) {
-        // Create marker container
         const markerContainer = this.add.container(x, y);
-        markerContainer.setDepth(300); // Above everything
+        markerContainer.setDepth(300);
         markerContainer.setData('city', city);
-        markerContainer.setData('originalScale', 1);
-        markerContainer.setData('idleTween', null);
-        markerContainer.setData('hoverTween', null);
 
-        // Giảm kích thước icon (từ 35 xuống 24)
-        const markerSize = Math.max(20, 24 * scale);
+        const markerSize = Math.max(26, 30 * scale);
         const colors = this.getMarkerColor(city.id);
         const iconEmoji = this.getCityIcon(city);
-        
-        // Store marker size and scale for highlight calculation
+
         markerContainer.setData('markerSize', markerSize);
         markerContainer.setData('scale', scale);
 
-        // Create marker background (pastel circle with transparency)
-        const markerBg = this.add.graphics();
-        const bgRadius = markerSize;
-        
-        // Outer glow (subtle)
-        markerBg.fillStyle(colors.bg, 0.2);
-        markerBg.fillCircle(0, 0, bgRadius + 3);
-        
-        // Main background - pastel color with 50% opacity
-        markerBg.fillStyle(colors.bg, 0.5);
-        markerBg.fillCircle(0, 0, bgRadius);
-        
-        // White border
-        markerBg.lineStyle(2, colors.border, 0.9);
-        markerBg.strokeCircle(0, 0, bgRadius);
-        
-        // Inner highlight
-        markerBg.fillStyle(0xFFFFFF, 0.3);
-        markerBg.fillCircle(0, -bgRadius * 0.2, bgRadius * 0.4);
-        
-        markerContainer.add(markerBg);
+        // Hào quang mềm phía sau
+        const glow = this.add.graphics();
+        glow.fillStyle(colors.icon, 0.18);
+        glow.fillCircle(0, 0, markerSize * 1.75);
+        glow.fillStyle(colors.icon, 0.28);
+        glow.fillCircle(0, 0, markerSize * 1.3);
+        markerContainer.add(glow);
 
-        // Create icon text (emoji) - giảm kích thước
-        const iconText = this.add.text(0, 0, iconEmoji, {
-            fontSize: `${Math.max(14, 18 * scale)}px`,
+        // Vòng cổng: nền pastel đặc + viền kép
+        const ring = this.add.graphics();
+        ring.fillStyle(colors.bg, 0.95);
+        ring.fillCircle(0, 0, markerSize);
+        ring.lineStyle(3, 0xFFFFFF, 0.95);
+        ring.strokeCircle(0, 0, markerSize);
+        ring.lineStyle(2, colors.icon, 0.9);
+        ring.strokeCircle(0, 0, markerSize - 4);
+        // Điểm sáng trên vành
+        ring.fillStyle(0xFFFFFF, 0.85);
+        ring.fillCircle(-markerSize * 0.35, -markerSize * 0.45, markerSize * 0.16);
+        markerContainer.add(ring);
+
+        // Icon
+        const iconText = this.add.text(0, 1, iconEmoji, {
+            fontSize: `${Math.round(markerSize * 1.05)}px`,
             fontFamily: 'Arial'
         }).setOrigin(0.5);
         markerContainer.add(iconText);
 
-        // Create city name label - đặt ở dưới icon với margin
+        // 4 tia sáng quay quanh cổng
+        const sparkRing = this.add.graphics();
+        for (let i = 0; i < 4; i++) {
+            const a = (i / 4) * Math.PI * 2;
+            sparkRing.fillStyle(0xFFFFFF, 0.95);
+            sparkRing.fillCircle(Math.cos(a) * markerSize * 1.45, Math.sin(a) * markerSize * 1.45, 2.4);
+            sparkRing.fillStyle(colors.icon, 0.8);
+            sparkRing.fillCircle(Math.cos(a) * markerSize * 1.45, Math.sin(a) * markerSize * 1.45, 1.3);
+        }
+        markerContainer.add(sparkRing);
+        this.tweens.add({
+            targets: sparkRing,
+            angle: 360,
+            duration: 6000,
+            repeat: -1,
+            ease: 'Linear'
+        });
+
+        // Label tên (ẩn, chỉ hiện khi hover) — nằm trên icon
         const nameLabel = this.createCityNameLabel(city.name, markerSize, scale, screenWidth, x);
-        
-        // Tính toán vị trí title dựa trên chiều cao thực tế của text
-        // Lấy chiều cao thực tế của text (có thể 1 hoặc 2 dòng)
-        const labelTextHeight = nameLabel.getData('textHeight') || 0;
-        const labelBgHeight = nameLabel.getData('bgHeight') || 0;
-        const actualLabelHeight = Math.max(labelTextHeight, labelBgHeight);
-        
-        // Khoảng cách tối thiểu giữa icon và text
-        // markerSize là bán kính, nên cần + markerSize để ra khỏi icon + margin an toàn
-        const marginBetween = 25 * scale; // Giảm margin một chút
-        // Tính safe distance: từ tâm icon (0) xuống dưới icon (markerSize) + margin + nửa chiều cao label
-        const safeDistance = markerSize + marginBetween + (actualLabelHeight / 2);
-        
-        // Đặt label ở dưới icon với khoảng cách an toàn
-        nameLabel.y = safeDistance;
+        const labelBgHeight = nameLabel.getData('bgHeight') || 30;
+        nameLabel.y = -(markerSize + 14 * scale + labelBgHeight / 2);
+        nameLabel.setAlpha(0);
+        nameLabel.setVisible(false);
         markerContainer.add(nameLabel);
         markerContainer.setData('nameLabel', nameLabel);
-        // Lưu chiều cao label để dùng cho hit area
-        markerContainer.setData('labelHeight', actualLabelHeight);
 
-        // Make interactive - tăng hit area để dễ hover/click
-        // Tính toán hit area bao gồm cả icon và label
-        const hitAreaSize = Math.max(markerSize * 3, 80 * scale);
-        
-        // Sử dụng chiều cao label đã tính ở trên
-        const labelHeight = markerContainer.getData('labelHeight') || actualLabelHeight || 50 * scale;
-        
-        // Height bao gồm: icon (markerSize*2) + margin (25*scale) + label height + margin dưới (20*scale)
-        const totalHeight = markerSize * 2 + 25 * scale + labelHeight + 20 * scale;
-        markerContainer.setSize(hitAreaSize, totalHeight);
-        
-        // Hit area bắt đầu từ trên icon, kéo dài xuống dưới label
-        markerContainer.setInteractive(new Phaser.Geom.Rectangle(-hitAreaSize/2, -markerSize - 10, hitAreaSize, totalHeight), Phaser.Geom.Rectangle.Contains);
+        // Vùng chạm tròn lớn, đúng tâm icon (tối thiểu ~88px đường kính)
+        const hitRadius = Math.max(markerSize * 1.5, 44);
+        markerContainer.setSize(hitRadius * 2, hitRadius * 2);
+        markerContainer.setInteractive(new Phaser.Geom.Circle(0, 0, hitRadius), Phaser.Geom.Circle.Contains);
         markerContainer.input.cursor = 'pointer';
-        markerContainer.setDepth(300); // Đảm bảo depth cao để có thể tương tác
 
-        // Hover events
         markerContainer.on('pointerover', () => {
             this.onMarkerHover(markerContainer, city, screenWidth, screenHeight);
         });
-
         markerContainer.on('pointerout', () => {
             this.onMarkerOut(markerContainer);
         });
-
-        // Click event
         markerContainer.on('pointerdown', () => {
             this.onMarkerClick(markerContainer, city);
         });
 
-        // Idle animation - nhún nhảy nhẹ (0.95 → 1.05 → 1.0)
+        // Idle: nổi nhẹ lên xuống + glow thở
         const idleTween = this.tweens.add({
             targets: markerContainer,
-            scaleX: 0.95,
-            scaleY: 0.95,
-            duration: 1000,
+            y: y - 5 * scale,
+            duration: 1600,
             yoyo: true,
             repeat: -1,
             ease: 'Sine.easeInOut',
-            delay: city.id * 100 // Stagger animations
+            delay: city.id * 150
         });
-        
-        // Add bounce effect
         this.tweens.add({
-            targets: markerContainer,
-            scaleX: 1.05,
-            scaleY: 1.05,
-            duration: 1500,
+            targets: glow,
+            alpha: { from: 0.65, to: 1 },
+            scaleX: { from: 0.95, to: 1.1 },
+            scaleY: { from: 0.95, to: 1.1 },
+            duration: 1400,
             yoyo: true,
             repeat: -1,
-            ease: 'Sine.easeOut',
-            delay: city.id * 100 + 500
+            ease: 'Sine.easeInOut',
+            delay: city.id * 150
         });
-        
+
         markerContainer.setData('idleTween', idleTween);
+        markerContainer.setData('glow', glow);
 
         return markerContainer;
     }
 
     /**
-     * Create city name label with smart positioning and backdrop blur effect
+     * Create city name label (pill nền tối, chữ trắng) — dùng khi hover
      */
     createCityNameLabel(name, markerSize, scale, screenWidth, markerX) {
-        const fontSize = Math.max(12, 14 * scale);
-        // Tăng padding để text không sát viền
-        const padding = 10 * scale; // Tăng từ 6 lên 10
-        const verticalPadding = 8 * scale; // Padding dọc riêng
-        
-        // Create text first - vị trí sẽ được set bởi parent container
+        const fontSize = Math.max(14, Math.round(17 * scale));
+        const padding = 12 * scale;
+        const verticalPadding = 8 * scale;
+
         const nameText = this.add.text(0, 0, name, {
             fontSize: `${fontSize}px`,
             fill: '#FFFFFF',
             fontFamily: 'Poppins, Baloo, Nunito, Comic Sans MS, Arial Rounded MT Bold, Arial',
             fontStyle: 'bold',
             align: 'center',
-            wordWrap: { width: 150 * scale }
+            wordWrap: { width: 180 * scale }
         }).setOrigin(0.5);
-        
-        // Tính toán chiều cao thực tế của text (có thể wrap thành nhiều dòng)
-        // Cần update text để tính bounds chính xác
+
         nameText.updateText();
         const textBounds = nameText.getBounds();
         const actualTextHeight = textBounds.height;
-        
-        // Create background for text (simulate backdrop blur with semi-transparent background)
+
         const textBg = this.add.graphics();
-        // Sử dụng padding riêng cho width và height
         const bgWidth = textBounds.width + padding * 2;
         const bgHeight = actualTextHeight + verticalPadding * 2;
-        
-        // Draw rounded rectangle background with transparency
-        textBg.fillStyle(0x000000, 0.4); // Semi-transparent black for readability
-        textBg.fillRoundedRect(
-            -bgWidth / 2, 
-            -bgHeight / 2, 
-            bgWidth, 
-            bgHeight, 
-            8 * scale
-        );
-        
-        // White border
-        textBg.lineStyle(1, 0xFFFFFF, 0.6);
-        textBg.strokeRoundedRect(
-            -bgWidth / 2, 
-            -bgHeight / 2, 
-            bgWidth, 
-            bgHeight, 
-            8 * scale
-        );
-        
-        // Position background behind text
-        textBg.x = nameText.x;
-        textBg.y = nameText.y;
-        textBg.setDepth(nameText.depth - 1);
-        
-        // Add shadow to text
+
+        textBg.fillStyle(0x3B2456, 0.88);
+        textBg.fillRoundedRect(-bgWidth / 2, -bgHeight / 2, bgWidth, bgHeight, bgHeight / 2);
+        textBg.lineStyle(2, 0xFFD700, 0.9);
+        textBg.strokeRoundedRect(-bgWidth / 2, -bgHeight / 2, bgWidth, bgHeight, bgHeight / 2);
+
         nameText.setShadow(1, 1, '#000000', 2, true, true);
-        
-        // Create container for label - đặt ở center (0, 0) vì sẽ được parent container điều chỉnh
+
         const labelContainer = this.add.container(0, 0);
         labelContainer.add(textBg);
         labelContainer.add(nameText);
         labelContainer.setData('text', nameText);
         labelContainer.setData('bg', textBg);
-        // Lưu chiều cao thực tế để tính toán vị trí
         labelContainer.setData('textHeight', actualTextHeight);
         labelContainer.setData('bgHeight', bgHeight);
-        
+
         return labelContainer;
     }
 
@@ -1301,42 +1164,36 @@ class MenuScreen extends Phaser.Scene {
         // Scale up animation (15-20% increase)
         const hoverTween = this.tweens.add({
             targets: markerContainer,
-            scaleX: 1.2,
-            scaleY: 1.2,
+            scaleX: 1.15,
+            scaleY: 1.15,
             duration: 200,
             ease: 'Back.easeOut'
         });
         markerContainer.setData('hoverTween', hoverTween);
 
-        // Add glow effect to marker background
-        const glow = this.add.graphics();
-        const glowRadius = 40 * (screenWidth / 1920);
-        glow.fillStyle(0xFFD700, 0.4);
-        glow.fillCircle(0, 0, glowRadius);
-        glow.setPosition(markerContainer.x, markerContainer.y);
-        glow.setDepth(markerContainer.depth - 1);
-        markerContainer.setData('glow', glow);
-        
-        // Pulse glow
-        this.tweens.add({
-            targets: glow,
-            alpha: 0.6,
-            scaleX: 1.2,
-            scaleY: 1.2,
-            duration: 500,
-            yoyo: true,
-            repeat: -1,
-            ease: 'Sine.easeInOut'
-        });
+        // Glow sáng hơn khi hover (glow là con của container, đã tồn tại sẵn)
+        const glow = markerContainer.getData('glow');
+        if (glow) {
+            this.tweens.add({
+                targets: glow,
+                alpha: 1,
+                scaleX: 1.35,
+                scaleY: 1.35,
+                duration: 250,
+                ease: 'Power2'
+            });
+        }
 
-        // Scale up name label
+        // Hiện label tên thành phố
         const nameLabel = markerContainer.getData('nameLabel');
         if (nameLabel) {
+            nameLabel.setVisible(true);
             this.tweens.add({
                 targets: nameLabel,
-                scaleX: 1.1,
-                scaleY: 1.1,
-                duration: 200,
+                alpha: 1,
+                scaleX: 1,
+                scaleY: 1,
+                duration: 180,
                 ease: 'Back.easeOut'
             });
         }
@@ -1501,20 +1358,19 @@ class MenuScreen extends Phaser.Scene {
             this.tweens.killTweensOf(markerContainer);
         }
 
-        // Remove glow effect
+        const scale = markerContainer.getData('scale') || 1;
+
+        // Glow về trạng thái thở bình thường
         const glow = markerContainer.getData('glow');
         if (glow) {
             this.tweens.add({
                 targets: glow,
-                alpha: 0,
+                alpha: 0.8,
+                scaleX: 1,
+                scaleY: 1,
                 duration: 200,
-                onComplete: () => {
-                    if (glow && glow.active) {
-                        glow.destroy();
-                    }
-                }
+                ease: 'Power2'
             });
-            markerContainer.setData('glow', null);
         }
 
         // Scale back down
@@ -1530,9 +1386,8 @@ class MenuScreen extends Phaser.Scene {
                 if (city) {
                     const idleTween = this.tweens.add({
                         targets: markerContainer,
-                        scaleX: 0.95,
-                        scaleY: 0.95,
-                        duration: 1000,
+                        y: markerContainer.y - 5 * scale,
+                        duration: 1600,
                         yoyo: true,
                         repeat: -1,
                         ease: 'Sine.easeInOut'
@@ -1542,15 +1397,15 @@ class MenuScreen extends Phaser.Scene {
             }
         });
 
-        // Scale down name label
+        // Ẩn label tên
         const nameLabel = markerContainer.getData('nameLabel');
         if (nameLabel) {
             this.tweens.add({
                 targets: nameLabel,
-                scaleX: 1,
-                scaleY: 1,
-                duration: 200,
-                ease: 'Power2'
+                alpha: 0,
+                duration: 150,
+                ease: 'Power2',
+                onComplete: () => nameLabel.setVisible(false)
             });
         }
 

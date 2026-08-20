@@ -8,7 +8,7 @@ const SubtractionHillPuzzle = {
     background: {
         type: 'image',
         imageKey: 'subtraction_hill_bg',
-        imageUrl: 'screens/subtraction_hill/assets/backgrounds/bg.png',
+        imageUrl: 'screens/subtraction_hill/assets/backgrounds/bg.jpg',
     },
 
     lostItemPool: [

@@ -38,13 +38,10 @@ class OrientationForestScreen extends Phaser.Scene {
     preload() {
         const bg = this.theme?.background;
         if (typeof ScreenLevelBackground !== 'undefined' && bg) {
-            ScreenLevelBackground.registerLevelBackground(this, bg, {
-                bgmKey: 'bgm_orientation_forest',
-                bgmUrl: 'screens/orientation_forest/assets/audio/bgm/bgm.wav',
-            });
+            // Không load BGM ở preload — lazy load sau khi vào màn
+            ScreenLevelBackground.registerLevelBackground(this, bg, {});
         } else {
-            this.load.image('orientation_forest_bg', 'screens/orientation_forest/assets/backgrounds/bg.png');
-            this.load.audio('bgm_orientation_forest', 'screens/orientation_forest/assets/audio/bgm/bgm.wav');
+            this.load.image('orientation_forest_bg', 'screens/orientation_forest/assets/backgrounds/bg.jpg');
         }
         this.load.audio('voice_intro_1', 'screens/orientation_forest/assets/audio/voice/intro_1.mp3');
         this.load.audio('voice_intro_2', 'screens/orientation_forest/assets/audio/voice/intro_2.mp3');
@@ -58,13 +55,18 @@ class OrientationForestScreen extends Phaser.Scene {
         const w = this.cameras.main.width;
         const h = this.cameras.main.height;
         this.sound.stopAll();
-        this.playLevelBGM();
         this.createBackground(w, h);
         this.createSignProgressRow(w, h);
         this.createSquirrel(w, h);
         this.createAmbientCreatures(w, h);
         this.scene.launch('UIScreen');
         this.time.delayedCall(400, () => this.showIntroductionDialogue());
+
+        // BGM load nền, tự phát khi sẵn sàng (chỉ khi nền không phải video có tiếng)
+        if (typeof ScreenLevelBackground !== 'undefined') {
+            ScreenLevelBackground.lazyLoadBGM(this, 'bgm_orientation_forest',
+                'screens/orientation_forest/assets/audio/bgm/bgm.mp3', () => this.playLevelBGM());
+        }
     }
 
     /* ─── Layout ─── */

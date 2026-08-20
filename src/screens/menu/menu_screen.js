@@ -20,20 +20,38 @@ class MenuScreen extends Phaser.Scene {
     }
 
     preload() {
-        // Load menu screen assets - World of Knowledge map
+        // Chỉ preload ảnh nền (nhỏ) — audio load nền sau khi menu hiển thị
         if (!this.textures.exists('menu_bg')) {
             this.load.image('menu_bg', 'screens/menu/assets/backgrounds/bunnies_world.jpg');
             console.log('MenuScreen: Loading background image');
         }
-        // Load menu BGM
-        this.load.audio('bgm_menu', 'screens/menu/assets/audio/bgm/menu_bgm.wav');
-        
-        // Load city description audio files
-        this.load.audio('voice_city_1', 'screens/menu/assets/audio/voice/city_1_khu_rung_dem_so.mp3');
-        this.load.audio('voice_city_2', 'screens/menu/assets/audio/voice/city_2_thanh_pho_guong.mp3');
-        this.load.audio('voice_city_4', 'screens/menu/assets/audio/voice/city_4_doi_phep_tru.mp3');
-        this.load.audio('voice_city_26', 'screens/menu/assets/audio/voice/city_26_khu_rung_dinh_huong.mp3');
-        this.load.audio('voice_city_click', 'screens/menu/assets/audio/voice/city_click.mp3');
+    }
+
+    /** Load BGM + voice thành phố ở chế độ nền để menu hiện ngay */
+    loadMenuAudioLazy() {
+        const files = [
+            ['bgm_menu', 'screens/menu/assets/audio/bgm/menu_bgm.mp3'],
+            ['voice_city_1', 'screens/menu/assets/audio/voice/city_1_khu_rung_dem_so.mp3'],
+            ['voice_city_2', 'screens/menu/assets/audio/voice/city_2_thanh_pho_guong.mp3'],
+            ['voice_city_4', 'screens/menu/assets/audio/voice/city_4_doi_phep_tru.mp3'],
+            ['voice_city_26', 'screens/menu/assets/audio/voice/city_26_khu_rung_dinh_huong.mp3'],
+            ['voice_city_click', 'screens/menu/assets/audio/voice/city_click.mp3'],
+        ];
+        let queued = 0;
+        files.forEach(([key, url]) => {
+            if (!this.cache.audio.exists(key)) {
+                this.load.audio(key, url);
+                queued++;
+            }
+        });
+        if (queued === 0) {
+            this.playMenuBGM();
+            return;
+        }
+        this.load.once('complete', () => {
+            if (this.scene.isActive()) this.playMenuBGM();
+        });
+        this.load.start();
     }
 
     create() {
@@ -44,8 +62,8 @@ class MenuScreen extends Phaser.Scene {
         // Stop any lingering sounds from previous scenes
         this.sound.stopAll();
 
-        // Play menu background music
-        this.playMenuBGM();
+        // Load audio ở chế độ nền; BGM tự phát khi tải xong
+        this.loadMenuAudioLazy();
 
         // Ensure bunny textures are generated (if not already done in BootScene)
         if (typeof generateAllBunnyTextures === 'function') {

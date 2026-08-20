@@ -34,13 +34,10 @@ class SubtractionHillScreen extends Phaser.Scene {
     preload() {
         const bg = this.theme?.background;
         if (typeof ScreenLevelBackground !== 'undefined' && bg) {
-            ScreenLevelBackground.registerLevelBackground(this, bg, {
-                bgmKey: 'bgm_subtraction_hill',
-                bgmUrl: 'screens/subtraction_hill/assets/audio/bgm/bgm.wav',
-            });
+            // Không load BGM ở preload (file lớn) — lazy load sau khi vào màn
+            ScreenLevelBackground.registerLevelBackground(this, bg, {});
         } else {
-            this.load.image('subtraction_hill_bg', 'screens/subtraction_hill/assets/backgrounds/bg.png');
-            this.load.audio('bgm_subtraction_hill', 'screens/subtraction_hill/assets/audio/bgm/bgm.wav');
+            this.load.image('subtraction_hill_bg', 'screens/subtraction_hill/assets/backgrounds/bg.jpg');
         }
         this.load.audio('voice_intro_1', 'screens/subtraction_hill/assets/audio/voice/intro_1.mp3');
         this.load.audio('voice_intro_2', 'screens/subtraction_hill/assets/audio/voice/intro_2.mp3');
@@ -54,7 +51,6 @@ class SubtractionHillScreen extends Phaser.Scene {
         const w = this.cameras.main.width;
         const h = this.cameras.main.height;
         this.sound.stopAll();
-        this.playLevelBGM();
         this.createBackground(w, h);
         this.pickLostItemsForRun();
         this.createItemProgressRow(w, h);
@@ -62,6 +58,12 @@ class SubtractionHillScreen extends Phaser.Scene {
         this.createAmbientCreatures(w, h);
         this.scene.launch('UIScreen');
         this.time.delayedCall(400, () => this.showIntroductionDialogue());
+
+        // BGM load nền, tự phát khi sẵn sàng
+        if (typeof ScreenLevelBackground !== 'undefined') {
+            ScreenLevelBackground.lazyLoadBGM(this, 'bgm_subtraction_hill',
+                'screens/subtraction_hill/assets/audio/bgm/bgm.mp3', () => this.playLevelBGM());
+        }
     }
 
     // ════════════════════════════════════════

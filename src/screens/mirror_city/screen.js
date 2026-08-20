@@ -27,13 +27,10 @@ class MirrorCityScreen extends Phaser.Scene {
     preload() {
         const bg = this.theme?.background;
         if (typeof ScreenLevelBackground !== 'undefined' && bg) {
-            ScreenLevelBackground.registerLevelBackground(this, bg, {
-                bgmKey: 'bgm_mirror_city',
-                bgmUrl: 'screens/mirror_city/assets/audio/bgm/bgm.wav',
-            });
+            // Không load BGM ở preload (file lớn) — lazy load sau khi vào màn
+            ScreenLevelBackground.registerLevelBackground(this, bg, {});
         } else {
             this.load.image('mirror_city_bg', 'screens/mirror_city/assets/backgrounds/bg.png');
-            this.load.audio('bgm_mirror_city', 'screens/mirror_city/assets/audio/bgm/bgm.wav');
         }
         this.load.audio('voice_intro_1', 'screens/mirror_city/assets/audio/voice/intro_1.mp3');
         this.load.audio('voice_intro_2', 'screens/mirror_city/assets/audio/voice/intro_2.mp3');
@@ -50,9 +47,15 @@ class MirrorCityScreen extends Phaser.Scene {
 
         // Ensure clean audio state (stop any sounds from previous scenes)
         this.sound.stopAll();
-        
-        // Play Mirror City BGM
-        this.playLevelBGM();
+
+        // BGM load nền, tự phát khi sẵn sàng
+        if (typeof ScreenLevelBackground !== 'undefined') {
+            ScreenLevelBackground.lazyLoadBGM(this, 'bgm_mirror_city',
+                'screens/mirror_city/assets/audio/bgm/bgm.mp3', () => this.playLevelBGM());
+        }
+
+        // Kiểm tra hỗ trợ emoji 1 lần cho cả màn
+        this.emojiOK = this.detectEmojiSupport();
 
         // Create Mirror City background
         this.createMirrorCityBackground();
@@ -658,8 +661,31 @@ class MirrorCityScreen extends Phaser.Scene {
         };
     }
 
+    /**
+     * Phát hiện thiết bị có font color emoji không (1 số máy/Linux cũ không có
+     * → text emoji render rỗng, làm mất vật thể trong tranh).
+     */
+    detectEmojiSupport() {
+        try {
+            const c = document.createElement('canvas');
+            c.width = c.height = 32;
+            const ctx = c.getContext('2d');
+            if (!ctx) return false;
+            ctx.font = '28px Arial';
+            ctx.fillText('🦋', 0, 26);
+            const d = ctx.getImageData(0, 0, 32, 32).data;
+            for (let i = 0; i < d.length; i += 4) {
+                if (d[i + 3] > 0 && (Math.max(d[i], d[i + 1], d[i + 2]) - Math.min(d[i], d[i + 1], d[i + 2]) > 30)) {
+                    return true; // có pixel màu → emoji màu hiển thị được
+                }
+            }
+        } catch (e) { /* ignore */ }
+        return false;
+    }
+
     /** Map tên vật (tiếng Anh trong dữ liệu) → emoji tương ứng */
     elementEmoji(element) {
+        if (this.emojiOK === false) return null;
         const e = (element || '').toLowerCase();
         // Thứ tự quan trọng: cụm dài/cụ thể trước, cụm ngắn sau
         const map = [
@@ -708,13 +734,6 @@ class MirrorCityScreen extends Phaser.Scene {
 
         // Draw main element based on puzzle
         this.drawMainElement(sceneContainer, panelWidth, panelHeight, puzzle, isOriginal, rng);
-
-        // Cắt nội dung theo khung bo góc của panel
-        const maskG = this.add.graphics();
-        maskG.fillStyle(0xffffff, 1);
-        maskG.fillRoundedRect(x - panelWidth / 2, y - panelHeight / 2, panelWidth, panelHeight, 10);
-        sceneContainer.setMask(new Phaser.Display.Masks.GeometryMask(this, maskG));
-        this.challengeContainer.add(maskG);
 
         // Create clickable difference area (only on the panel that has the difference)
         if (!isOriginal) {
@@ -811,14 +830,30 @@ class MirrorCityScreen extends Phaser.Scene {
         }
         container.add(baseScene);
 
-        // Hoa emoji trang trí cho cảnh thiên nhiên (vị trí seeded → 2 panel giống nhau)
+        // Hoa trang trí cho cảnh thiên nhiên (vị trí seeded → 2 panel giống nhau)
         if (category === 'animals' || category === 'nature') {
             const flowers = ['🌸', '🌼', '🌷', '🌻'];
+            const petalColors = [0xFF9EC7, 0xFFE14D, 0xFF8A80, 0xB39DDB];
             for (let i = 0; i < 4; i++) {
                 const fx = rng.between(-Math.round(width / 2) + 26, Math.round(width / 2) - 26);
                 const fy = Math.round(height * 0.30) + rng.between(-6, 14);
-                const f = this.add.text(fx, fy, flowers[rng.between(0, flowers.length - 1)], { fontSize: '20px' }).setOrigin(0.5);
-                container.add(f);
+                const pick = rng.between(0, 3);
+                if (this.emojiOK !== false) {
+                    const f = this.add.text(fx, fy, flowers[pick], { fontSize: '20px' }).setOrigin(0.5);
+                    container.add(f);
+                } else {
+                    // Fallback vector: hoa 5 cánh
+                    const g = this.add.graphics();
+                    const pc = petalColors[pick];
+                    for (let p = 0; p < 5; p++) {
+                        const a = (p / 5) * Math.PI * 2;
+                        g.fillStyle(pc, 1);
+                        g.fillCircle(fx + Math.cos(a) * 6, fy + Math.sin(a) * 6, 4.5);
+                    }
+                    g.fillStyle(0xFFD700, 1);
+                    g.fillCircle(fx, fy, 3.5);
+                    container.add(g);
+                }
             }
         }
     }
@@ -996,11 +1031,34 @@ class MirrorCityScreen extends Phaser.Scene {
             puzzle.difference.reflection.toLowerCase().includes('right') :
             puzzle.difference.original.toLowerCase().includes('right');
 
-        const emoji = this.elementEmoji(puzzle.difference.element) || '🐤';
-        const t = this.add.text(x, y, emoji, { fontSize: '46px' }).setOrigin(0.5);
-        // Lật ngang emoji theo hướng nhìn
-        t.setScale(facingRight ? 1 : -1, 1);
-        container.add(t);
+        const emoji = this.elementEmoji(puzzle.difference.element);
+        if (emoji) {
+            const t = this.add.text(x, y, emoji, { fontSize: '46px' }).setOrigin(0.5);
+            // Lật ngang emoji theo hướng nhìn
+            t.setScale(facingRight ? 1 : -1, 1);
+            container.add(t);
+            return;
+        }
+
+        // Fallback vector: mặt thú nhìn về hướng trái/phải
+        const dir = facingRight ? 1 : -1;
+        const g = this.add.graphics();
+        g.fillStyle(0xFFA94D, 1);
+        g.fillCircle(x, y, 22);
+        g.lineStyle(2.5, 0xFFFFFF, 0.85);
+        g.strokeCircle(x, y, 22);
+        // tai
+        g.fillTriangle(x - 12, y - 16, x - 6, y - 30, x - 1, y - 17);
+        g.fillTriangle(x + 12, y - 16, x + 6, y - 30, x + 1, y - 17);
+        // mắt nhìn theo hướng
+        g.fillStyle(0xFFFFFF, 1);
+        g.fillCircle(x + dir * 7, y - 4, 6);
+        g.fillStyle(0x2A2A2A, 1);
+        g.fillCircle(x + dir * 9.5, y - 4, 3);
+        // mõm chỉ hướng
+        g.fillStyle(0xFF6B6B, 1);
+        g.fillTriangle(x + dir * 22, y + 5, x + dir * 11, y, x + dir * 11, y + 10);
+        container.add(g);
     }
 
     drawShapeElement(container, rng, x, y, puzzle, showDifference) {
@@ -1574,10 +1632,7 @@ class MirrorCityScreen extends Phaser.Scene {
     playLevelBGM() {
         if (typeof ScreenLevelBackground !== 'undefined' && ScreenLevelBackground.hasLoadedVideo(this)) return;
         if (this.cache.audio.exists('bgm_mirror_city') && window.gameData?.musicEnabled !== false) {
-            // Stop any existing sounds (but keep voice audio capability)
-            this.sound.stopAll();
-            
-            // Create and play Mirror City BGM
+            // Không stopAll ở đây — hàm này được gọi lazy, tránh cắt voice intro
             this.levelBGM = this.sound.add('bgm_mirror_city', {
                 volume: 0.65, // Increased volume for better presence
                 loop: true

@@ -12,7 +12,7 @@ const OrientationForestPuzzle = {
     background: {
         type: 'video',
         imageKey: 'orientation_forest_bg',
-        imageUrl: 'screens/orientation_forest/assets/backgrounds/bg.png',
+        imageUrl: 'screens/orientation_forest/assets/backgrounds/bg.jpg',
         videoKey: 'orientation_forest_bg_video',
         videoUrl: 'screens/orientation_forest/assets/backgrounds/bg.mp4',
     },

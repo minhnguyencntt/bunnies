@@ -29,7 +29,7 @@ class CountingForestScreen extends Phaser.Scene {
             // Không load BGM ở preload (file lớn) — lazy load sau khi vào màn
             ScreenLevelBackground.registerLevelBackground(this, bg, {});
         } else {
-            this.load.image('counting_forest_bg', 'screens/counting_forest/assets/backgrounds/bg.png');
+            this.load.image('counting_forest_bg', 'screens/counting_forest/assets/backgrounds/bg.jpg');
         }
         this.load.audio('voice_intro_1', 'screens/counting_forest/assets/audio/voice/intro_1.mp3');
         this.load.audio('voice_intro_2', 'screens/counting_forest/assets/audio/voice/intro_2.mp3');

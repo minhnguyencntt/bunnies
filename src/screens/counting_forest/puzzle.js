@@ -10,6 +10,6 @@ const CountingForestPuzzle = {
     background: {
         type: 'image',
         imageKey: 'counting_forest_bg',
-        imageUrl: 'screens/counting_forest/assets/backgrounds/bg.png',
+        imageUrl: 'screens/counting_forest/assets/backgrounds/bg.jpg',
     },
 };

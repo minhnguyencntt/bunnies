@@ -65,9 +65,8 @@ class MenuScreen extends Phaser.Scene {
         // Load audio ở chế độ nền; BGM tự phát khi tải xong
         this.loadMenuAudioLazy();
 
-        // Ensure bunny textures are generated (if not already done in BootScene)
-        if (typeof generateAllBunnyTextures === 'function') {
-            // Check if textures exist, if not generate them
+        // Ensure bunny textures are generated (chỉ khi KHÔNG có sprite vẽ tay)
+        if (!this.textures.exists('spr_bunny_idle') && typeof generateAllBunnyTextures === 'function') {
             if (!this.textures.exists('bunny_milo_idle')) {
                 generateAllBunnyTextures(this);
             }
@@ -221,9 +220,16 @@ class MenuScreen extends Phaser.Scene {
     }
 
     createBunnies(width, height) {
+        // Ưu tiên sprite vẽ tay — mượt như hoạt hình
+        if (this.textures.exists('spr_bunny_idle')) {
+            this.createSpriteBunnies(width, height);
+            return;
+        }
+
         // Reduced number of bunnies: 2-4 for cleaner look
         const bunnyCount = Phaser.Math.Between(2, 4);
         
+
         // Minimum distance between bunnies when spawning
         const minSpawnDistance = 80;
         const existingPositions = []; // Track positions to avoid overlap
@@ -391,6 +397,144 @@ class MenuScreen extends Phaser.Scene {
                 
                 this.bunnies.push(bunny);
             }
+        }
+    }
+
+    /**
+     * Thỏ sprite vẽ tay: nhảy nảy mượt (squash & stretch), lật hướng theo hướng chạy,
+     * chạm vào → vui vẻ. Thay thế hệ thống texture generate cũ.
+     */
+    createSpriteBunnies(width, height) {
+        const bunnyCount = 3;
+        const bottomTop = height * 0.62;
+        const bottomBottom = height - 70;
+        const positions = [];
+        const minDist = 110;
+
+        for (let i = 0; i < bunnyCount; i++) {
+            let pos = null;
+            for (let attempt = 0; attempt < 40 && !pos; attempt++) {
+                const px = Phaser.Math.Between(90, width - 90);
+                const py = Phaser.Math.Between(bottomTop, bottomBottom);
+                if (positions.every(p => Phaser.Math.Distance.Between(px, py, p.x, p.y) >= minDist)) {
+                    pos = { x: px, y: py };
+                }
+            }
+            if (!pos) pos = { x: 120 + i * 140, y: bottomBottom - 20 };
+            positions.push(pos);
+
+            const idleTex = this.textures.get('spr_bunny_idle').getSourceImage();
+            const baseScale = 74 / idleTex.height;
+            const bunny = this.add.image(pos.x, pos.y, 'spr_bunny_idle');
+            bunny.setOrigin(0.5, 1); // chân đứng trên mặt đất
+            bunny.setScale(baseScale);
+            bunny.setDepth(50);
+            bunny.setInteractive({ useHandCursor: true });
+            bunny.setData('baseScale', baseScale);
+            bunny.setData('busy', false);
+            this.bunnies.push(bunny);
+
+            const hop = () => {
+                if (!bunny.active || !bunny.scene) return;
+                if (bunny.getData('busy')) {
+                    this.time.delayedCall(400, hop);
+                    return;
+                }
+                bunny.setData('busy', true);
+
+                const startX0 = bunny.x;
+                const startY0 = bunny.y;
+                const targetX = Phaser.Math.Between(90, width - 90);
+                const targetY = Phaser.Math.Between(bottomTop, bottomBottom);
+                const s = bunny.getData('baseScale');
+                const hopHeight = Phaser.Math.Between(34, 56);
+
+                // Lật hướng theo hướng chạy
+                bunny.setFlipX(targetX < bunny.x);
+                bunny.setTexture('spr_bunny_hop');
+
+                // Nén xuống chuẩn bị nhảy
+                this.tweens.add({
+                    targets: bunny,
+                    scaleY: s * 0.82,
+                    scaleX: s * 1.12,
+                    duration: 130,
+                    ease: 'Quad.easeOut',
+                    onComplete: () => {
+                        if (!bunny.active) return;
+                        // Bung lên
+                        this.tweens.add({
+                            targets: bunny,
+                            scaleY: s * 1.1,
+                            scaleX: s * 0.92,
+                            duration: 160,
+                            ease: 'Quad.easeOut',
+                        });
+                        // Bay theo cung parabol tới đích (1 counter điều khiển cả x lẫn y)
+                        this.tweens.addCounter({
+                            from: 0,
+                            to: 1,
+                            duration: 420,
+                            ease: 'Sine.easeInOut',
+                            onUpdate: (tw) => {
+                                if (!bunny.active) return;
+                                const t = tw.getValue();
+                                bunny.x = Phaser.Math.Linear(startX0, targetX, t);
+                                bunny.y = Phaser.Math.Linear(startY0, targetY, t) - Math.sin(t * Math.PI) * hopHeight;
+                            },
+                        });
+                        this.time.delayedCall(430, () => {
+                            if (!bunny.active) return;
+                            // Tiếp đất: nén nhẹ rồi về idle
+                            bunny.setTexture('spr_bunny_idle');
+                            this.tweens.add({
+                                targets: bunny,
+                                scaleY: s * 0.88,
+                                scaleX: s * 1.08,
+                                duration: 100,
+                                yoyo: true,
+                                ease: 'Quad.easeOut',
+                                onComplete: () => {
+                                    if (!bunny.active) return;
+                                    bunny.setScale(s);
+                                    bunny.setData('busy', false);
+                                    // Thỉnh thoảng vui vẻ sau khi nhảy
+                                    if (Math.random() < 0.18) {
+                                        bunny.setTexture('spr_bunny_happy');
+                                        this.time.delayedCall(700, () => {
+                                            if (bunny.active) bunny.setTexture('spr_bunny_idle');
+                                        });
+                                    }
+                                    this.time.delayedCall(Phaser.Math.Between(700, 2200), hop);
+                                },
+                            });
+                        });
+                    },
+                });
+            };
+            this.time.delayedCall(600 + i * 700, hop);
+
+            // Chạm vào thỏ → vui vẻ nhảy lên
+            bunny.on('pointerdown', () => {
+                if (!bunny.active || bunny.getData('busy')) return;
+                bunny.setData('busy', true);
+                const s = bunny.getData('baseScale');
+                bunny.setTexture('spr_bunny_happy');
+                this.tweens.add({
+                    targets: bunny,
+                    y: bunny.y - 26,
+                    scaleY: s * 1.1,
+                    duration: 200,
+                    yoyo: true,
+                    ease: 'Back.easeOut',
+                    onComplete: () => {
+                        if (!bunny.active) return;
+                        bunny.setTexture('spr_bunny_idle');
+                        bunny.setScale(s);
+                        bunny.setData('busy', false);
+                    },
+                });
+            });
         }
     }
 

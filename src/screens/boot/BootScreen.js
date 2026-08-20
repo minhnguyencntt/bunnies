@@ -12,9 +12,18 @@ class BootScreen extends Phaser.Scene {
     preload() {
         // Load boot screen background - World of Knowledge map
         this.load.image('boot_bg', 'screens/boot/assets/backgrounds/bunnies_world.jpg');
-        
+
         // Load boot screen BGM
         this.load.audio('bgm_boot', 'screens/boot/assets/audio/bgm/boot_bgm.mp3');
+
+        // Sprite nhân vật vẽ tay (dùng chung toàn game)
+        const sprites = [
+            'bunny_idle', 'bunny_hop', 'bunny_happy', 'bunny_sad',
+            'squirrel_side', 'squirrel_front', 'squirrel_back', 'squirrel_happy',
+            'owl_idle', 'owl_cheer', 'owl_sad', 'owl_encourage',
+            'fox_idle', 'fox_joy', 'fox_hopeful', 'fox_walk',
+        ];
+        sprites.forEach((n) => this.load.image(`spr_${n}`, `core/characters/assets/${n}.png`));
         
         // Add load event handlers for debugging
         this.load.on('filecomplete-image-boot_bg', () => {
@@ -97,8 +106,11 @@ class BootScreen extends Phaser.Scene {
 
         // Chia việc generate texture nặng thành từng bước nhỏ theo frame
         // → thanh loading chạy mượt, không treo màn hình
+        // (Có sprite vẽ tay rồi thì bỏ qua generate thỏ/cú — vào game nhanh hơn nhiều)
+        const hasBunnyArt = this.textures.exists('spr_bunny_idle');
+        const hasOwlArt = this.textures.exists('spr_owl_idle');
         this.generationSteps = [];
-        if (typeof generateAllBunnyTextures === 'function') {
+        if (!hasBunnyArt && typeof generateAllBunnyTextures === 'function') {
             this.generationSteps.push(() => generateAllBunnyTextures(this));
         }
         if (typeof generateFireflies === 'function') {
@@ -110,10 +122,10 @@ class BootScreen extends Phaser.Scene {
         if (typeof generateMagicParticles === 'function') {
             this.generationSteps.push(() => generateMagicParticles(this, 8));
         }
-        if (typeof generateAllBunnyAnimations === 'function') {
+        if (!hasBunnyArt && typeof generateAllBunnyAnimations === 'function') {
             this.generationSteps.push(() => generateAllBunnyAnimations(this));
         }
-        if (typeof generateWiseOwlAnimations === 'function') {
+        if (!hasOwlArt && typeof generateWiseOwlAnimations === 'function') {
             this.generationSteps.push(() => generateWiseOwlAnimations(this));
         }
         this.generationIndex = 0;
@@ -246,6 +258,29 @@ class BootScreen extends Phaser.Scene {
     }
 
     createRunningBunny(width, height) {
+        const startX = this.loadingBarX - this.loadingBarWidth / 2 + 20;
+        const bunnyY = this.loadingBarY;
+
+        // Ưu tiên sprite vẽ tay
+        if (this.textures.exists('spr_bunny_hop')) {
+            const tex = this.textures.get('spr_bunny_hop').getSourceImage();
+            const scale = 56 / tex.height;
+            this.runningBunny = this.add.image(startX, bunnyY, 'spr_bunny_hop');
+            this.runningBunny.setOrigin(0.5, 1);
+            this.runningBunny.setScale(scale);
+            this.runningBunny.setDepth(1000);
+            this.tweens.add({
+                targets: this.runningBunny,
+                y: bunnyY - 6,
+                scaleY: scale * 1.08,
+                duration: 220,
+                yoyo: true,
+                repeat: -1,
+                ease: 'Sine.easeInOut'
+            });
+            return;
+        }
+
         // Use Milo (energetic, cheerful) for the loading screen bunny
         if (typeof BunnyCharacter !== 'undefined' && typeof BUNNY_CHARACTERS !== 'undefined') {
             const milo = new BunnyCharacter(this, { ...BUNNY_CHARACTERS.milo, size: 40 });

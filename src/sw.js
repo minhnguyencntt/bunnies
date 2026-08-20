@@ -5,7 +5,7 @@
  *   sau lần tải đầu → chơi xong 1 lần là offline hoàn toàn.
  */
 
-const CACHE_VERSION = 'bunnies-pwa-v2';
+const CACHE_VERSION = 'bunnies-pwa-v3';
 const PRECACHE = `${CACHE_VERSION}-core`;
 const RUNTIME = `${CACHE_VERSION}-runtime`;
 
@@ -64,6 +64,24 @@ const CORE_ASSETS = [
     // Nền menu + boot (vào game là thấy ngay, kể cả offline)
     './screens/menu/assets/backgrounds/bunnies_world.jpg',
     './screens/boot/assets/backgrounds/bunnies_world.jpg',
+
+    // Sprite nhân vật vẽ tay
+    './core/characters/assets/bunny_idle.png',
+    './core/characters/assets/bunny_hop.png',
+    './core/characters/assets/bunny_happy.png',
+    './core/characters/assets/bunny_sad.png',
+    './core/characters/assets/squirrel_side.png',
+    './core/characters/assets/squirrel_front.png',
+    './core/characters/assets/squirrel_back.png',
+    './core/characters/assets/squirrel_happy.png',
+    './core/characters/assets/owl_idle.png',
+    './core/characters/assets/owl_cheer.png',
+    './core/characters/assets/owl_sad.png',
+    './core/characters/assets/owl_encourage.png',
+    './core/characters/assets/fox_idle.png',
+    './core/characters/assets/fox_joy.png',
+    './core/characters/assets/fox_hopeful.png',
+    './core/characters/assets/fox_walk.png',
 ];
 
 self.addEventListener('install', (event) => {

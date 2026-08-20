@@ -184,9 +184,14 @@ class CountingForestScreen extends Phaser.Scene {
     createBunnyOnPlank(index) {
         const p = this.bridgePlanks[index];
         if (!p?.container) return;
-        const sz = Math.min(p.w * 0.6, 28);
         let bunny;
-        if (typeof BunnyCharacter !== 'undefined' && typeof BUNNY_CHARACTERS !== 'undefined') {
+        const sz = Math.min(p.w * 0.6, 28);
+        if (this.textures.exists('spr_bunny_happy')) {
+            // Sprite vẽ tay — thỏ vui vẻ đứng trên ván
+            const tex = this.textures.get('spr_bunny_happy').getSourceImage();
+            bunny = this.add.image(0, -p.h / 2, 'spr_bunny_happy').setOrigin(0.5, 1);
+            bunny.setScale(46 / tex.height);
+        } else if (typeof BunnyCharacter !== 'undefined' && typeof BUNNY_CHARACTERS !== 'undefined') {
             const keys = Object.keys(BUNNY_CHARACTERS);
             const cfg = BUNNY_CHARACTERS[keys[Phaser.Math.Between(0, keys.length - 1)]];
             const tex = new BunnyCharacter(this, { ...cfg, size: sz }).generateTexture('jumping');

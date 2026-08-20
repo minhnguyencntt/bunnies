@@ -44,12 +44,35 @@ class SquirrelCharacter {
         const sq = this.scene.add.container(sx, sy);
         sq.setDepth(depth);
 
-        this.views = {
-            side: SquirrelCharacter.buildSideView(this.scene),
-            front: SquirrelCharacter.buildFrontView(this.scene),
-            back: SquirrelCharacter.buildBackView(this.scene),
-        };
-        sq.add([this.views.back, this.views.front, this.views.side]);
+        if (this.scene.textures.exists('spr_squirrel_side')) {
+            // Sprite vẽ tay — đẹp & chân thật
+            const makeView = (key) => {
+                const c = this.scene.add.container(0, 0);
+                const img = this.scene.add.image(0, 0, key);
+                const tex = this.scene.textures.get(key).getSourceImage();
+                const h = 104;
+                img.setScale(h / tex.height);
+                img.setOrigin(0.5, 0.82); // chân chạm đất ngang platform
+                c.add(img);
+                return c;
+            };
+            this.views = {
+                side: makeView('spr_squirrel_side'),
+                front: makeView('spr_squirrel_front'),
+                back: makeView('spr_squirrel_back'),
+                happy: makeView('spr_squirrel_happy'),
+            };
+            sq.add([this.views.back, this.views.front, this.views.side, this.views.happy]);
+            this.views.happy.setVisible(false);
+        } else {
+            // Fallback vector
+            this.views = {
+                side: SquirrelCharacter.buildSideView(this.scene),
+                front: SquirrelCharacter.buildFrontView(this.scene),
+                back: SquirrelCharacter.buildBackView(this.scene),
+            };
+            sq.add([this.views.back, this.views.front, this.views.side]);
+        }
 
         this.container = sq;
         this.facing = 'forward';
@@ -62,6 +85,7 @@ class SquirrelCharacter {
     applyFacing(animate = true) {
         if (!this.container || !this.views) return;
         const f = this.facing;
+        if (this.views.happy) this.views.happy.setVisible(false);
         this.views.side.setVisible(f === 'left' || f === 'right');
         this.views.front.setVisible(f === 'back');
         this.views.back.setVisible(f === 'forward');
@@ -367,6 +391,16 @@ class SquirrelCharacter {
         if (!this.container) return;
         this.scene.tweens.killTweensOf(this.container);
         const oy = this.container.y;
+
+        // Hiện view vui vẻ trong lúc nhảy (nếu có sprite)
+        const happyView = this.views?.happy;
+        if (happyView) {
+            this.views.side.setVisible(false);
+            this.views.front.setVisible(false);
+            this.views.back.setVisible(false);
+            happyView.setVisible(true);
+        }
+
         this.scene.tweens.add({
             targets: this.container,
             y: oy - 18,
@@ -381,6 +415,7 @@ class SquirrelCharacter {
                     this.container.y = oy;
                     this.container.setScale(1);
                 }
+                if (happyView) this.applyFacing(false); // trở lại view theo hướng
                 this.startIdleMotion();
             }
         });

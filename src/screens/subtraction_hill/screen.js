@@ -451,6 +451,18 @@ class SubtractionHillScreen extends Phaser.Scene {
     }
 
     buildMotherFoxContainer(x, y) {
+        // Ưu tiên sprite vẽ tay — mẹ cáo lớn hơn cáo con
+        if (this.textures.exists('spr_fox_idle')) {
+            const mom = this.add.container(x, y);
+            const img = this.add.image(0, 0, 'spr_fox_idle');
+            const tex = this.textures.get('spr_fox_idle').getSourceImage();
+            img.setScale(150 / tex.height);
+            img.setOrigin(0.5, 0.85);
+            mom.add(img);
+            mom.setDepth(34);
+            return mom;
+        }
+
         const mom = this.add.container(x, y);
         const tail = this.add.graphics(); tail.fillStyle(0xb85c1c); tail.fillEllipse(-32, 16, 28, 18);
         const body = this.add.graphics();

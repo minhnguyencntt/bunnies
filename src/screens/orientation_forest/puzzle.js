@@ -8,13 +8,11 @@
 const OrientationForestPuzzle = {
     version: 2,
 
-    /** Nền video (mp4 + âm trong video); màn city duy nhất dùng video. */
+    /** Nền tĩnh (ảnh vẽ theo kịch bản ngã rẽ trong rừng) — không dùng video. */
     background: {
-        type: 'video',
+        type: 'image',
         imageKey: 'orientation_forest_bg',
         imageUrl: 'screens/orientation_forest/assets/backgrounds/bg.jpg',
-        videoKey: 'orientation_forest_bg_video',
-        videoUrl: 'screens/orientation_forest/assets/backgrounds/bg.mp4',
     },
 
     directionPool: [

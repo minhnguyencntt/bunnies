@@ -120,12 +120,22 @@ class CountingForestScreen extends GameShell {
             g.fillEllipse(6, -26, 14, 8);
             apple.add(g);
             apple.setSize(56, 56);
-            apple.setInteractive({ draggable: true, useHandCursor: true });
+            // Containers have no origin: default hitArea would sit bottom-right of
+            // the visual apple. Use an explicit centered, generous touch target.
+            apple.setInteractive({
+                hitArea: new Phaser.Geom.Circle(0, 0, 40),
+                hitAreaCallback: Phaser.Geom.Circle.Contains,
+                draggable: true,
+                useHandCursor: true,
+            });
             apple.setData('ox', ox);
             apple.setData('oy', oy);
             apple.setData('collected', false);
 
-            apple.on('dragstart', () => { apple.setScale(1.15).setDepth(250); });
+            apple.on('dragstart', () => {
+                this.tweens.killTweensOf(apple); // idle bob must not fight the drag
+                apple.setScale(1.15).setDepth(250);
+            });
             apple.on('drag', (_p, dx, dy) => { apple.x = dx; apple.y = dy; });
             apple.on('dragend', () => this.handleAppleDrop(apple));
             this.tweens.add({ targets: apple, y: oy - 4, duration: 1500 + i * 130, yoyo: true, repeat: -1 });
@@ -183,6 +193,7 @@ class CountingForestScreen extends GameShell {
         const a = Phaser.Math.Between(2, max - 2);
         const b = Phaser.Math.Between(2, max - a);
         const correct = a + b;
+        this.expected = correct; // debug/test hook
         const choiceCount = diff.choiceCount;
 
         // Problem panel
@@ -243,8 +254,7 @@ class CountingForestScreen extends GameShell {
                 fontSize: '32px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold',
                 color: '#ffd700', stroke: '#000', strokeThickness: 3,
             }).setOrigin(0.5));
-            sign.setSize(104, 60);
-            sign.setInteractive({ useHandCursor: true });
+            setCenteredInput(sign, 116, 72);
             sign.on('pointerdown', () => {
                 if (!this.acceptingInput || this.isPaused) return;
                 if (val === correct) {
@@ -288,6 +298,7 @@ class CountingForestScreen extends GameShell {
         const b = Phaser.Math.Between(2, a - 2);
         const c = Phaser.Math.Between(2, Math.min(9, max - (a - b)));
         const correct = a - b + c;
+        this.expected = correct; // debug/test hook
 
         // Story panel
         const panel = this.track(this.add.container(w / 2, 116).setDepth(150));

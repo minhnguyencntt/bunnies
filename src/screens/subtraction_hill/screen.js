@@ -83,8 +83,8 @@ class SubtractionHillScreen extends GameShell {
         const w = this.cameras.main.width;
         const h = this.cameras.main.height;
         const max = diff.mathRange;
-        const a = Phaser.Math.Between(3, max);
-        const b = Phaser.Math.Between(1, a - 1);
+        const a = Phaser.Math.Between(4, Math.max(4, max));
+        const b = Phaser.Math.Between(1, a - 2); // always ≥ 2 items remain to count
         const remaining = a - b;
         this.roundTarget = remaining;
         const item = this.pickItem();
@@ -131,7 +131,12 @@ class SubtractionHillScreen extends GameShell {
                 // Remains — tappable to collect
                 this.time.delayedCall(600 + a * 100 + b * 260, () => {
                     if (!it.active || this.sessionOver) return;
-                    it.setInteractive({ useHandCursor: true });
+                    // Generous padded hit area around the emoji for small fingers
+                    it.setInteractive({
+                        hitArea: new Phaser.Geom.Rectangle(-14, -14, it.width + 28, it.height + 28),
+                        hitAreaCallback: Phaser.Geom.Rectangle.Contains,
+                        useHandCursor: true,
+                    });
                     it.on('pointerdown', () => this.collectItem(it));
                     this.tweens.add({ targets: it, y: rowY - 8, duration: 900, yoyo: true, repeat: -1 });
                 });
@@ -209,11 +214,19 @@ class SubtractionHillScreen extends GameShell {
             const it = this.track(this.add.text(ix, rowY, item.emoji, { fontSize: '48px' })
                 .setOrigin(0.5).setDepth(120));
             it.setSize(56, 56);
-            it.setInteractive({ draggable: true, useHandCursor: true });
+            it.setInteractive({
+                hitArea: new Phaser.Geom.Rectangle(-12, -12, it.width + 24, it.height + 24),
+                hitAreaCallback: Phaser.Geom.Rectangle.Contains,
+                draggable: true,
+                useHandCursor: true,
+            });
             it.setData('ox', ix);
             it.setData('oy', rowY);
             it.setData('packed', false);
-            it.on('dragstart', () => it.setDepth(250).setScale(1.15));
+            it.on('dragstart', () => {
+                this.tweens.killTweensOf(it); // idle bob must not fight the drag
+                it.setDepth(250).setScale(1.15);
+            });
             it.on('drag', (_p, dx, dy) => { it.x = dx; it.y = dy; });
             it.on('dragend', () => this.handlePackDrop(it));
             this.tweens.add({ targets: it, y: rowY - 5, duration: 1300 + i * 90, yoyo: true, repeat: -1 });
@@ -262,6 +275,7 @@ class SubtractionHillScreen extends GameShell {
         this.companionSay('Giỏ đủ rồi! Còn lại bao nhiêu món ngoài kia?', 2800);
 
         const correct = this.roundTarget;
+        this.expected = correct; // debug/test hook
         const wrongs = new Set();
         while (wrongs.size < 2) {
             const v = Phaser.Math.Between(Math.max(1, correct - 3), correct + 3);
@@ -294,6 +308,7 @@ class SubtractionHillScreen extends GameShell {
             ? Phaser.Math.Between(2, Math.min(8, max - (a - b)))
             : Phaser.Math.Between(1, a - b - 1);
         const correct = useAdd ? a - b + c : a - b - c;
+        this.expected = correct; // debug/test hook
         const item = this.pickItem();
         const third = useAdd ? `được thêm ${c}` : `cho đi tiếp ${c}`;
 

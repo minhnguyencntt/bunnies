@@ -87,6 +87,7 @@ class OrientationForestScreen extends GameShell {
         const h = this.cameras.main.height;
         const dirs = this.directions(diff.choiceCount);
         const correct = Phaser.Utils.Array.GetRandom(dirs);
+        this.expected = correct.id; // debug/test hook
         const clues = (typeof OrientationForestPuzzle !== 'undefined' && OrientationForestPuzzle.cluePool)
             ? OrientationForestPuzzle.cluePool
             : [{ emoji: '🌳', name: 'cây' }];

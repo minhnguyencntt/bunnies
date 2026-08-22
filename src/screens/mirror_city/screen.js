@@ -112,7 +112,7 @@ class MirrorCityScreen extends GameShell {
 
     pickMutations(elements, count, subtlety) {
         const typesBySubtlety = {
-            1: ['count', 'presence', 'color'],
+            1: ['count', 'presence'], // most obvious types for the youngest players
             2: ['count', 'presence', 'color', 'size', 'shape'],
             3: ['color', 'size', 'shape', 'direction', 'position', 'rotation', 'presence', 'count'],
         };

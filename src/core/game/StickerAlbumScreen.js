@@ -46,8 +46,7 @@ class StickerAlbumScreen extends Phaser.Scene {
         bg.strokeCircle(0, 0, 26);
         back.add(bg);
         back.add(this.add.text(0, 0, '🗺', { fontSize: '22px' }).setOrigin(0.5));
-        back.setSize(56, 56);
-        back.setInteractive({ useHandCursor: true });
+        setCenteredInput(back, 56, 56);
         back.on('pointerdown', () => { this.sound.stopAll(); this.scene.start('MenuScreen'); });
         back.on('pointerover', () => back.setScale(1.12));
         back.on('pointerout', () => back.setScale(1));
@@ -93,8 +92,7 @@ class StickerAlbumScreen extends Phaser.Scene {
             color: sticker.owned ? rs.color : '#90a4ae',
         }).setOrigin(0.5));
 
-        c.setSize(size, size);
-        c.setInteractive({ useHandCursor: true });
+        setCenteredInput(c, size, size);
         c.on('pointerdown', () => this.showStickerInfo(x, y, sticker));
         if (sticker.owned) {
             this.tweens.add({ targets: c, scale: 1.06, duration: 1200, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });

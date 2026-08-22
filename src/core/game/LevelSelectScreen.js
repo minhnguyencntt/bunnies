@@ -58,8 +58,7 @@ class LevelSelectScreen extends Phaser.Scene {
         bg.strokeCircle(0, 0, 26);
         back.add(bg);
         back.add(this.add.text(0, 0, '🗺', { fontSize: '22px' }).setOrigin(0.5));
-        back.setSize(56, 56);
-        back.setInteractive({ useHandCursor: true });
+        setCenteredInput(back, 56, 56);
         back.on('pointerdown', () => { this.sound.stopAll(); this.scene.start('MenuScreen'); });
         back.on('pointerover', () => back.setScale(1.12));
         back.on('pointerout', () => back.setScale(1));
@@ -123,8 +122,7 @@ class LevelSelectScreen extends Phaser.Scene {
         }
 
         if (unlocked) {
-            c.setSize(cw, ch);
-            c.setInteractive({ useHandCursor: true });
+            setCenteredInput(c, cw, ch);
             c.on('pointerover', () => c.setScale(1.04));
             c.on('pointerout', () => c.setScale(1));
             c.on('pointerdown', () => {

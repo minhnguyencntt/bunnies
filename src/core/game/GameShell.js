@@ -15,6 +15,20 @@
  * Optional overrides: introText(), introVoiceKey(), parTimeMs,
  *   handleTimeout(), showHintVisual(hint), onSessionStart()
  */
+/**
+ * Containers have no origin, so their default input hitArea sits bottom-right
+ * of the visual center. This helper gives any container a centered hitArea.
+ */
+function setCenteredInput(obj, width, height, opts = {}) {
+    obj.setSize(width, height);
+    obj.setInteractive(Object.assign({
+        hitArea: new Phaser.Geom.Rectangle(-width / 2, -height / 2, width, height),
+        hitAreaCallback: Phaser.Geom.Rectangle.Contains,
+        useHandCursor: true,
+    }, opts));
+    return obj;
+}
+
 class GameShell extends Phaser.Scene {
     constructor(key) {
         super({ key });
@@ -295,8 +309,7 @@ class GameShell extends Phaser.Scene {
         bg.strokeCircle(0, 0, 21);
         c.add(bg);
         c.add(this.add.text(0, 0, icon, { fontSize: '18px' }).setOrigin(0.5));
-        c.setSize(46, 46);
-        c.setInteractive({ useHandCursor: true });
+        setCenteredInput(c, 46, 46);
         c.on('pointerdown', () => { this.tweens.add({ targets: c, scale: 0.88, duration: 80, yoyo: true }); onTap(); });
         c.on('pointerover', () => c.setScale(1.1));
         c.on('pointerout', () => c.setScale(1));
@@ -542,8 +555,7 @@ class GameShell extends Phaser.Scene {
                 color: '#fff', stroke: '#000', strokeThickness: 3,
             }).setOrigin(0.5);
             c.add(label);
-            c.setSize(size, size);
-            c.setInteractive({ useHandCursor: true });
+            setCenteredInput(c, size, size);
             c.on('pointerdown', () => {
                 if (!this.acceptingInput || this.isPaused) return;
                 onPick(opt, c);

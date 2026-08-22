@@ -1,679 +1,364 @@
 /**
- * screen.js — CountingForestScreen (Khu rừng đếm số). Load sau `puzzle.js`.
- * Gameplay: phép cộng a+b ≤ 10, kéo thẻ đáp án lên ván cầu, 10 ván. Xem story.md.
+ * screen.js — Khu Rừng Đếm Số (Counting Forest). Educational goal: ADDITION.
+ * Redesigned on the Knowledge World Game Engine (GameShell).
+ *
+ *   Màn 1 · Thu Hoạch Táo   — drag & combine two apple groups into Bunnine's basket
+ *   Màn 2 · Đường Pha Lê    — pick the path whose sign equals a + b, Bunnine runs it
+ *   Màn 3 · Nhiệm Vụ Pha Lê — multi-step story problems (a − b + c) with animation
  */
-class CountingForestScreen extends Phaser.Scene {
+class CountingForestScreen extends GameShell {
     constructor() {
-        super({ key: 'CountingForestScreen' });
-        this.planksRestored = 0;
-        this.totalPlanks = 10;
-        this.currentQuestion = null;
-        this.checkingAnswer = false;
-        this.draggedCard = null;
-        this.wiseOwl = null;
-        this.bridgePlanks = [];
-        this.answerCards = [];
-        this.questionGroup = null;
-        this.levelBGM = null;
-        this.currentVoice = null;
-        this.dialogueIndex = 0;
-        this.butterflies = [];
-        this.fireflies = [];
-        this.magicParticles = [];
-        this.levelBgVideo = null;
+        super('CountingForestScreen');
+        this.gameId = 'counting_forest';
+        this.roundObjects = [];
+        this.collected = 0;
+        this.roundTarget = 0;
     }
 
-    preload() {
-        const bg = typeof CountingForestPuzzle !== 'undefined' ? CountingForestPuzzle.background : null;
-        if (typeof ScreenLevelBackground !== 'undefined' && bg) {
-            // Không load BGM ở preload (file lớn) — lazy load sau khi vào màn
-            ScreenLevelBackground.registerLevelBackground(this, bg, {});
+    onPreload() {
+        this.load.image('cf_bg', 'screens/counting_forest/assets/backgrounds/bg.jpg');
+        this.preloadCommonAudio('counting_forest');
+    }
+
+    buildWorld(w, h) {
+        if (this.textures.exists('cf_bg')) {
+            this.add.image(w / 2, h / 2, 'cf_bg').setDisplaySize(w, h).setDepth(0);
         } else {
-            this.load.image('counting_forest_bg', 'screens/counting_forest/assets/backgrounds/bg.jpg');
-        }
-        this.load.audio('voice_intro_1', 'screens/counting_forest/assets/audio/voice/intro_1.mp3');
-        this.load.audio('voice_intro_2', 'screens/counting_forest/assets/audio/voice/intro_2.mp3');
-        this.load.audio('voice_intro_3', 'screens/counting_forest/assets/audio/voice/intro_3.mp3');
-        this.load.audio('voice_correct', 'screens/counting_forest/assets/audio/voice/correct_answer.mp3');
-        this.load.audio('voice_wrong', 'screens/counting_forest/assets/audio/voice/wrong_answer.mp3');
-        this.load.audio('voice_complete', 'screens/counting_forest/assets/audio/voice/level_complete.mp3');
-    }
-
-    create() {
-        const w = this.cameras.main.width;
-        const h = this.cameras.main.height;
-        this.sound.stopAll();
-        this.createBackground(w, h);
-        this.createBridge(w, h);
-        this.createWiseOwl(w, h);
-        this.createAmbientCreatures(w, h);
-        this.scene.launch('UIScreen');
-        this.time.delayedCall(500, () => this.showIntroductionDialogue());
-
-        // BGM load nền, tự phát khi sẵn sàng
-        if (typeof ScreenLevelBackground !== 'undefined') {
-            ScreenLevelBackground.lazyLoadBGM(this, 'bgm_counting_forest',
-                'screens/counting_forest/assets/audio/bgm/bgm.mp3', () => this.playLevelBGM());
-        } else {
-            this.playLevelBGM();
-        }
-    }
-
-    // ════════════════════════════════════════
-    //  Layout — all positions derived from screen size
-    // ════════════════════════════════════════
-
-    L() {
-        const w = this.cameras.main.width;
-        const h = this.cameras.main.height;
-        const hudH = 80;
-        return {
-            w, h, hudH,
-            questionY: hudH + 50,
-            cardY: hudH + 140,
-            cardSize: Phaser.Math.Clamp(Math.round(w * 0.065), 64, 84),
-            cardGap: Phaser.Math.Clamp(Math.round(w * 0.025), 16, 32),
-            bridgeLeft: Math.round(w * 0.08),
-            bridgeRight: Math.round(w * 0.92),
-            bridgeY: Math.round(h * 0.7),
-            plankH: Phaser.Math.Clamp(Math.round(h * 0.05), 28, 40),
-            plankGap: 4,
-            owlX: Math.round(w * 0.09),
-            owlY: Math.round(h * 0.50),
-        };
-    }
-
-    // ════════════════════════════════════════
-    //  Background
-    // ════════════════════════════════════════
-
-    createBackground(w, h) {
-        const bg = typeof CountingForestPuzzle !== 'undefined' ? CountingForestPuzzle.background : null;
-        let mode = 'none';
-        if (typeof ScreenLevelBackground !== 'undefined' && bg) {
-            mode = ScreenLevelBackground.createLayer(this, w, h, bg, { depth: 0, videoRef: 'levelBgVideo' });
-        } else if (this.textures.exists('counting_forest_bg')) {
-            this.add.image(w / 2, h / 2, 'counting_forest_bg').setDisplaySize(w, h).setDepth(0);
-            mode = 'image';
-        }
-        if (mode === 'none') {
             const g = this.add.graphics().setDepth(0);
-            g.fillGradientStyle(0x87CEEB, 0x87CEEB, 0xFFE4B5, 0xFFE4B5, 1);
+            g.fillGradientStyle(0x87ceeb, 0x87ceeb, 0xffe4b5, 0xffe4b5, 1);
             g.fillRect(0, 0, w, h * 0.65);
-            g.fillStyle(0x228B22);
+            g.fillStyle(0x228b22);
             g.fillRect(0, h * 0.65, w, h * 0.35);
         }
+        this.startLevelBGM('bgm_counting_forest', 'screens/counting_forest/assets/audio/bgm/bgm.mp3');
+    }
+
+    introText() {
+        return {
+            1: 'Bunnine đói rồi! Kéo táo vào giỏ giúp Bunnine — đếm xem tất cả có bao nhiêu quả nhé!',
+            2: 'Bunnine cần tìm con đường pha lê đúng! Cộng hai số rồi chọn biển số đúng nhé!',
+            3: 'Bunnine đang thu thập pha lê! Hãy theo dõi câu chuyện và tính xem cuối cùng có bao nhiêu viên!',
+        }[this.level];
+    }
+
+    presentRound(index, diff) {
+        this.clearRound();
+        if (this.level === 1) this.presentAppleHarvest(diff);
+        else if (this.level === 2) this.presentCrystalPaths(diff);
+        else this.presentCrystalQuest(diff);
+    }
+
+    track(obj) { this.roundObjects.push(obj); return obj; }
+
+    clearRound() {
+        this.roundObjects.forEach(o => { if (o?.active) o.destroy(true); });
+        this.roundObjects = [];
+        this.collected = 0;
     }
 
     // ════════════════════════════════════════
-    //  Bridge — 10 planks
+    //  Màn 1 — Thu Hoạch Táo (drag & combine, a+b ≤ 5)
     // ════════════════════════════════════════
 
-    createBridge() {
-        const l = this.L();
-        const totalW = l.bridgeRight - l.bridgeLeft;
-        const plankW = (totalW - (this.totalPlanks - 1) * l.plankGap) / this.totalPlanks;
+    presentAppleHarvest(diff) {
+        const w = this.cameras.main.width;
+        const h = this.cameras.main.height;
+        const max = diff.mathRange;
+        const a = Phaser.Math.Between(1, max - 1);
+        const b = Phaser.Math.Between(1, max - a);
+        this.roundTarget = a + b;
+        this.analytics.recordExploration(0, this.roundTarget);
 
-        this.bridgePlanks = [];
-        for (let i = 0; i < this.totalPlanks; i++) {
-            const x = l.bridgeLeft + i * (plankW + l.plankGap);
-            const cx = x + plankW / 2;
-            const cy = l.bridgeY;
+        // Visual equation: 🍎🍎 + 🍎 = ?
+        const eq = this.track(this.add.container(w / 2, 108).setDepth(150));
+        const eqBg = this.add.graphics();
+        eqBg.fillStyle(0x5c3a1e, 0.9);
+        eqBg.fillRoundedRect(-190, -26, 380, 52, 16);
+        eqBg.lineStyle(3, 0xffd700, 0.8);
+        eqBg.strokeRoundedRect(-190, -26, 380, 52, 16);
+        eq.add(eqBg);
+        eq.add(this.add.text(0, 0, `${'🍎'.repeat(a)} + ${'🍎'.repeat(b)} = ?`, {
+            fontSize: '26px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold', color: '#fff',
+        }).setOrigin(0.5));
+        this.equationText = eq.list[1];
 
-            const container = this.add.container(cx, cy).setDepth(10);
+        // Basket with Bunnine
+        const basketX = w / 2;
+        const basketY = h * 0.8;
+        const basket = this.track(this.add.container(basketX, basketY).setDepth(60));
+        const bg = this.add.graphics();
+        bg.fillStyle(0x8d6e63, 1);
+        bg.fillRoundedRect(-110, -40, 220, 80, 18);
+        bg.lineStyle(4, 0x5d4037, 1);
+        bg.strokeRoundedRect(-110, -40, 220, 80, 18);
+        basket.add(bg);
+        this.basketCounter = this.add.text(0, 0, '0', {
+            fontSize: '40px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold',
+            color: '#ffd700', stroke: '#000', strokeThickness: 3,
+        }).setOrigin(0.5);
+        basket.add(this.basketCounter);
+        this.basketZone = { x: basketX, y: basketY, hw: 130, hh: 70 };
 
-            const broken = this.add.graphics();
-            broken.fillStyle(0x654321, 0.75);
-            broken.fillRoundedRect(-plankW / 2, -l.plankH / 2, plankW, l.plankH, 4);
-            broken.lineStyle(2, 0x4A4A4A, 0.8);
-            broken.strokeRoundedRect(-plankW / 2, -l.plankH / 2, plankW, l.plankH, 4);
-            broken.lineStyle(1.5, 0x2A2A2A, 0.6);
-            broken.beginPath();
-            broken.moveTo(-plankW * 0.2, -l.plankH / 2);
-            broken.lineTo(plankW * 0.15, l.plankH / 2);
-            broken.strokePath();
-            container.add(broken);
+        // Two apple groups on trees
+        this.spawnAppleGroup(a, w * 0.22, h * 0.42, 0xc62828);
+        this.spawnAppleGroup(b, w * 0.78, h * 0.42, 0xd84315);
+        this.companionSay(`Kéo ${a} quả bên trái và ${b} quả bên phải vào giỏ nào!`, 3500);
+    }
 
+    spawnAppleGroup(count, cx, cy, color) {
+        const apples = [];
+        for (let i = 0; i < count; i++) {
+            const ox = cx + (i - (count - 1) / 2) * 64;
+            const oy = cy + (i % 2) * 20 - 10;
+            const apple = this.track(this.add.container(ox, oy).setDepth(120));
+            const g = this.add.graphics();
+            g.fillStyle(color, 1);
+            g.fillCircle(0, 0, 26);
+            g.fillStyle(0xffffff, 0.35);
+            g.fillCircle(-8, -8, 8);
+            g.fillStyle(0x33691e, 1);
+            g.fillEllipse(6, -26, 14, 8);
+            apple.add(g);
+            apple.setSize(56, 56);
+            apple.setInteractive({ draggable: true, useHandCursor: true });
+            apple.setData('ox', ox);
+            apple.setData('oy', oy);
+            apple.setData('collected', false);
+
+            apple.on('dragstart', () => { apple.setScale(1.15).setDepth(250); });
+            apple.on('drag', (_p, dx, dy) => { apple.x = dx; apple.y = dy; });
+            apple.on('dragend', () => this.handleAppleDrop(apple));
+            this.tweens.add({ targets: apple, y: oy - 4, duration: 1500 + i * 130, yoyo: true, repeat: -1 });
+            apples.push(apple);
+        }
+        return apples;
+    }
+
+    handleAppleDrop(apple) {
+        if (apple.getData('collected')) return;
+        const z = this.basketZone;
+        const inside = Math.abs(apple.x - z.x) < z.hw && Math.abs(apple.y - z.y) < z.hh;
+        if (!inside) {
+            this.recordFumble();
             this.tweens.add({
-                targets: container, y: cy - 2,
-                duration: 2000 + i * 80, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
+                targets: apple, x: apple.getData('ox'), y: apple.getData('oy'), scale: 1,
+                duration: 350, ease: 'Back.easeOut',
+                onComplete: () => apple.setDepth(120),
             });
-
-            const dropZone = this.add.zone(cx, cy, plankW * 1.4, l.plankH * 2.8).setDepth(9);
-
-            this.bridgePlanks.push({
-                index: i, x, cx, cy, w: plankW, h: l.plankH,
-                isRestored: false, container, broken, dropZone, highlight: null,
-            });
+            return;
         }
+        apple.setData('collected', true);
+        apple.removeAllListeners();
+        this.collected++;
+        this.analytics.recordExploration(1, 0);
+        this.tweens.add({
+            targets: apple, x: z.x, y: z.y - 10, scale: 0.4, duration: 300,
+            onComplete: () => {
+                apple.setDepth(59);
+                this.basketCounter.setText(String(this.collected));
+                this.tweens.add({ targets: this.basketCounter, scale: 1.4, duration: 150, yoyo: true });
+                this.spawnSparkles(z.x, z.y - 30, 5);
+                if (this.collected >= this.roundTarget) {
+                    this.finishAppleRound();
+                }
+            },
+        });
     }
 
-    restorePlank(index, value) {
-        const p = this.bridgePlanks[index];
-        if (!p || p.isRestored) return;
-        p.isRestored = true;
-        this.planksRestored++;
-
-        this.tweens.add({ targets: p.broken, alpha: 0, duration: 200, onComplete: () => p.broken.destroy() });
-
-        const restored = this.add.graphics();
-        restored.fillGradientStyle(0x9370DB, 0x9370DB, 0x7B52B5, 0x7B52B5, 1);
-        restored.fillRoundedRect(-p.w / 2, -p.h / 2, p.w, p.h, 4);
-        restored.lineStyle(3, 0xFFD700, 1);
-        restored.strokeRoundedRect(-p.w / 2, -p.h / 2, p.w, p.h, 4);
-        p.container.add(restored);
-
-        const fs = Math.min(p.w * 0.4, p.h * 0.7, 22);
-        p.container.add(
-            this.add.text(0, 0, String(value), {
-                fontSize: fs + 'px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold',
-                color: '#FFD700', stroke: '#000', strokeThickness: 2,
-            }).setOrigin(0.5).setDepth(20)
-        );
-
-        p.container.setScale(0);
-        this.tweens.add({ targets: p.container, scale: 1, duration: 400, ease: 'Back.easeOut' });
-        this.createSparkles(p.cx, p.cy, 15);
-        this.createBunnyOnPlank(index);
-
-        if (this.planksRestored >= this.totalPlanks) {
-            this.time.delayedCall(600, () => this.completeLevel());
-        }
-    }
-
-    createBunnyOnPlank(index) {
-        const p = this.bridgePlanks[index];
-        if (!p?.container) return;
-        let bunny;
-        const sz = Math.min(p.w * 0.6, 28);
-        if (this.textures.exists('spr_bunny_happy')) {
-            // Sprite vẽ tay — thỏ vui vẻ đứng trên ván
-            const tex = this.textures.get('spr_bunny_happy').getSourceImage();
-            bunny = this.add.image(0, -p.h / 2, 'spr_bunny_happy').setOrigin(0.5, 1);
-            bunny.setScale(46 / tex.height);
-        } else if (typeof BunnyCharacter !== 'undefined' && typeof BUNNY_CHARACTERS !== 'undefined') {
-            const keys = Object.keys(BUNNY_CHARACTERS);
-            const cfg = BUNNY_CHARACTERS[keys[Phaser.Math.Between(0, keys.length - 1)]];
-            const tex = new BunnyCharacter(this, { ...cfg, size: sz }).generateTexture('jumping');
-            bunny = this.add.image(0, -p.h * 0.8, tex).setOrigin(0.5);
-        } else {
-            bunny = this.add.circle(0, -p.h * 0.8, sz / 2, 0xFFFFFF).setOrigin(0.5);
-        }
-        bunny.setDepth(14);
-        p.container.add(bunny);
-
-        const hop = () => {
-            if (!bunny.active) return;
-            this.tweens.add({
-                targets: bunny, y: bunny.y - Phaser.Math.Between(6, 12),
-                duration: Phaser.Math.Between(300, 500), yoyo: true, ease: 'Power2',
-                onComplete: () => { if (bunny.active) this.time.delayedCall(Phaser.Math.Between(600, 1400), hop); },
-            });
-        };
-        this.time.delayedCall(Phaser.Math.Between(200, 600), hop);
+    finishAppleRound() {
+        // Reveal the equation the child just built: a + b = total
+        const eq = this.equationText.text;
+        this.equationText.setText(eq.replace('?', String(this.roundTarget)));
+        this.answerCorrect(this.basketZone.x, this.basketZone.y - 60);
     }
 
     // ════════════════════════════════════════
-    //  Question generation + UI
+    //  Màn 2 — Đường Pha Lê (choose the path, a+b ≤ 10)
     // ════════════════════════════════════════
 
-    generateNewQuestion() {
-        const a = Phaser.Math.Between(1, 9);
-        const b = Phaser.Math.Between(1, 10 - a);
+    presentCrystalPaths(diff) {
+        const w = this.cameras.main.width;
+        const h = this.cameras.main.height;
+        const max = diff.mathRange;
+        const a = Phaser.Math.Between(2, max - 2);
+        const b = Phaser.Math.Between(2, max - a);
         const correct = a + b;
+        const choiceCount = diff.choiceCount;
 
+        // Problem panel
+        const panel = this.track(this.add.container(w / 2, 112).setDepth(150));
+        const pbg = this.add.graphics();
+        pbg.fillStyle(0x5c3a1e, 0.92);
+        pbg.fillRoundedRect(-160, -30, 320, 60, 16);
+        pbg.lineStyle(3, 0xffd700, 0.8);
+        pbg.strokeRoundedRect(-160, -30, 320, 60, 16);
+        panel.add(pbg);
+        panel.add(this.add.text(0, 0, `${a} + ${b} = ?`, {
+            fontSize: '32px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold', color: '#fff',
+            stroke: '#000', strokeThickness: 2,
+        }).setOrigin(0.5));
+
+        // Distractors near the answer
         const wrongs = new Set();
-        while (wrongs.size < 2) {
-            const v = Phaser.Math.Between(Math.max(2, correct - 4), Math.min(10, correct + 4));
+        while (wrongs.size < choiceCount - 1) {
+            const v = Phaser.Math.Between(Math.max(2, correct - 4), Math.min(max, correct + 4));
             if (v !== correct) wrongs.add(v);
         }
+        const options = Phaser.Utils.Array.Shuffle([correct, ...wrongs]);
 
-        this.currentQuestion = {
-            text: `${a} + ${b} = ?`,
-            answers: Phaser.Utils.Array.Shuffle([correct, ...wrongs]),
-            correctValue: correct,
-        };
+        // Paths: vertical lanes with a sign at the bottom
+        const laneW = Math.min(220, w * 0.2);
+        const gap = 30;
+        const totalW = options.length * laneW + (options.length - 1) * gap;
+        const startX = (w - totalW) / 2 + laneW / 2;
+        const bunnyY = h * 0.82;
 
-        this.clearQuestionUI();
-        this.showQuestionUI();
-    }
+        this.actor = this.track(this.add.image(w / 2, bunnyY,
+            this.textures.exists('spr_bunny_hop') ? 'spr_bunny_hop' : 'spr_bunny_idle').setDepth(100));
+        const tex = this.actor.texture.getSourceImage();
+        this.actor.setScale(90 / tex.height);
 
-    clearQuestionUI() {
-        if (this.questionGroup) { this.questionGroup.destroy(true); this.questionGroup = null; }
-        this.answerCards.forEach(c => { if (c?.active) c.destroy(true); });
-        this.answerCards = [];
-    }
-
-    showQuestionUI() {
-        const l = this.L();
-        const q = this.currentQuestion;
-
-        const panelW = Math.min(l.w * 0.5, 460);
-        const panelH = 54;
-        this.questionGroup = this.add.container(l.w / 2, l.questionY).setDepth(150);
-
-        const bg = this.add.graphics();
-        bg.fillStyle(0x5C3A1E, 0.92);
-        bg.fillRoundedRect(-panelW / 2, -panelH / 2, panelW, panelH, 14);
-        bg.lineStyle(3, 0xFFD700, 0.8);
-        bg.strokeRoundedRect(-panelW / 2, -panelH / 2, panelW, panelH, 14);
-        this.questionGroup.add(bg);
-
-        this.questionGroup.add(
-            this.add.text(0, 0, q.text, {
-                fontSize: '30px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold',
-                color: '#fff', stroke: '#000', strokeThickness: 2,
-            }).setOrigin(0.5)
-        );
-
-        this.createAnswerCards(l, q);
-    }
-
-    createAnswerCards(l, q) {
-        const cw = l.cardSize;
-        const ch = l.cardSize;
-        const gap = l.cardGap;
-        const n = q.answers.length;
-        const totalW = n * cw + (n - 1) * gap;
-        const startX = (l.w - totalW) / 2 + cw / 2;
-
-        const palettes = [
-            { fill: 0xF8BBD0, border: 0xF48FB1 },
-            { fill: 0xB9F6CA, border: 0x69D99A },
-            { fill: 0xB3E5FC, border: 0x64B5F6 },
-        ];
-
-        q.answers.forEach((val, i) => {
-            const cx = startX + i * (cw + gap);
-            const cy = l.cardY;
-            const pal = palettes[i % palettes.length];
-
-            const card = this.add.container(cx, cy).setSize(cw, ch).setDepth(150);
-
-            const bg = this.add.graphics();
-            bg.fillStyle(pal.fill, 1);
-            bg.fillRoundedRect(-cw / 2, -ch / 2, cw, ch, 12);
-            bg.lineStyle(3, pal.border, 1);
-            bg.strokeRoundedRect(-cw / 2, -ch / 2, cw, ch, 12);
-            card.add(bg);
-
-            const fs = Math.min(cw * 0.45, 34);
-            card.add(
-                this.add.text(0, 0, String(val), {
-                    fontSize: fs + 'px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold',
-                    color: '#fff', stroke: '#000', strokeThickness: 2,
-                }).setOrigin(0.5)
-            );
-
-            card.setInteractive({ draggable: true, useHandCursor: true });
-            card.setData('value', val);
-            card.setData('originX', cx);
-            card.setData('originY', cy);
-
-            card.on('dragstart', () => {
-                this.draggedCard = card;
-                this.tweens.killTweensOf(card);
-                card.setScale(1.12).setDepth(200);
-            });
-            card.on('drag', (_ptr, dx, dy) => {
-                card.x = dx;
-                card.y = dy;
-                this.highlightNearestPlank(card);
-            });
-            card.on('dragend', () => this.handleCardDrop(card));
-
-            this.tweens.add({
-                targets: card, y: cy - 3,
-                duration: 1800 + i * 120, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
-            });
-
-            this.answerCards.push(card);
-        });
-    }
-
-    // ════════════════════════════════════════
-    //  Drag & drop
-    // ════════════════════════════════════════
-
-    highlightNearestPlank(card) {
-        this.bridgePlanks.forEach(p => { if (p.highlight) p.highlight.setAlpha(0); });
-
-        let best = null;
-        let bestD = Infinity;
-        for (const p of this.bridgePlanks) {
-            if (p.isRestored) continue;
-            const d = Phaser.Math.Distance.Between(card.x, card.y, p.cx, p.cy);
-            if (d < bestD && d < p.w * 1.8) { best = p; bestD = d; }
-        }
-        if (best) {
-            if (!best.highlight) {
-                const hl = this.add.graphics();
-                hl.lineStyle(3, 0xFFD700, 0.85);
-                hl.strokeRoundedRect(-best.w / 2 - 4, -best.h / 2 - 4, best.w + 8, best.h + 8, 6);
-                best.container.add(hl);
-                best.highlight = hl;
+        options.forEach((val, i) => {
+            const cx = startX + i * (laneW + gap);
+            // Path
+            const path = this.add.graphics();
+            path.fillStyle(0xd7ccc8, 0.55);
+            path.fillRoundedRect(cx - laneW / 2 + 20, h * 0.3, laneW - 40, bunnyY - h * 0.3 - 30, 20);
+            this.track(path).setDepth(40);
+            // Crystals along path
+            for (let k = 0; k < 3; k++) {
+                const cy = h * 0.36 + k * ((bunnyY - h * 0.42) / 2.4);
+                const gem = this.track(this.add.text(cx, cy, '💎', { fontSize: '30px' }).setOrigin(0.5).setDepth(50));
+                this.tweens.add({ targets: gem, y: cy - 5, duration: 1200 + k * 200, yoyo: true, repeat: -1 });
             }
-            best.highlight.setAlpha(1);
-        }
-    }
-
-    handleCardDrop(card) {
-        this.bridgePlanks.forEach(p => { if (p.highlight) p.highlight.setAlpha(0); });
-
-        if (this.checkingAnswer) { this.returnCard(card); return; }
-
-        for (const p of this.bridgePlanks) {
-            if (p.isRestored) continue;
-            const dz = p.dropZone;
-            const hw = dz.width / 2;
-            const hh = dz.height / 2;
-            if (card.x >= dz.x - hw && card.x <= dz.x + hw &&
-                card.y >= dz.y - hh && card.y <= dz.y + hh) {
-                this.checkAnswer(card, p.index);
-                return;
-            }
-        }
-        this.returnCard(card);
-    }
-
-    checkAnswer(card, plankIndex) {
-        this.checkingAnswer = true;
-        const val = card.getData('value');
-        if (val === this.currentQuestion.correctValue) {
-            this.onCorrectAnswer(card, plankIndex, val);
-        } else {
-            this.onWrongAnswer(card, plankIndex);
-        }
-    }
-
-    onCorrectAnswer(card, plankIndex, value) {
-        const plank = this.bridgePlanks[plankIndex];
-        const fx = plank ? plank.cx : card.x;
-        const fy = plank ? plank.cy - 30 : card.y;
-
-        this.tweens.add({
-            targets: card, alpha: 0, scale: 0, duration: 250,
-            onComplete: () => card.destroy(true),
-        });
-        this.answerCards = this.answerCards.filter(c => c !== card);
-
-        this.restorePlank(plankIndex, value);
-
-        if (typeof RewardFX !== 'undefined') {
-            RewardFX.correctAnswer(this, fx, fy);
-        }
-
-        if (this.wiseOwl) {
-            this.wiseOwl.cheer();
-            this.playVoice('voice_correct');
-        }
-
-        if (window.gameData) {
-            window.gameData.score = (window.gameData.score || 0) + 10;
-        }
-
-        this.time.delayedCall(2200, () => {
-            this.checkingAnswer = false;
-            if (this.wiseOwl) this.wiseOwl.returnToIdle();
-            if (this.planksRestored < this.totalPlanks) this.generateNewQuestion();
-        });
-    }
-
-    onWrongAnswer(card, plankIndex) {
-        const plank = this.bridgePlanks[plankIndex];
-        if (plank?.container) {
-            const ox = plank.container.x;
-            this.tweens.add({
-                targets: plank.container, x: ox - 3,
-                duration: 50, yoyo: true, repeat: 3,
-                onComplete: () => { plank.container.x = ox; },
+            // Sign
+            const sign = this.track(this.add.container(cx, h * 0.24).setDepth(150));
+            const sbg = this.add.graphics();
+            sbg.fillStyle(0x8d6e63, 1);
+            sbg.fillRoundedRect(-52, -30, 104, 60, 12);
+            sbg.lineStyle(4, 0x5d4037, 1);
+            sbg.strokeRoundedRect(-52, -30, 104, 60, 12);
+            sign.add(sbg);
+            sign.add(this.add.text(0, 0, String(val), {
+                fontSize: '32px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold',
+                color: '#ffd700', stroke: '#000', strokeThickness: 3,
+            }).setOrigin(0.5));
+            sign.setSize(104, 60);
+            sign.setInteractive({ useHandCursor: true });
+            sign.on('pointerdown', () => {
+                if (!this.acceptingInput || this.isPaused) return;
+                if (val === correct) {
+                    this.runPath(cx, bunnyY);
+                } else {
+                    this.shake(sign);
+                    this.answerWrong(cx, h * 0.24);
+                }
             });
-        }
-
-        const cx = card.x;
-        this.tweens.add({
-            targets: card, x: cx - 6,
-            duration: 50, yoyo: true, repeat: 4,
-            onComplete: () => this.returnCard(card),
+            sign.setScale(0);
+            this.tweens.add({ targets: sign, scale: 1, duration: 300, delay: i * 100, ease: 'Back.easeOut' });
         });
-
-        if (this.wiseOwl) {
-            this.wiseOwl.showSadness();
-            this.wiseOwl.showDialogue('Ồ! Chưa đúng. Hãy đếm cẩn thận và chọn lại nhé!', 3500);
-            this.playVoice('voice_wrong');
-            this.time.delayedCall(4000, () => { if (this.wiseOwl) this.wiseOwl.returnToIdle(); });
-        }
-
-        this.time.delayedCall(100, () => { this.checkingAnswer = false; });
     }
 
-    returnCard(card) {
-        const ox = card.getData('originX');
-        const oy = card.getData('originY');
-        this.tweens.killTweensOf(card);
+    runPath(cx, bunnyY) {
+        this.acceptingInput = false;
+        const h = this.cameras.main.height;
         this.tweens.add({
-            targets: card, x: ox, y: oy, scale: 1, duration: 350, ease: 'Back.easeOut',
+            targets: this.actor, x: cx, duration: 350, ease: 'Power2',
             onComplete: () => {
-                card.setDepth(150);
-                this.draggedCard = null;
                 this.tweens.add({
-                    targets: card, y: oy - 3,
-                    duration: 1800, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
+                    targets: this.actor, y: h * 0.34, duration: 900, ease: 'Sine.easeInOut',
+                    onUpdate: () => {
+                        this.spawnSparkles(this.actor.x, this.actor.y + 20, 1);
+                    },
+                    onComplete: () => this.answerCorrect(cx, h * 0.3),
                 });
             },
         });
     }
 
     // ════════════════════════════════════════
-    //  Wise Owl
+    //  Màn 3 — Nhiệm Vụ Pha Lê (story: a − b + c ≤ 20)
     // ════════════════════════════════════════
 
-    createWiseOwl() {
-        const l = this.L();
-        if (typeof WiseOwlCharacter !== 'undefined') {
-            this.wiseOwl = new WiseOwlCharacter(this, { x: l.owlX, y: l.owlY, size: 90 });
-            this.wiseOwl.create();
+    presentCrystalQuest(diff) {
+        const w = this.cameras.main.width;
+        const h = this.cameras.main.height;
+        const max = diff.mathRange;
+        const a = Phaser.Math.Between(8, Math.min(15, max));
+        const b = Phaser.Math.Between(2, a - 2);
+        const c = Phaser.Math.Between(2, Math.min(9, max - (a - b)));
+        const correct = a - b + c;
+
+        // Story panel
+        const panel = this.track(this.add.container(w / 2, 116).setDepth(150));
+        const pbg = this.add.graphics();
+        pbg.fillStyle(0x4a148c, 0.9);
+        pbg.fillRoundedRect(-330, -44, 660, 88, 18);
+        pbg.lineStyle(3, 0xffd700, 0.8);
+        pbg.strokeRoundedRect(-330, -44, 660, 88, 18);
+        panel.add(pbg);
+        panel.add(this.add.text(0, 0,
+            `Bunnine có ${a} 💎 · dùng ${b} 💎 · tìm thêm ${c} 💎\nHỏi Bunnine còn bao nhiêu 💎?`, {
+            fontSize: '22px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold', color: '#fff',
+            align: 'center', stroke: '#000', strokeThickness: 2,
+        }).setOrigin(0.5));
+
+        // Animated crystal stage: a appear → b fly away → c fly in
+        const stageY = h * 0.42;
+        const gems = [];
+        const perRow = Math.min(a, 10);
+        for (let i = 0; i < a; i++) {
+            const gx = w / 2 + (i - (perRow - 1) / 2) * 44 - (i >= 10 ? 0 : 0);
+            const gy = stageY + Math.floor(i / 10) * 44;
+            const gem = this.track(this.add.text(gx, gy, '💎', { fontSize: '30px' }).setOrigin(0.5).setDepth(120).setScale(0));
+            gems.push(gem);
+            this.tweens.add({ targets: gem, scale: 1, duration: 200, delay: 200 + i * 70, ease: 'Back.easeOut' });
         }
-    }
-
-    // ════════════════════════════════════════
-    //  Introduction (ngắn 5–10s, có nút bỏ qua)
-    // ════════════════════════════════════════
-
-    showIntroductionDialogue() {
-        if (typeof IntroHelper !== 'undefined') {
-            IntroHelper.play(this, {
-                text: 'Cây cầu gãy rồi! Kéo đáp án đúng lên cầu để sửa 10 tấm ván nhé!',
-                voiceKey: 'voice_intro_2',
-                voiceRate: 1.5,
-                showText: (t, ms) => { if (this.wiseOwl) this.wiseOwl.showDialogue(t, ms); },
-                onComplete: () => this.generateNewQuestion(),
-            });
-        } else {
-            this.generateNewQuestion();
-        }
-    }
-
-    // ════════════════════════════════════════
-    //  Level complete + reward
-    // ════════════════════════════════════════
-
-    completeLevel() {
-        this.clearQuestionUI();
-        const l = this.L();
-        for (let i = 0; i < 15; i++) {
-            this.time.delayedCall(i * 60, () => {
-                this.createSparkles(Phaser.Math.Between(80, l.w - 80), Phaser.Math.Between(80, l.h - 80), 8);
-            });
-        }
-        this.time.delayedCall(1500, () => this.showReward());
-    }
-
-    showReward() {
-        const l = this.L();
-        const w = l.w;
-        const h = l.h;
-
-        const overlay = this.add.graphics().setDepth(250);
-        overlay.fillStyle(0x000000, 0.6);
-        overlay.fillRect(0, 0, w, h);
-
-        const pw = Math.min(w * 0.6, 520);
-        const ph = Math.min(h * 0.52, 370);
-        const px = (w - pw) / 2;
-        const py = (h - ph) / 2;
-
-        const panel = this.add.graphics().setDepth(251);
-        panel.fillStyle(0xFFF8DC, 0.96);
-        panel.fillRoundedRect(px, py, pw, ph, 20);
-        panel.lineStyle(4, 0xFFD700, 1);
-        panel.strokeRoundedRect(px, py, pw, ph, 20);
-
-        this.add.text(w / 2, py + ph * 0.18, '📖 Trang sách số 1', {
-            fontSize: '34px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold', color: '#5C3A1E',
-        }).setOrigin(0.5).setDepth(252);
-
-        this.add.text(w / 2, py + ph * 0.38, 'Sức Mạnh Của Những Con Số', {
-            fontSize: '24px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold', color: '#8B4513',
-        }).setOrigin(0.5).setDepth(252);
-
-        this.add.text(w / 2, py + ph * 0.55, '⭐', { fontSize: '44px' }).setOrigin(0.5).setDepth(252);
-
-        const btnW = 200;
-        const btnH = 54;
-        const btnY = py + ph * 0.78;
-
-        const btnBg = this.add.graphics().setDepth(252);
-        btnBg.fillStyle(0x5C3A1E, 1);
-        btnBg.fillRoundedRect(w / 2 - btnW / 2, btnY - btnH / 2, btnW, btnH, 12);
-        btnBg.lineStyle(3, 0xFFD700, 1);
-        btnBg.strokeRoundedRect(w / 2 - btnW / 2, btnY - btnH / 2, btnW, btnH, 12);
-
-        const btnZone = this.add.zone(w / 2, btnY, btnW, btnH)
-            .setInteractive({ useHandCursor: true }).setDepth(253);
-        this.add.text(w / 2, btnY, 'Tiếp tục', {
-            fontSize: '22px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold', color: '#FFD700',
-        }).setOrigin(0.5).setDepth(253);
-
-        btnZone.on('pointerover', () => btnBg.setAlpha(0.85));
-        btnZone.on('pointerout', () => btnBg.setAlpha(1));
-        btnZone.on('pointerdown', () => {
-            this.sound.stopAll();
-            this.scene.stop('UIScreen');
-            this.scene.start('MenuScreen');
-        });
-
-        if (this.wiseOwl) {
-            this.time.delayedCall(400, () => {
-                this.wiseOwl.celebrate();
-                this.wiseOwl.showDialogue('Tuyệt vời! Bạn đã học được sức mạnh của những con số!', 5000);
-                this.playVoice('voice_complete');
-            });
-        }
-    }
-
-    // ════════════════════════════════════════
-    //  Audio
-    // ════════════════════════════════════════
-
-    playLevelBGM() {
-        if (typeof ScreenLevelBackground !== 'undefined' && ScreenLevelBackground.hasLoadedVideo(this)) return;
-        if (this.cache.audio.exists('bgm_counting_forest') && window.gameData?.musicEnabled !== false) {
-            this.levelBGM = this.sound.add('bgm_counting_forest', { volume: 0.4, loop: true });
-            this.levelBGM.play();
-        }
-    }
-
-    stopLevelBGM() {
-        if (typeof ScreenLevelBackground !== 'undefined') {
-            ScreenLevelBackground.fadeOutBackgroundMedia(this, {
-                soundProp: 'levelBGM', videoProp: 'levelBgVideo', duration: 400,
-            });
-            return;
-        }
-        if (!this.levelBGM) return;
-        this.tweens.add({
-            targets: this.levelBGM, volume: 0, duration: 400,
-            onComplete: () => { if (this.levelBGM) { this.levelBGM.stop(); this.levelBGM = null; } },
-        });
-    }
-
-    playVoice(key) {
-        if (this.currentVoice) { this.currentVoice.stop(); this.currentVoice = null; }
-        if (this.cache.audio.exists(key)) {
-            this.currentVoice = this.sound.add(key, { volume: 0.35 });
-            this.currentVoice.play();
-            return this.currentVoice;
-        }
-        return null;
-    }
-
-    stopVoice() {
-        if (this.currentVoice) { this.currentVoice.stop(); this.currentVoice = null; }
-    }
-
-    // ════════════════════════════════════════
-    //  Effects + ambient
-    // ════════════════════════════════════════
-
-    createSparkles(x, y, count) {
-        const colors = [0xFFD700, 0xFF69B4, 0x87CEEB, 0x90EE90, 0x9370DB];
-        for (let i = 0; i < count; i++) {
-            const s = this.add.graphics().setDepth(200);
-            s.fillStyle(colors[Phaser.Math.Between(0, colors.length - 1)], 0.8);
-            s.fillCircle(0, 0, Phaser.Math.Between(2, 5));
-            s.setPosition(x, y);
-            const a = Phaser.Math.DegToRad(Phaser.Math.Between(0, 360));
-            const d = Phaser.Math.Between(30, 80);
+        const t1 = 300 + a * 70 + 500;
+        for (let i = 0; i < b; i++) {
+            const gem = gems[a - 1 - i];
             this.tweens.add({
-                targets: s,
-                x: x + Math.cos(a) * d, y: y + Math.sin(a) * d,
-                alpha: 0, scale: 0, duration: 600,
-                onComplete: () => s.destroy(),
+                targets: gem, y: gem.y - 90, alpha: 0, duration: 500, delay: t1 + i * 160,
             });
         }
+        const t2 = t1 + b * 160 + 400;
+        for (let i = 0; i < c; i++) {
+            const gx = w / 2 + (i - (c - 1) / 2) * 44;
+            const gem = this.track(this.add.text(gx, stageY + 110, '✨', { fontSize: '30px' }).setOrigin(0.5).setDepth(120).setAlpha(0));
+            this.tweens.add({ targets: gem, alpha: 1, y: stageY + 96, duration: 400, delay: t2 + i * 160 });
+        }
+
+        // Choices appear after the story animation
+        const wrongs = new Set();
+        while (wrongs.size < diff.choiceCount - 1) {
+            const v = Phaser.Math.Between(Math.max(1, correct - 5), correct + 5);
+            if (v !== correct) wrongs.add(v);
+        }
+        const options = Phaser.Utils.Array.Shuffle([correct, ...wrongs])
+            .map(v => ({ label: v, value: v }));
+
+        this.time.delayedCall(Math.min(t2 + c * 160 + 300, 6000), () => {
+            if (this.sessionOver) return;
+            const buttons = this.createChoiceButtons(options, h * 0.72, (opt, btn) => {
+                if (opt.value === correct) {
+                    this.answerCorrect(btn.x, btn.y);
+                } else {
+                    this.shake(btn);
+                    this.answerWrong(btn.x, btn.y);
+                }
+            });
+            buttons.forEach(b => this.track(b));
+        });
     }
 
-    createAmbientCreatures(w, h) {
-        if (typeof generateButterflies === 'function' && typeof createMenuButterfly === 'function') {
-            generateButterflies(this, 4).forEach(data => {
-                const b = createMenuButterfly(this, data);
-                if (b) { b.x = Phaser.Math.Between(w * 0.1, w * 0.9); b.y = Phaser.Math.Between(h * 0.3, h * 0.65); this.butterflies.push(b); }
-            });
+    showHintVisual(hint) {
+        if (this.level === 2 && hint.style === 'direct') return; // L2 partial: text only
+        if (this.level === 1 && hint.style === 'direct' && this.basketZone) {
+            const z = this.basketZone;
+            const ring = this.add.graphics().setDepth(300);
+            ring.lineStyle(5, 0xffd700, 0.9);
+            ring.strokeRoundedRect(z.x - z.hw, z.y - z.hh, z.hw * 2, z.hh * 2, 20);
+            this.tweens.add({ targets: ring, alpha: 0, duration: 1800, onComplete: () => ring.destroy() });
         }
-        if (typeof generateFireflies === 'function' && typeof createMenuFirefly === 'function') {
-            generateFireflies(this, 5).forEach(data => {
-                const f = createMenuFirefly(this, data);
-                if (f) { f.x = Phaser.Math.Between(w * 0.1, w * 0.9); f.y = Phaser.Math.Between(h * 0.2, h * 0.6); this.fireflies.push(f); }
-            });
-        }
-        if (typeof generateMagicParticles === 'function' && typeof createMenuMagicParticle === 'function') {
-            generateMagicParticles(this, 6).forEach(data => {
-                const p = createMenuMagicParticle(this, data);
-                if (p) { p.x = Phaser.Math.Between(w * 0.15, w * 0.85); p.y = Phaser.Math.Between(h * 0.3, h * 0.65); this.magicParticles.push(p); }
-            });
-        }
-    }
-
-    // ════════════════════════════════════════
-    //  Lifecycle
-    // ════════════════════════════════════════
-
-    update() {
-        const tick = (group) => group.forEach(o => { const bs = o.getData('behaviorSystem'); if (bs?.update) bs.update(group); });
-        tick(this.butterflies);
-        tick(this.fireflies);
-        tick(this.magicParticles);
-    }
-
-    shutdown() {
-        this.sound.stopAll();
-        this.stopVoice();
-        if (typeof ScreenLevelBackground !== 'undefined') {
-            ScreenLevelBackground.destroyVideo(this, 'levelBgVideo');
-        }
-        if (this.levelBGM) { this.levelBGM.stop(); this.levelBGM = null; }
-        if (this.wiseOwl) this.wiseOwl.destroy();
-        this.clearQuestionUI();
     }
 }

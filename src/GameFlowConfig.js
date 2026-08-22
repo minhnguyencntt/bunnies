@@ -1,6 +1,9 @@
 /**
- * GameFlowConfig.js - Centralized game flow configuration
- * Control the sequence of levels and game progression
+ * GameFlowConfig.js - Legacy flow configuration (debug/logging).
+ * NOTE: Game identity, levels, difficulty, scoring, rewards, awards and
+ * stickers now live in the Knowledge World Game Engine:
+ *   src/core/engine/GameConfig.js  (data-driven game definitions)
+ *   src/core/game/GameShell.js     (shared gameplay scene)
  */
 
 const GameFlowConfig = {

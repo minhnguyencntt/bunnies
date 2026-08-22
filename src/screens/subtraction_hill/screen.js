@@ -1,673 +1,387 @@
 /**
- * screen.js — SubtractionHillScreen (Đồi Phép Trừ). Load sau `puzzle.js` (SubtractionHillPuzzle).
- * Gameplay: 6 phép trừ a−b (0–10), chọn đáp án, cáo nhặt đồ, reunion mẹ. Xem story.md.
+ * screen.js — Đồi Phép Trừ (Subtraction Hill). Educational goal: SUBTRACTION.
+ * Redesigned on the Knowledge World Game Engine (GameShell).
+ *
+ *   Màn 1 · Táo Lăn Đồi      — items roll away; collect & count what remains
+ *   Màn 2 · Giỏ Quà Của Cáo  — pack b items into the basket, then tell the remainder
+ *   Màn 3 · Hành Trình Của Cáo — multi-step story problems (a − b ± c)
  */
-class SubtractionHillScreen extends Phaser.Scene {
+class SubtractionHillScreen extends GameShell {
     constructor() {
-        super({ key: 'SubtractionHillScreen' });
-        this.totalPuzzles = 6;
-        this.currentRound = 0;
-        this.solvedCount = 0;
-        this.comboStreak = 0;
-        this.checkingAnswer = false;
-        this.currentProblem = null;
-        this.levelBGM = null;
-        this.currentVoice = null;
-        this.roundRoot = null;
-        this.hintText = null;
-        this.youngFoxCharacter = null;
-        this.youngFox = null;
-        this.foxBubble = null;
-        this.motherFox = null;
-        this.itemProgressSlots = [];
-        this.itemProgressTitle = null;
-        this.lostItemsQueue = [];
-        this.problemHistory = [];
-        this.butterflies = [];
-        this.fireflies = [];
-        this.magicParticles = [];
-        this.theme = typeof SubtractionHillPuzzle !== 'undefined' ? SubtractionHillPuzzle : null;
-        this.usesArtBackground = false;
-        this.levelBgVideo = null;
+        super('SubtractionHillScreen');
+        this.gameId = 'subtraction_hill';
+        this.roundObjects = [];
+        this.collected = 0;
+        this.roundTarget = 0;
+        this.packNeeded = 0;
+        this.packed = 0;
+        this.phase = 'collect';
     }
 
-    preload() {
-        const bg = this.theme?.background;
-        if (typeof ScreenLevelBackground !== 'undefined' && bg) {
-            // Không load BGM ở preload (file lớn) — lazy load sau khi vào màn
-            ScreenLevelBackground.registerLevelBackground(this, bg, {});
+    onPreload() {
+        this.load.image('sh_bg', 'screens/subtraction_hill/assets/backgrounds/bg.jpg');
+        this.preloadCommonAudio('subtraction_hill');
+    }
+
+    buildWorld(w, h) {
+        if (this.textures.exists('sh_bg')) {
+            this.add.image(w / 2, h / 2, 'sh_bg').setDisplaySize(w, h).setDepth(0);
         } else {
-            this.load.image('subtraction_hill_bg', 'screens/subtraction_hill/assets/backgrounds/bg.jpg');
-        }
-        this.load.audio('voice_intro_1', 'screens/subtraction_hill/assets/audio/voice/intro_1.mp3');
-        this.load.audio('voice_intro_2', 'screens/subtraction_hill/assets/audio/voice/intro_2.mp3');
-        this.load.audio('voice_intro_3', 'screens/subtraction_hill/assets/audio/voice/intro_3.mp3');
-        this.load.audio('voice_correct', 'screens/subtraction_hill/assets/audio/voice/correct_answer.mp3');
-        this.load.audio('voice_wrong', 'screens/subtraction_hill/assets/audio/voice/wrong_answer.mp3');
-        this.load.audio('voice_complete', 'screens/subtraction_hill/assets/audio/voice/level_complete.mp3');
-    }
-
-    create() {
-        const w = this.cameras.main.width;
-        const h = this.cameras.main.height;
-        this.sound.stopAll();
-        this.createBackground(w, h);
-        this.pickLostItemsForRun();
-        this.createItemProgressRow(w, h);
-        this.createYoungFox(w, h);
-        this.createAmbientCreatures(w, h);
-        this.scene.launch('UIScreen');
-        this.time.delayedCall(400, () => this.showIntroductionDialogue());
-
-        // BGM load nền, tự phát khi sẵn sàng
-        if (typeof ScreenLevelBackground !== 'undefined') {
-            ScreenLevelBackground.lazyLoadBGM(this, 'bgm_subtraction_hill',
-                'screens/subtraction_hill/assets/audio/bgm/bgm.mp3', () => this.playLevelBGM());
-        }
-    }
-
-    // ════════════════════════════════════════
-    //  Layout
-    // ════════════════════════════════════════
-
-    L() {
-        const w = this.cameras.main.width;
-        const h = this.cameras.main.height;
-        const hudH = 80;
-        return {
-            w, h, hudH,
-            equationY: hudH + 90,
-            btnY: hudH + 210,
-            btnW: Phaser.Math.Clamp(Math.round(w * 0.075), 72, 100),
-            btnH: 68,
-            btnGap: Phaser.Math.Clamp(Math.round(w * 0.02), 14, 24),
-            progressY: hudH + 320,
-            foxX: Math.round(w * 0.13),
-            foxY: Math.round(h * 0.72),
-        };
-    }
-
-    // ════════════════════════════════════════
-    //  Background
-    // ════════════════════════════════════════
-
-    createBackground(w, h) {
-        const bg = this.theme?.background;
-        let mode = 'none';
-        if (typeof ScreenLevelBackground !== 'undefined' && bg) {
-            mode = ScreenLevelBackground.createLayer(this, w, h, bg, { depth: 0, videoRef: 'levelBgVideo' });
-        } else if (this.textures.exists('subtraction_hill_bg')) {
-            this.add.image(w / 2, h / 2, 'subtraction_hill_bg').setDisplaySize(w, h).setDepth(0);
-            mode = 'image';
-        }
-        this.usesArtBackground = mode === 'image' || mode === 'video';
-        if (mode === 'none') {
             const g = this.add.graphics().setDepth(0);
-            g.fillGradientStyle(0x87CEEB, 0x87CEEB, 0xFFA07A, 0xFFA07A, 1);
+            g.fillGradientStyle(0x87ceeb, 0x87ceeb, 0xffa07a, 0xffa07a, 1);
             g.fillRect(0, 0, w, h * 0.6);
-            g.fillStyle(0x7CCD7C);
+            g.fillStyle(0x7ccd7c);
             g.fillRect(0, h * 0.6, w, h * 0.4);
         }
-    }
-
-    // ════════════════════════════════════════
-    //  Young Fox (from core)
-    // ════════════════════════════════════════
-
-    createYoungFox(w, h) {
-        if (typeof YoungFoxCharacter !== 'undefined') {
-            this.youngFoxCharacter = new YoungFoxCharacter(this);
-            this.youngFox = this.youngFoxCharacter.create({
-                width: w, height: h, usesArtBackground: this.usesArtBackground,
-            });
+        // Fox friend watches from the side
+        if (this.textures.exists('spr_fox_idle')) {
+            const fox = this.add.image(this.cameras.main.width - 90, this.cameras.main.height - 80, 'spr_fox_idle').setDepth(60);
+            const tex = fox.texture.getSourceImage();
+            fox.setScale(100 / tex.height);
+            this.tweens.add({ targets: fox, y: fox.y - 5, duration: 1500, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
         }
+        this.startLevelBGM('bgm_subtraction_hill', 'screens/subtraction_hill/assets/audio/bgm/bgm.mp3');
+    }
+
+    introText() {
+        return {
+            1: 'Ối! Đồ của Cáo Con lăn xuống đồi mất rồi! Nhặt những món còn lại bỏ vào giỏ giúp Cáo nhé!',
+            2: 'Cáo Con cần xếp đồ vào giỏ! Xếp đúng số lượng, rồi đếm xem còn lại bao nhiêu nhé!',
+            3: 'Cáo Con đi xa thật xa! Hãy theo dõi hành trình và tính xem cuối cùng còn bao nhiêu món đồ!',
+        }[this.level];
+    }
+
+    presentRound(index, diff) {
+        this.clearRound();
+        if (this.level === 1) this.presentRollingItems(diff);
+        else if (this.level === 2) this.presentPacking(diff);
+        else this.presentJourney(diff);
+    }
+
+    track(obj) { this.roundObjects.push(obj); return obj; }
+
+    clearRound() {
+        this.roundObjects.forEach(o => { if (o?.active) o.destroy(true); });
+        this.roundObjects = [];
+        this.collected = 0;
+        this.packed = 0;
+        this.phase = 'collect';
+    }
+
+    pickItem() {
+        const pool = (typeof SubtractionHillPuzzle !== 'undefined' && SubtractionHillPuzzle.lostItemPool)
+            ? SubtractionHillPuzzle.lostItemPool
+            : [{ emoji: '🍎', labelVi: 'Táo' }];
+        return Phaser.Utils.Array.GetRandom(pool);
     }
 
     // ════════════════════════════════════════
-    //  Fox bubble (dialogue text near fox)
+    //  Màn 1 — Táo Lăn Đồi (a − b, collect the remainder)
     // ════════════════════════════════════════
 
-    showFoxBubble(text, durationMs) {
-        if (this.foxBubble) { this.foxBubble.destroy(); this.foxBubble = null; }
-        if (!this.youngFox?.scene) return;
+    presentRollingItems(diff) {
         const w = this.cameras.main.width;
-        const bx = Phaser.Math.Clamp(this.youngFox.x + 60, 120, w - 120);
-        const by = this.youngFox.y - 85;
-        const wrap = Math.min(380, w * 0.5);
+        const h = this.cameras.main.height;
+        const max = diff.mathRange;
+        const a = Phaser.Math.Between(4, Math.max(4, max));
+        const b = Phaser.Math.Between(1, a - 2); // always ≥ 2 items remain to count
+        const remaining = a - b;
+        this.roundTarget = remaining;
+        const item = this.pickItem();
+        this.analytics.recordExploration(0, remaining);
 
-        const t = this.add.text(bx, by, text, {
-            fontSize: '17px', fontFamily: 'Comic Sans MS, Arial', color: '#4a3728', fontStyle: 'bold',
-            align: 'center', wordWrap: { width: wrap }, backgroundColor: '#fff8e7', padding: { x: 12, y: 8 },
-        }).setOrigin(0.5).setDepth(60);
+        this.storyText = this.track(this.add.text(w / 2, 108,
+            `Cáo có ${a} ${item.emoji} — ${b} món lăn đi rồi! Còn lại: ?`, {
+            fontSize: '24px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold', color: '#fff',
+            stroke: '#000', strokeThickness: 3, backgroundColor: '#5c3a1ecc', padding: { x: 16, y: 8 },
+        }).setOrigin(0.5).setDepth(150));
 
-        this.foxBubble = t;
-        t.setAlpha(0);
-        this.tweens.add({ targets: t, alpha: 1, y: by - 6, duration: 250, ease: 'Back.easeOut' });
-        this.time.delayedCall(durationMs || 3500, () => {
-            if (!t.active) return;
-            this.tweens.add({
-                targets: t, alpha: 0, y: by - 18, duration: 300,
-                onComplete: () => { t.destroy(); if (this.foxBubble === t) this.foxBubble = null; },
-            });
-        });
-    }
-
-    // ════════════════════════════════════════
-    //  Item progress row
-    // ════════════════════════════════════════
-
-    pickLostItemsForRun() {
-        const n = this.totalPuzzles;
-        if (this.theme?.getLostItemsForLevel) {
-            this.lostItemsQueue = this.theme.getLostItemsForLevel(n);
-        } else {
-            const pool = [
-                { id: 'toy', emoji: '🧸', labelVi: 'Thú bông' },
-                { id: 'book', emoji: '📘', labelVi: 'Sách nhỏ' },
-                { id: 'candy', emoji: '🍬', labelVi: 'Kẹo' },
-                { id: 'star', emoji: '⭐', labelVi: 'Ngôi sao' },
-                { id: 'hat', emoji: '🎩', labelVi: 'Mũ' },
-                { id: 'ball', emoji: '⚽', labelVi: 'Quả bóng' },
-            ];
-            this.lostItemsQueue = Phaser.Utils.Array.Shuffle(pool.slice()).slice(0, n);
-        }
-    }
-
-    createItemProgressRow(w, h) {
-        const l = this.L();
-        const count = this.totalPuzzles;
-        const slotR = 38;
-        const gap = 14;
-        const totalW = count * slotR * 2 + (count - 1) * gap;
-        const startX = (w - totalW) / 2 + slotR;
-
-        this.itemProgressSlots = [];
-        for (let i = 0; i < count; i++) {
-            const x = startX + i * (slotR * 2 + gap);
-            const slot = this.add.container(x, l.progressY).setDepth(21);
-            const bg = this.add.graphics();
-            bg.fillStyle(0xffffff, 0.35);
-            bg.lineStyle(3, 0xffb347, 0.9);
-            bg.strokeCircle(0, 0, slotR);
-            bg.fillCircle(0, 0, slotR);
-            const label = this.add.text(0, 0, '·', { fontSize: '34px', color: '#ccc' }).setOrigin(0.5);
-            slot.add([bg, label]);
-            this.itemProgressSlots.push({ container: slot, label, filled: false });
-        }
-
-        this.itemProgressTitle = this.add.text(w / 2, l.progressY - 50, `Đã tìm: 0 / ${count} món đồ`, {
-            fontSize: '20px', fontFamily: 'Comic Sans MS, Arial', color: '#fff8dc', fontStyle: 'bold',
-            stroke: '#5c3d1e', strokeThickness: 3,
-        }).setOrigin(0.5).setDepth(22);
-    }
-
-    updateItemProgressTitle() {
-        if (this.itemProgressTitle) this.itemProgressTitle.setText(`Đã tìm: ${this.solvedCount} / ${this.totalPuzzles} món đồ`);
-    }
-
-    fillItemProgressSlot(index, emoji) {
-        const slot = this.itemProgressSlots[index];
-        if (!slot || slot.filled) return;
-        slot.filled = true;
-        slot.label.setText(emoji).setScale(0.2);
-        this.tweens.add({ targets: slot.label, scale: 1.1, duration: 350, ease: 'Back.easeOut', yoyo: true,
-            onComplete: () => this.tweens.add({ targets: slot.label, scale: 1, duration: 100 }),
-        });
-    }
-
-    // ════════════════════════════════════════
-    //  Problem generation
-    // ════════════════════════════════════════
-
-    maxMinuendForRound() {
-        return Math.min(10, 3 + Math.ceil(((this.currentRound + 1) / this.totalPuzzles) * 7));
-    }
-
-    choiceCountForRound() {
-        if (this.currentRound <= 1) return 2;
-        if (this.currentRound <= 3) return 3;
-        return 4;
-    }
-
-    generateProblem() {
-        const maxA = this.maxMinuendForRound();
-        const numChoices = this.choiceCountForRound();
-        const numWrong = numChoices - 1;
-
-        let a = 0, b = 0, correct = 0, found = false;
-        for (let attempt = 0; attempt < 60 && !found; attempt++) {
-            if (attempt > 45) this.problemHistory.splice(0, Math.ceil(this.problemHistory.length / 2));
-            a = Phaser.Math.Between(0, maxA);
-            b = a === 0 ? 0 : Phaser.Math.Between(0, a);
-            correct = a - b;
-            const key = `${a}-${b}`;
-            if (!this.problemHistory.includes(key)) found = true;
-        }
-        this.problemHistory.push(`${a}-${b}`);
-        if (this.problemHistory.length > 10) this.problemHistory.shift();
-
-        const wrong = [];
-        const tryW = v => { const n = Phaser.Math.Clamp(v, 0, 10); if (n !== correct && !wrong.includes(n) && wrong.length < numWrong) wrong.push(n); };
-        tryW(correct - 1); tryW(correct + 1); tryW(correct - 2); tryW(correct + 2);
-        tryW(a); tryW(b); tryW(0); tryW(10);
-        let guard = 0;
-        while (wrong.length < numWrong && guard++ < 40) tryW(Phaser.Math.Between(0, 10));
-
-        return { a, b, correct, choices: Phaser.Utils.Array.Shuffle([correct, ...wrong]) };
-    }
-
-    // ════════════════════════════════════════
-    //  Round UI — equation + answer buttons
-    // ════════════════════════════════════════
-
-    clearRoundUI() {
-        if (this.roundRoot) { this.roundRoot.destroy(true); this.roundRoot = null; }
-        if (this.hintText) { this.hintText.destroy(); this.hintText = null; }
-    }
-
-    startRound() {
-        if (this.currentRound >= this.totalPuzzles) { this.completeLevel(); return; }
-        this.clearRoundUI();
-        const prob = this.generateProblem();
-        this.currentProblem = prob;
-
-        const l = this.L();
-        const root = this.add.container(0, 0).setDepth(50);
-        this.roundRoot = root;
-
-        // Equation sign (wooden board)
-        const boardW = Math.min(l.w * 0.6, 480);
-        const boardH = 90;
-        const board = this.add.graphics();
-        board.fillStyle(0x8b4513, 0.94);
-        board.fillRoundedRect(-boardW / 2, -boardH / 2, boardW, boardH, 16);
-        board.lineStyle(4, 0xd2691e, 1);
-        board.strokeRoundedRect(-boardW / 2, -boardH / 2, boardW, boardH, 16);
-        board.lineStyle(2, 0xffd700, 0.5);
-        board.strokeRoundedRect(-boardW / 2 + 5, -boardH / 2 + 5, boardW - 10, boardH - 10, 12);
-
-        const eqText = this.add.text(0, 0, `${prob.a} − ${prob.b} = ?`, {
-            fontSize: '40px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold',
-            color: '#fff8dc', stroke: '#4a3728', strokeThickness: 4,
+        // Basket
+        const basketY = h * 0.82;
+        const basket = this.track(this.add.container(w / 2, basketY).setDepth(60));
+        const bg = this.add.graphics();
+        bg.fillStyle(0x8d6e63, 1);
+        bg.fillRoundedRect(-100, -36, 200, 72, 18);
+        bg.lineStyle(4, 0x5d4037, 1);
+        bg.strokeRoundedRect(-100, -36, 200, 72, 18);
+        basket.add(bg);
+        this.basketCounter = this.add.text(0, 0, '🧺 0', {
+            fontSize: '32px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold',
+            color: '#ffd700', stroke: '#000', strokeThickness: 3,
         }).setOrigin(0.5);
+        basket.add(this.basketCounter);
 
-        const sign = this.add.container(l.w / 2, l.equationY);
-        sign.add([board, eqText]);
-        root.add(sign);
+        // Items in a row; the last b roll away
+        const rowY = h * 0.42;
+        const spacing = Math.min(90, (w * 0.7) / a);
+        for (let i = 0; i < a; i++) {
+            const ix = w / 2 + (i - (a - 1) / 2) * spacing;
+            const it = this.track(this.add.text(ix, rowY, item.emoji, { fontSize: '52px' })
+                .setOrigin(0.5).setDepth(120).setScale(0));
+            this.tweens.add({ targets: it, scale: 1, duration: 250, delay: 200 + i * 100, ease: 'Back.easeOut' });
 
-        // Answer buttons
-        const { btnW, btnH, btnGap, btnY } = l;
-        const n = prob.choices.length;
-        const totalW = n * btnW + (n - 1) * btnGap;
-        let sx = l.w / 2 - totalW / 2 + btnW / 2;
-
-        const palettes = [
-            { fill: 0xFFB6C1, border: 0xFF69B4 },
-            { fill: 0x90EE90, border: 0x32CD32 },
-            { fill: 0x87CEEB, border: 0x4682B4 },
-            { fill: 0xFFE4B5, border: 0xFFA500 },
-        ];
-
-        prob.choices.forEach((val, i) => {
-            const pal = palettes[i % palettes.length];
-            const g = this.add.graphics();
-            g.fillStyle(pal.fill, 1);
-            g.fillRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, 14);
-            g.lineStyle(3, pal.border, 1);
-            g.strokeRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, 14);
-
-            const txt = this.add.text(0, 0, String(val), {
-                fontSize: Math.min(36, btnW * 0.42) + 'px', fontFamily: 'Comic Sans MS, Arial',
-                fontStyle: 'bold', color: '#fff', stroke: '#333', strokeThickness: 3,
-            }).setOrigin(0.5);
-
-            const btn = this.add.container(sx, btnY).setSize(btnW, btnH).setDepth(51);
-            btn.add([g, txt]);
-            btn.setInteractive({ useHandCursor: true });
-            btn.setData('answerValue', val);
-            btn.setData('btnGraphics', g);
-            btn.setData('btnLabel', txt);
-
-            btn.on('pointerover', () => { if (!this.checkingAnswer) this.tweens.add({ targets: btn, scale: 1.06, duration: 100 }); });
-            btn.on('pointerout', () => this.tweens.add({ targets: btn, scale: 1, duration: 100 }));
-            btn.on('pointerdown', () => {
-                if (this.checkingAnswer) return;
-                this.onChoiceTap(val, btn);
-            });
-
-            this.tweens.add({ targets: btn, y: btnY - 3, duration: 1900 + i * 80, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
-            root.add(btn);
-            sx += btnW + btnGap;
-        });
-    }
-
-    onChoiceTap(value, btn) {
-        if (this.checkingAnswer || !this.currentProblem) return;
-        if (value === this.currentProblem.correct) this.onCorrectAnswer(btn);
-        else this.onWrongAnswer(btn);
-    }
-
-    // ════════════════════════════════════════
-    //  Correct / wrong
-    // ════════════════════════════════════════
-
-    onCorrectAnswer() {
-        this.checkingAnswer = true;
-        this.comboStreak++;
-        this.emitThemeEvent(this.theme?.events?.correct || 'SubtractionHillScreen:CorrectAnswer');
-        this.playCorrectAnswerSfx();
-
-        const itemIndex = this.solvedCount;
-        const itemDef = this.lostItemsQueue[itemIndex];
-        const emoji = itemDef ? itemDef.emoji : '✨';
-
-        if (typeof RewardFX !== 'undefined') {
-            RewardFX.correctAnswer(this, this.cameras.main.width / 2, this.L().equationY + 10);
-        }
-
-        this.flyLostItemToFox(emoji, this.cameras.main.width / 2, this.L().equationY);
-        this.time.delayedCall(400, () => { this.fillItemProgressSlot(itemIndex, emoji); this.updateItemProgressTitle(); });
-
-        const itemName = itemDef?.labelVi || 'Đồ';
-        const cheers = [`Tìm thấy ${itemName} rồi!`, `${itemName} đây rồi! Cảm ơn bạn!`, `Hay quá! Nhặt được ${itemName}!`, `${itemName} đã về với cáo con!`];
-        this.showFoxBubble(cheers[itemIndex % cheers.length], 2500);
-        if (this.youngFoxCharacter) this.youngFoxCharacter.hopJoy();
-
-        this.solvedCount++;
-        this.currentRound++;
-
-        const ratio = this.solvedCount / this.totalPuzzles;
-        if (ratio >= 0.99 && this.youngFoxCharacter) this.youngFoxCharacter.setEmotion('joy');
-        else if (ratio >= 0.45 && this.youngFoxCharacter) this.youngFoxCharacter.setEmotion('hopeful');
-
-        this.emitThemeEvent(this.theme?.events?.itemCollected || 'SubtractionHillScreen:ItemCollected');
-
-        this.time.delayedCall(2200, () => { this.checkingAnswer = false; this.startRound(); });
-    }
-
-    onWrongAnswer(btn) {
-        this.checkingAnswer = true;
-        this.comboStreak = 0;
-        this.emitThemeEvent(this.theme?.events?.wrong || 'SubtractionHillScreen:WrongAnswer');
-        this.playVoice('voice_wrong');
-        this.showFoxBubble('Chưa đúng rồi… Thử lại nhé!', 3200);
-
-        if (btn?.active) {
-            const ox = btn.x;
-            this.tweens.add({ targets: btn, x: ox - 8, duration: 55, yoyo: true, repeat: 5, onComplete: () => btn.setX(ox) });
-            const g = btn.getData('btnGraphics');
-            const txt = btn.getData('btnLabel');
-            if (g) { this.tweens.add({ targets: g, alpha: 0.4, duration: 180 }); this.time.delayedCall(900, () => { if (g?.scene) this.tweens.add({ targets: g, alpha: 1, duration: 250 }); }); }
-            if (txt) { this.tweens.add({ targets: txt, alpha: 0.45, duration: 180 }); this.time.delayedCall(900, () => { if (txt?.scene) this.tweens.add({ targets: txt, alpha: 1, duration: 250 }); }); }
-        }
-
-        const { a, b } = this.currentProblem;
-        if (this.hintText) this.hintText.destroy();
-        this.hintText = this.add.text(this.cameras.main.width / 2, this.L().btnY + 65,
-            `💡 Gợi ý: ${a} bớt ${b} còn mấy?`, {
-                fontSize: '17px', fontFamily: 'Comic Sans MS, Arial', color: '#fff', fontStyle: 'bold',
-                stroke: '#5c3d1e', strokeThickness: 3,
-            }).setOrigin(0.5).setDepth(52).setAlpha(0);
-        this.tweens.add({ targets: this.hintText, alpha: 1, duration: 400 });
-
-        this.time.delayedCall(600, () => { this.checkingAnswer = false; });
-    }
-
-    flyLostItemToFox(emoji, fromX, fromY) {
-        if (!this.youngFox) return;
-        const item = this.add.text(fromX, fromY, emoji, { fontSize: '52px' }).setOrigin(0.5).setDepth(200);
-        item.setScale(0.3);
-        this.tweens.add({
-            targets: item, scale: 1.1, duration: 200, ease: 'Back.easeOut',
-            onComplete: () => {
+            if (i >= remaining) {
+                // Rolls away down the hill
                 this.tweens.add({
-                    targets: item, x: this.youngFox.x, y: this.youngFox.y - 15, scale: 0.8, alpha: 0.8,
-                    duration: 650, ease: 'Cubic.easeInOut', onComplete: () => item.destroy(),
+                    targets: it, x: w + 80, y: rowY + 140, angle: 540, alpha: 0.15,
+                    duration: 1100, delay: 400 + a * 100 + (i - remaining) * 260, ease: 'Sine.easeIn',
+                    onComplete: () => it.setVisible(false),
                 });
+            } else {
+                // Remains — tappable to collect
+                this.time.delayedCall(600 + a * 100 + b * 260, () => {
+                    if (!it.active || this.sessionOver) return;
+                    // Generous padded hit area around the emoji for small fingers
+                    it.setInteractive({
+                        hitArea: new Phaser.Geom.Rectangle(-14, -14, it.width + 28, it.height + 28),
+                        hitAreaCallback: Phaser.Geom.Rectangle.Contains,
+                        useHandCursor: true,
+                    });
+                    it.on('pointerdown', () => this.collectItem(it));
+                    this.tweens.add({ targets: it, y: rowY - 8, duration: 900, yoyo: true, repeat: -1 });
+                });
+            }
+        }
+    }
+
+    collectItem(it) {
+        if (!this.acceptingInput || this.isPaused || this.sessionOver) return;
+        if (it.getData('collected')) return;
+        it.setData('collected', true);
+        it.removeAllListeners();
+        this.tweens.killTweensOf(it);
+        this.collected++;
+        this.analytics.recordExploration(1, 0);
+        const w = this.cameras.main.width;
+        const h = this.cameras.main.height;
+        this.tweens.add({
+            targets: it, x: w / 2, y: h * 0.82 - 20, scale: 0.5, duration: 350,
+            onComplete: () => {
+                it.setDepth(59);
+                this.basketCounter.setText(`🧺 ${this.collected}`);
+                this.tweens.add({ targets: this.basketCounter, scale: 1.35, duration: 140, yoyo: true });
+                this.spawnSparkles(w / 2, h * 0.82 - 40, 5);
+                if (this.collected >= this.roundTarget) {
+                    this.storyText.setText(this.storyText.text.replace('?', String(this.roundTarget)));
+                    this.answerCorrect(w / 2, h * 0.82 - 60);
+                }
             },
         });
     }
 
     // ════════════════════════════════════════
-    //  Level complete + reunion
+    //  Màn 2 — Giỏ Quà Của Cáo (pack b, then answer remainder)
     // ════════════════════════════════════════
 
-    completeLevel() {
-        this.clearRoundUI();
-        this.checkingAnswer = true;
-        this.emitThemeEvent(this.theme?.events?.levelComplete || 'SubtractionHillScreen:LevelComplete');
-
-        if (typeof ScreenLevelBackground !== 'undefined') {
-            ScreenLevelBackground.fadeOutBackgroundMedia(this, {
-                soundProp: 'levelBGM', videoProp: 'levelBgVideo', duration: 450,
-            });
-        } else if (this.levelBGM) {
-            this.tweens.add({
-                targets: this.levelBGM, volume: 0, duration: 450,
-                onComplete: () => { if (this.levelBGM) { this.levelBGM.stop(); this.levelBGM.destroy(); this.levelBGM = null; } },
-            });
-        }
-        this.time.delayedCall(500, () => this.runReunionSequence());
-    }
-
-    buildMotherFoxContainer(x, y) {
-        // Ưu tiên sprite vẽ tay — mẹ cáo lớn hơn cáo con
-        if (this.textures.exists('spr_fox_idle')) {
-            const mom = this.add.container(x, y);
-            const img = this.add.image(0, 0, 'spr_fox_idle');
-            const tex = this.textures.get('spr_fox_idle').getSourceImage();
-            img.setScale(150 / tex.height);
-            img.setOrigin(0.5, 0.85);
-            mom.add(img);
-            mom.setDepth(34);
-            return mom;
-        }
-
-        const mom = this.add.container(x, y);
-        const tail = this.add.graphics(); tail.fillStyle(0xb85c1c); tail.fillEllipse(-32, 16, 28, 18);
-        const body = this.add.graphics();
-        body.fillStyle(0xd2691e); body.fillEllipse(0, 8, 56, 44);
-        body.fillStyle(0xfff5e6); body.fillEllipse(16, 12, 22, 16);
-        body.fillStyle(0x1a1a1a); body.fillCircle(22, 10, 3); body.fillCircle(30, 10, 3);
-        body.fillStyle(0xc04040); body.fillRoundedRect(10, 22, 28, 6, 3);
-        const earL = this.add.graphics();
-        earL.fillStyle(0xc05621); earL.fillTriangle(-10, -14, -22, -38, -4, -28);
-        earL.fillStyle(0xffe4e1, 0.9); earL.fillTriangle(-12, -16, -20, -32, -5, -28);
-        const earR = this.add.graphics();
-        earR.fillStyle(0xc05621); earR.fillTriangle(10, -14, 22, -38, 4, -28);
-        earR.fillStyle(0xffe4e1, 0.9); earR.fillTriangle(12, -16, 20, -32, 5, -28);
-        const scarf = this.add.graphics(); scarf.fillStyle(0xff6b81); scarf.fillRoundedRect(-22, 18, 44, 12, 5);
-        mom.add([tail, body, scarf, earL, earR]);
-        mom.setDepth(34);
-        return mom;
-    }
-
-    runReunionSequence() {
+    presentPacking(diff) {
         const w = this.cameras.main.width;
         const h = this.cameras.main.height;
+        const max = diff.mathRange;
+        const a = Phaser.Math.Between(4, max);
+        const b = Phaser.Math.Between(2, a - 2);
+        const remaining = a - b;
+        this.packNeeded = b;
+        this.roundTarget = remaining;
+        const item = this.pickItem();
 
-        this.createSparkles(w / 2, h / 2, 20);
+        this.storyText = this.track(this.add.text(w / 2, 104,
+            `Có ${a} ${item.emoji} — xếp ${b} vào giỏ. Còn lại mấy ${item.emoji}?`, {
+            fontSize: '23px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold', color: '#fff',
+            stroke: '#000', strokeThickness: 3, backgroundColor: '#5c3a1ecc', padding: { x: 16, y: 8 },
+        }).setOrigin(0.5).setDepth(150));
 
-        this.motherFox = this.buildMotherFoxContainer(w * 0.72, h * 0.58);
-        this.motherFox.setAlpha(0).setScale(0.7);
-        this.tweens.add({ targets: this.motherFox, alpha: 1, scale: 1, duration: 650, ease: 'Back.easeOut', delay: 200 });
+        // Basket (drop zone)
+        const basketY = h * 0.8;
+        const basket = this.track(this.add.container(w / 2, basketY).setDepth(60));
+        const bg = this.add.graphics();
+        bg.fillStyle(0x8d6e63, 1);
+        bg.fillRoundedRect(-110, -38, 220, 76, 18);
+        bg.lineStyle(4, 0x5d4037, 1);
+        bg.strokeRoundedRect(-110, -38, 220, 76, 18);
+        basket.add(bg);
+        this.basketCounter = this.add.text(0, 0, `🧺 0/${b}`, {
+            fontSize: '30px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold',
+            color: '#ffd700', stroke: '#000', strokeThickness: 3,
+        }).setOrigin(0.5);
+        basket.add(this.basketCounter);
+        this.basketZone = { x: w / 2, y: basketY, hw: 125, hh: 60 };
 
-        if (this.youngFox) {
-            this.tweens.killTweensOf(this.youngFox);
-            this.tweens.add({
-                targets: this.youngFox, x: w * 0.56, y: h * 0.56, duration: 1100, ease: 'Cubic.easeInOut', delay: 400,
-                onComplete: () => {
-                    this.createSparkles(this.youngFox.x, this.youngFox.y - 20, 12);
-                    if (this.youngFoxCharacter) this.youngFoxCharacter.setEmotion('joy');
-                },
+        // Draggable items
+        const rowY = h * 0.4;
+        const spacing = Math.min(86, (w * 0.72) / a);
+        for (let i = 0; i < a; i++) {
+            const ix = w / 2 + (i - (a - 1) / 2) * spacing;
+            const it = this.track(this.add.text(ix, rowY, item.emoji, { fontSize: '48px' })
+                .setOrigin(0.5).setDepth(120));
+            it.setSize(56, 56);
+            it.setInteractive({
+                hitArea: new Phaser.Geom.Rectangle(-12, -12, it.width + 24, it.height + 24),
+                hitAreaCallback: Phaser.Geom.Rectangle.Contains,
+                draggable: true,
+                useHandCursor: true,
             });
+            it.setData('ox', ix);
+            it.setData('oy', rowY);
+            it.setData('packed', false);
+            it.on('dragstart', () => {
+                this.tweens.killTweensOf(it); // idle bob must not fight the drag
+                it.setDepth(250).setScale(1.15);
+            });
+            it.on('drag', (_p, dx, dy) => { it.x = dx; it.y = dy; });
+            it.on('dragend', () => this.handlePackDrop(it));
+            this.tweens.add({ targets: it, y: rowY - 5, duration: 1300 + i * 90, yoyo: true, repeat: -1 });
         }
-
-        this.playVoice('voice_complete');
-        this.showFoxBubble('Mẹ ơi! Con tìm được hết đồ rồi!', 3200);
-        this.time.delayedCall(3200, () => this.showRewardPanel());
     }
 
-    showRewardPanel() {
+    handlePackDrop(it) {
+        if (!this.acceptingInput || this.isPaused || this.sessionOver) return;
+        if (it.getData('packed')) return;
+        const z = this.basketZone;
+        const inside = Math.abs(it.x - z.x) < z.hw && Math.abs(it.y - z.y) < z.hh;
+        if (!inside) {
+            this.tweens.add({
+                targets: it, x: it.getData('ox'), y: it.getData('oy'), scale: 1,
+                duration: 300, ease: 'Back.easeOut', onComplete: () => it.setDepth(120),
+            });
+            return;
+        }
+        if (this.packed >= this.packNeeded) { // basket full — put it back gently
+            this.companionSay('Giỏ đủ rồi! Đếm phần còn lại nào!', 2000);
+            this.tweens.add({
+                targets: it, x: it.getData('ox'), y: it.getData('oy'), scale: 1,
+                duration: 300, ease: 'Back.easeOut', onComplete: () => it.setDepth(120),
+            });
+            return;
+        }
+        it.setData('packed', true);
+        it.removeAllListeners();
+        this.tweens.killTweensOf(it);
+        this.packed++;
+        this.tweens.add({
+            targets: it, x: z.x + (this.packed - (this.packNeeded + 1) / 2) * 34, y: z.y - 8, scale: 0.55, duration: 300,
+            onComplete: () => {
+                it.setDepth(59);
+                this.basketCounter.setText(`🧺 ${this.packed}/${this.packNeeded}`);
+                this.spawnSparkles(z.x, z.y - 34, 4);
+                if (this.packed >= this.packNeeded) this.askRemainder();
+            },
+        });
+    }
+
+    askRemainder() {
         const w = this.cameras.main.width;
         const h = this.cameras.main.height;
+        this.phase = 'answer';
+        this.companionSay('Giỏ đủ rồi! Còn lại bao nhiêu món ngoài kia?', 2800);
 
-        const overlay = this.add.graphics().setDepth(250);
-        overlay.fillStyle(0x000000, 0.55);
-        overlay.fillRect(0, 0, w, h);
-
-        const pw = Math.min(w * 0.6, 500);
-        const ph = Math.min(h * 0.48, 340);
-        const px = (w - pw) / 2;
-        const py = (h - ph) / 2;
-
-        const panel = this.add.graphics().setDepth(251);
-        panel.fillStyle(0xFFF8DC, 0.96);
-        panel.fillRoundedRect(px, py, pw, ph, 20);
-        panel.lineStyle(4, 0xFFD700, 1);
-        panel.strokeRoundedRect(px, py, pw, ph, 20);
-
-        this.add.text(w / 2, py + ph * 0.18, '🦊 Đồi Phép Trừ — Hoàn thành!', {
-            fontSize: '28px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold', color: '#5C3A1E',
-        }).setOrigin(0.5).setDepth(252);
-
-        this.add.text(w / 2, py + ph * 0.36, 'Cáo con đã tìm đủ đồ và gặp lại mẹ!', {
-            fontSize: '20px', fontFamily: 'Comic Sans MS, Arial', color: '#8B4513',
-        }).setOrigin(0.5).setDepth(252);
-
-        const itemLabels = this.lostItemsQueue.map(it => `${it.emoji} ${it.labelVi || ''}`).join('  ');
-        this.add.text(w / 2, py + ph * 0.52, itemLabels, {
-            fontSize: '22px', fontFamily: 'Comic Sans MS, Arial', color: '#5C3A1E',
-            wordWrap: { width: pw - 40 }, align: 'center',
-        }).setOrigin(0.5).setDepth(252);
-
-        const btnW = 200;
-        const btnH = 54;
-        const btnY = py + ph * 0.8;
-        const btnBg = this.add.graphics().setDepth(252);
-        btnBg.fillStyle(0x5C3A1E);
-        btnBg.fillRoundedRect(w / 2 - btnW / 2, btnY - btnH / 2, btnW, btnH, 12);
-        btnBg.lineStyle(3, 0xFFD700);
-        btnBg.strokeRoundedRect(w / 2 - btnW / 2, btnY - btnH / 2, btnW, btnH, 12);
-
-        this.add.zone(w / 2, btnY, btnW, btnH).setInteractive({ useHandCursor: true }).setDepth(253)
-            .on('pointerdown', () => {
-                this.sound.stopAll();
-                this.scene.stop('UIScreen');
-                this.scene.start('MenuScreen');
-            });
-
-        this.add.text(w / 2, btnY, 'Tiếp tục', {
-            fontSize: '22px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold', color: '#FFD700',
-        }).setOrigin(0.5).setDepth(253);
+        const correct = this.roundTarget;
+        this.expected = correct; // debug/test hook
+        const wrongs = new Set();
+        while (wrongs.size < 2) {
+            const v = Phaser.Math.Between(Math.max(1, correct - 3), correct + 3);
+            if (v !== correct) wrongs.add(v);
+        }
+        const options = Phaser.Utils.Array.Shuffle([correct, ...wrongs]).map(v => ({ label: v, value: v }));
+        const buttons = this.createChoiceButtons(options, h * 0.56, (opt, btn) => {
+            if (opt.value === correct) {
+                this.answerCorrect(btn.x, btn.y);
+            } else {
+                this.shake(btn);
+                this.answerWrong(btn.x, btn.y);
+            }
+        });
+        buttons.forEach(b => this.track(b));
     }
 
     // ════════════════════════════════════════
-    //  Introduction dialogue (fox bubbles + voice, cùng cấu trúc counting_forest / mirror_city)
+    //  Màn 3 — Hành Trình Của Cáo (a − b ± c ≤ 20)
     // ════════════════════════════════════════
 
-    showIntroductionDialogue() {
-        if (typeof IntroHelper !== 'undefined') {
-            IntroHelper.play(this, {
-                text: 'Cáo con làm rơi đồ! Chạm đáp án đúng để tìm lại đồ nhé!',
-                voiceKey: 'voice_intro_1',
-                voiceRate: 1.5,
-                showText: (t, ms) => this.showFoxBubble(t, ms),
-                onComplete: () => this.startRound(),
-            });
+    presentJourney(diff) {
+        const w = this.cameras.main.width;
+        const h = this.cameras.main.height;
+        const max = diff.mathRange;
+        const a = Phaser.Math.Between(9, Math.min(16, max));
+        const b = Phaser.Math.Between(2, a - 3);
+        const useAdd = Math.random() < 0.35;
+        const c = useAdd
+            ? Phaser.Math.Between(2, Math.min(8, max - (a - b)))
+            : Phaser.Math.Between(1, a - b - 1);
+        const correct = useAdd ? a - b + c : a - b - c;
+        this.expected = correct; // debug/test hook
+        const item = this.pickItem();
+        const third = useAdd ? `được thêm ${c}` : `cho đi tiếp ${c}`;
+
+        const panel = this.track(this.add.container(w / 2, 116).setDepth(150));
+        const pbg = this.add.graphics();
+        pbg.fillStyle(0x1b5e20, 0.9);
+        pbg.fillRoundedRect(-340, -44, 680, 88, 18);
+        pbg.lineStyle(3, 0xffd700, 0.8);
+        pbg.strokeRoundedRect(-340, -44, 680, 88, 18);
+        panel.add(pbg);
+        panel.add(this.add.text(0, 0,
+            `Cáo có ${a} ${item.emoji} · cho bạn ${b} · ${third} ${item.emoji}\nHỏi Cáo còn bao nhiêu ${item.emoji}?`, {
+            fontSize: '21px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold', color: '#fff',
+            align: 'center', stroke: '#000', strokeThickness: 2,
+        }).setOrigin(0.5));
+
+        // Animated item row
+        const stageY = h * 0.4;
+        const items = [];
+        const perRow = Math.min(a, 10);
+        for (let i = 0; i < a; i++) {
+            const ix = w / 2 + (i - (perRow - 1) / 2) * 42;
+            const iy = stageY + Math.floor(i / 10) * 42;
+            const it = this.track(this.add.text(ix, iy, item.emoji, { fontSize: '28px' })
+                .setOrigin(0.5).setDepth(120).setScale(0));
+            items.push(it);
+            this.tweens.add({ targets: it, scale: 1, duration: 180, delay: 200 + i * 60, ease: 'Back.easeOut' });
+        }
+        const t1 = 300 + a * 60 + 500;
+        for (let i = 0; i < b; i++) {
+            const it = items[a - 1 - i];
+            this.tweens.add({ targets: it, x: it.x + 120, alpha: 0, duration: 450, delay: t1 + i * 150 });
+        }
+        const t2 = t1 + b * 150 + 400;
+        if (useAdd) {
+            for (let i = 0; i < c; i++) {
+                const it = this.track(this.add.text(w / 2 + (i - (c - 1) / 2) * 42, stageY + 100, item.emoji, { fontSize: '28px' })
+                    .setOrigin(0.5).setDepth(120).setAlpha(0));
+                this.tweens.add({ targets: it, alpha: 1, y: stageY + 88, duration: 350, delay: t2 + i * 150 });
+            }
         } else {
-            this.startRound();
+            for (let i = 0; i < c; i++) {
+                const it = items[a - b - 1 - i];
+                if (it) this.tweens.add({ targets: it, x: it.x - 120, alpha: 0, duration: 450, delay: t2 + i * 150 });
+            }
         }
-    }
 
-    // ════════════════════════════════════════
-    //  Audio
-    // ════════════════════════════════════════
-
-    playLevelBGM() {
-        if (typeof ScreenLevelBackground !== 'undefined' && ScreenLevelBackground.hasLoadedVideo(this)) return;
-        if (this.cache.audio.exists('bgm_subtraction_hill') && window.gameData?.musicEnabled !== false) {
-            this.levelBGM = this.sound.add('bgm_subtraction_hill', { volume: 0.44, loop: true });
-            this.levelBGM.play();
+        const wrongs = new Set();
+        while (wrongs.size < diff.choiceCount - 1) {
+            const v = Phaser.Math.Between(Math.max(0, correct - 5), correct + 5);
+            if (v !== correct) wrongs.add(v);
         }
-    }
-
-    playVoice(key) {
-        if (this.currentVoice) { this.currentVoice.stop(); this.currentVoice = null; }
-        if (this.cache.audio.exists(key)) {
-            this.currentVoice = this.sound.add(key, { volume: 0.4 });
-            this.currentVoice.play();
-        }
-    }
-
-    playCorrectAnswerSfx() {
-        if (window.gameData?.soundEnabled === false) return;
-        this.playVoice('voice_correct');
-    }
-
-    emitThemeEvent(name) {
-        if (this.events && name) this.events.emit(name);
-    }
-
-    // ════════════════════════════════════════
-    //  Effects + ambient
-    // ════════════════════════════════════════
-
-    createSparkles(x, y, count) {
-        const colors = [0xFFD700, 0xFF69B4, 0x87CEEB, 0x90EE90, 0x9370DB];
-        for (let i = 0; i < count; i++) {
-            const s = this.add.graphics().setDepth(200);
-            s.fillStyle(colors[Phaser.Math.Between(0, colors.length - 1)], 0.8);
-            s.fillCircle(0, 0, Phaser.Math.Between(2, 5));
-            s.setPosition(x, y);
-            const a = Phaser.Math.DegToRad(Phaser.Math.Between(0, 360));
-            const d = Phaser.Math.Between(30, 80);
-            this.tweens.add({
-                targets: s, x: x + Math.cos(a) * d, y: y + Math.sin(a) * d,
-                alpha: 0, scale: 0, duration: 600, onComplete: () => s.destroy(),
+        const options = Phaser.Utils.Array.Shuffle([correct, ...wrongs]).map(v => ({ label: v, value: v }));
+        this.time.delayedCall(Math.min(t2 + c * 150 + 300, 6500), () => {
+            if (this.sessionOver) return;
+            const buttons = this.createChoiceButtons(options, h * 0.72, (opt, btn) => {
+                if (opt.value === correct) {
+                    this.answerCorrect(btn.x, btn.y);
+                } else {
+                    this.shake(btn);
+                    this.answerWrong(btn.x, btn.y);
+                }
             });
-        }
+            buttons.forEach(b => this.track(b));
+        });
     }
 
-    createAmbientCreatures(w, h) {
-        if (typeof generateButterflies === 'function' && typeof createMenuButterfly === 'function') {
-            generateButterflies(this, 3).forEach(data => {
-                const b = createMenuButterfly(this, data);
-                if (b) { b.x = Phaser.Math.Between(w * 0.15, w * 0.85); b.y = Phaser.Math.Between(h * 0.2, h * 0.55); this.butterflies.push(b); }
-            });
-        }
-        if (typeof generateFireflies === 'function' && typeof createMenuFirefly === 'function') {
-            generateFireflies(this, 4).forEach(data => {
-                const f = createMenuFirefly(this, data);
-                if (f) { f.x = Phaser.Math.Between(w * 0.1, w * 0.9); f.y = Phaser.Math.Between(h * 0.25, h * 0.65); this.fireflies.push(f); }
-            });
-        }
-        if (typeof generateMagicParticles === 'function' && typeof createMenuMagicParticle === 'function') {
-            generateMagicParticles(this, 5).forEach(data => {
-                const p = createMenuMagicParticle(this, data);
-                if (p) { p.x = Phaser.Math.Between(w * 0.12, w * 0.88); p.y = Phaser.Math.Between(h * 0.3, h * 0.7); this.magicParticles.push(p); }
-            });
-        }
-    }
-
-    // ════════════════════════════════════════
-    //  Lifecycle
-    // ════════════════════════════════════════
-
-    update() {
-        const tick = (g) => g.forEach(o => { const bs = o.getData('behaviorSystem'); if (bs?.update) bs.update(g); });
-        tick(this.butterflies);
-        tick(this.fireflies);
-        tick(this.magicParticles);
-    }
-
-    shutdown() {
-        this.sound.stopAll();
-        if (this.currentVoice) { this.currentVoice.stop(); this.currentVoice = null; }
-        if (typeof ScreenLevelBackground !== 'undefined') {
-            ScreenLevelBackground.destroyVideo(this, 'levelBgVideo');
-        }
-        if (this.levelBGM) { this.levelBGM.stop(); this.levelBGM = null; }
-        this.clearRoundUI();
+    showHintVisual(hint) {
+        if (hint.style !== 'direct' || !this.basketZone) return;
+        const z = this.basketZone;
+        const ring = this.add.graphics().setDepth(300);
+        ring.lineStyle(5, 0xffd700, 0.9);
+        ring.strokeRoundedRect(z.x - z.hw, z.y - z.hh, z.hw * 2, z.hh * 2, 20);
+        this.tweens.add({ targets: ring, alpha: 0, duration: 1800, onComplete: () => ring.destroy() });
     }
 }

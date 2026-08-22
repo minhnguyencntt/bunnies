@@ -1,21 +1,39 @@
 # 🐰 Bunnies và thế giới tri thức
 
-Game giáo dục offline HTML5 cho trẻ em 4-10 tuổi, được xây dựng bằng Phaser 3.
+Game phiêu lưu giáo dục offline HTML5 cho trẻ em 3-15 tuổi, xây bằng Phaser 3 trên **Knowledge World Game Engine** (data-driven).
 
 ## 📋 Tổng Quan
 
-"Bunnies và thế giới tri thức" là một game giáo dục phiêu lưu với phong cách hoạt hình đáng yêu, giúp trẻ em học toán học, chữ cái và màu sắc thông qua các thử thách vui nhộn.
+"Bunnies và thế giới tri thức" là một nền tảng game phiêu lưu giáo dục: trẻ em học toán, quan sát và định hướng không gian thông qua gameplay thật sự (kéo-thả, khám phá, ghi nhớ, giải quyết vấn đề) — không phải trắc nghiệm. Mỗi game có 3 màn (🌱 Nhà Thám Hiểm · ⚔️ Nhà Phiêu Lưu · 👑 Bậc Thầy) với độ khó thích ứng, và mọi hoạt động đều đổ vào hệ thống **Điểm → Sao → Huy hiệu → Sticker → XP → Đá Tri Thức → Tiến trình Thế Giới**.
 
 ### Đặc Điểm
 
-- ✅ **Offline hoàn toàn** - Không cần internet
-- ✅ **PWA** - Cài đặt như app thật lên màn hình chính (xem mục bên dưới)
-- ✅ **Không backend** - Chạy 100% trên client
-- ✅ **Không lưu state** - Mỗi lần chơi là mới
-- ✅ **Responsive** - Hỗ trợ mobile (portrait/landscape) và desktop
-- ✅ **Đa input** - Hỗ trợ touch, mouse và keyboard
-- ✅ **Cartoon style** - Đẹp, thân thiện, phù hợp trẻ em
+- ✅ **Game Engine tái sử dụng** — 13 engine (Level, Difficulty, Adaptive Difficulty, Scoring, Star, Award, Sticker, Reward, XP, Progression, Hint, Analytics, Save) — thêm game mới chủ yếu bằng cấu hình
+- ✅ **3 màn chơi mỗi game** với độ khó khác biệt thật sự (số vật, số lựa chọn, giới hạn giờ, tải trí nhớ, độ tinh vi…)
+- ✅ **Độ khó thích ứng** trong từng màn theo hiệu suất của trẻ
+- ✅ **Bunnine tham gia gameplay** — chạy đường, thu hoạch, phản hồi cảm xúc
+- ✅ **Album Sticker + Huy hiệu + XP + Đá Tri Thức** lưu bền (localStorage)
+- ✅ **Offline hoàn toàn** - Không cần internet, **PWA** cài như app thật
+- ✅ **Responsive** - Mobile (portrait/landscape) và desktop; touch, mouse, keyboard
 - ✅ **Tiếng Việt** - Tất cả text trong game đều bằng tiếng Việt
+
+### Tài liệu thiết kế
+
+- [docs/GAME_AUDIT.md](docs/GAME_AUDIT.md) — đánh giá game hiện có (Phase 1)
+- [docs/GAME_REDESIGN.md](docs/GAME_REDESIGN.md) — thiết kế lại từng game 26 mục (Phase 2)
+- [docs/GAME_ENGINE.md](docs/GAME_ENGINE.md) — kiến trúc Game Engine (Phase 3)
+- [docs/UI_UX_REDESIGN.md](docs/UI_UX_REDESIGN.md) — hệ thống màn hình UI/UX (Phase 4)
+- [docs/AUDIO_DESIGN.md](docs/AUDIO_DESIGN.md) — hệ thống âm thanh hoàn chỉnh (voice, nhạc động, SFX, ambience)
+
+### Hệ thống âm thanh
+
+- ✅ **Voice hướng dẫn theo ngữ cảnh** — 63 câu thoại tiếng Việt tạo bằng edge-tts (theo màn/độ tuổi), fallback Web Speech, đa ngôn ngữ sẵn sàng
+- ✅ **Nhạc nền động** — chủ đề riêng mỗi khu vực + lớp cường độ (khám phá → chơi → thử thách → chiến thắng)
+- ✅ **SFX tổng hợp** (Web Audio, không cần file) — mọi tương tác đều có âm thanh, có biến tấu chống nhàm
+- ✅ **Ambience thủ tục** — gió, chim, chuông… theo từng thế giới
+- ✅ **Voice ducking + ưu tiên + cooldown** — giọng nói luôn rõ, không bao giờ ồn
+- ✅ **Cài đặt âm thanh** — 5 thanh trượt + bật/tắt, lưu bền
+- ✅ **Đếm số bằng giọng nói** đồng bộ với thao tác thu thập (giáo dục)
 
 ---
 
@@ -101,17 +119,30 @@ bunnies/
 ├── src/
 │   ├── index.html
 │   ├── game.js
-│   ├── GameFlowConfig.js
+│   ├── GameFlowConfig.js        # legacy flow (xem core/engine/GameConfig.js)
 │   ├── ASSETS_MANIFEST.json
+│   ├── core/
+│   │   ├── audio/               # Hệ thống âm thanh: AudioEngine, SFX, Music, Voice, Ambience
+│   │   │   ├── assets/voice/    # 63 câu thoại vi-VN (edge-tts) · assets/bgm/ chủ đề thưởng
+│   │   ├── engine/              # Knowledge World Game Engine (13 engine, data-driven)
+│   │   │   ├── GameConfig.js    # định nghĩa game × 3 màn: difficulty/scoring/reward/hint/award/sticker
+│   │   │   ├── SaveEngine.js · AnalyticsEngine.js · ScoringEngine.js · StarEngine.js
+│   │   │   ├── AdaptiveDifficultyEngine.js · XPEngine.js · AwardEngine.js
+│   │   │   ├── StickerEngine.js · RewardEngine.js · ProgressionEngine.js · HintEngine.js
+│   │   ├── game/                # framework dùng chung
+│   │   │   ├── GameShell.js     # scene gốc: HUD, pause, hint, timer, Bunnine, luồng màn
+│   │   │   ├── ResultScreen.js · LevelSelectScreen.js · StickerAlbumScreen.js
+│   │   └── characters/          # Bunnine, Cú, Cáo, Sóc, bướm, …
 │   ├── screens/
 │   │   ├── boot/BootScreen.js
-│   │   ├── menu/                 # xem chuẩn “Menu” bên dưới
-│   │   ├── counting_forest/
-│   │   ├── mirror_city/
-│   │   ├── subtraction_hill/
-│   │   └── UIScreen.js
-│   └── core/                   # nhân vật, hạt, bướm, …
-├── scripts/                    # Python: `generate_audio.py` (TTS + BGM), presets trong `scripts/bgm/`
+│   │   ├── menu/                # bản đồ Thế Giới Tri Thức + HUD tiến trình
+│   │   ├── counting_forest/     # Khu Rừng Đếm Số — phép cộng (3 màn)
+│   │   ├── mirror_city/         # Thành Phố Gương — tìm điểm khác biệt (3 màn)
+│   │   ├── subtraction_hill/    # Đồi Phép Trừ — phép trừ (3 màn)
+│   │   └── orientation_forest/  # Khu Rừng Định Hướng — trái/phải/trước/sau (3 màn)
+│   └── sw.js                    # PWA offline
+├── scripts/                     # Python: `generate_audio.py` (TTS + BGM)
+├── docs/                        # tài liệu thiết kế Phase 1–4
 └── README.md
 ```
 
@@ -183,21 +214,16 @@ Chi tiết và lệnh cụ thể từng màn: `src/screens/<màn>/story.md`.
 
 ## 🎮 Gameplay
 
-### Level 1: Cầu Toán Học
+Mỗi game giữ nguyên tên và mục tiêu giáo dục gốc, với 3 màn chơi:
 
-**Mục tiêu**: Trả lời đúng các câu hỏi toán học để sửa cầu.
+| Game | Mục tiêu | Màn 1 🌱 | Màn 2 ⚔️ | Màn 3 👑 |
+|---|---|---|---|---|
+| 🌲 Khu Rừng Đếm Số | Phép cộng | Thu Hoạch Táo — kéo 2 nhóm táo vào giỏ Bunnine | Đường Pha Lê — chọn con đường có tổng đúng | Nhiệm Vụ Pha Lê — bài toán nhiều bước a − b + c |
+| ⛰️ Đồi Phép Trừ | Phép trừ | Táo Lăn Đồi — nhặt phần còn lại sau khi vật lăn đi | Giỏ Quà Của Cáo — xếp đúng số vào giỏ rồi đếm phần dư | Hành Trình Của Cáo — bài toán nhiều bước a − b ± c |
+| 🪞 Thành Phố Gương | Quan sát | 1 điểm khác rõ, không giờ | 3 điểm khác, giờ nhẹ, combo | 5 điểm khác tinh vi (màu/hướng/vị trí/họa tiết), thử thách giờ |
+| 🌳 Khu Rừng Định Hướng | Trái/phải/trước/sau | 2 mũi tên lớn, không giờ | 4 hướng, giờ nhẹ | Dẫn Đường Cho Sóc — ghi nhớ & lặp lại trình tự hướng |
 
-**Cách chơi**:
-1. Đọc câu hỏi hiển thị trên màn hình
-2. Kéo thẻ đáp án vào ô trả lời (drop zone)
-3. Nếu đúng: Cầu được sửa một phần, Bé Thỏ nhảy cẫng vui mừng
-4. Nếu sai: Thẻ rung lắc, Cú Thông Thái đưa ra gợi ý
-5. Hoàn thành 3 câu hỏi để vượt qua level
-
-**Câu hỏi mẫu**:
-- "2 + 3 = ?"
-- "5 - 2 = ?"
-- "1 + 4 = ?"
+**Vòng đời phần thưởng**: Chơi → Điểm (0–100) → ⭐/⭐⭐/⭐⭐⭐ → XP (lên Cấp Tri Thức) → Huy hiệu → Sticker (Album) → 💎 Đá Tri Thức → Tiến trình trên bản đồ thế giới (🥉🥈🥇 theo sao mỗi thành phố).
 
 ---
 

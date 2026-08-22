@@ -1,681 +1,242 @@
 /**
- * screen.js — OrientationForestScreen (Khu Rừng Định Hướng).
+ * screen.js — Khu Rừng Định Hướng (Orientation Forest).
+ * Educational goal: SPATIAL ORIENTATION (trái/phải/trước/sau) + sequence memory.
+ * Redesigned on the Knowledge World Game Engine (GameShell).
  *
- * Visual-first: vật (cluePool) xuất hiện ở vị trí tương đối so với Sóc →
- * trẻ chọn mũi tên đúng hướng. Không phụ thuộc text, voice là kênh chính.
+ *   Màn 1 · Trái Hay Phải     — object appears left/right of Sóc, 2 big arrows
+ *   Màn 2 · Bốn Hướng         — object at one of 4 positions, 4 arrows, light timer
+ *   Màn 3 · Dẫn Đường Cho Sóc — watch a direction sequence, repeat it to guide Sóc
  */
-class OrientationForestScreen extends Phaser.Scene {
+class OrientationForestScreen extends GameShell {
     constructor() {
-        super({ key: 'OrientationForestScreen' });
-        this.totalPuzzles = 6;
-        this.currentRound = 0;
-        this.solvedCount = 0;
-        this.checkingAnswer = false;
-        this.currentProblem = null;
-        this.levelBGM = null;
-        this.currentVoice = null;
-        this.roundRoot = null;
-        this.squirrelCharacter = null;
-        this.squirrel = null;
-        this.squirrelBubble = null;
-        this.signProgressSlots = [];
-        this.signProgressTitle = null;
-        this.questionHistory = [];
-        this.collectedDirections = [];
-        this.collectedClues = [];
-        this.butterflies = [];
-        this.fireflies = [];
-        this.magicParticles = [];
-        this.theme = typeof OrientationForestPuzzle !== 'undefined' ? OrientationForestPuzzle : null;
-        this.usesArtBackground = false;
-        this.dialogueIndex = 0;
-        this.levelBgVideo = null;
-        this._clueObj = null;
-        this._clueRing = null;
-        this._squirrelPlatform = null;
+        super('OrientationForestScreen');
+        this.gameId = 'orientation_forest';
+        this.roundObjects = [];
+        this.sequence = [];
+        this.sequenceProgress = 0;
+        this.squirrelPos = { x: 0, y: 0 };
     }
 
-    preload() {
-        const bg = this.theme?.background;
-        if (typeof ScreenLevelBackground !== 'undefined' && bg) {
-            // Không load BGM ở preload — lazy load sau khi vào màn
-            ScreenLevelBackground.registerLevelBackground(this, bg, {});
+    onPreload() {
+        this.load.image('of_bg', 'screens/orientation_forest/assets/backgrounds/bg.jpg');
+        this.preloadCommonAudio('orientation_forest');
+    }
+
+    buildWorld(w, h) {
+        if (this.textures.exists('of_bg')) {
+            this.add.image(w / 2, h / 2, 'of_bg').setDisplaySize(w, h).setDepth(0);
         } else {
-            this.load.image('orientation_forest_bg', 'screens/orientation_forest/assets/backgrounds/bg.jpg');
-        }
-        this.load.audio('voice_intro_1', 'screens/orientation_forest/assets/audio/voice/intro_1.mp3');
-        this.load.audio('voice_intro_2', 'screens/orientation_forest/assets/audio/voice/intro_2.mp3');
-        this.load.audio('voice_intro_3', 'screens/orientation_forest/assets/audio/voice/intro_3.mp3');
-        this.load.audio('voice_correct', 'screens/orientation_forest/assets/audio/voice/correct_answer.mp3');
-        this.load.audio('voice_wrong', 'screens/orientation_forest/assets/audio/voice/wrong_answer.mp3');
-        this.load.audio('voice_complete', 'screens/orientation_forest/assets/audio/voice/level_complete.mp3');
-    }
-
-    create() {
-        const w = this.cameras.main.width;
-        const h = this.cameras.main.height;
-        this.sound.stopAll();
-        this.createBackground(w, h);
-        this.createSignProgressRow(w, h);
-        this.createSquirrel(w, h);
-        this.createAmbientCreatures(w, h);
-        this.scene.launch('UIScreen');
-        this.time.delayedCall(400, () => this.showIntroductionDialogue());
-
-        // BGM load nền, tự phát khi sẵn sàng (chỉ khi nền không phải video có tiếng)
-        if (typeof ScreenLevelBackground !== 'undefined') {
-            ScreenLevelBackground.lazyLoadBGM(this, 'bgm_orientation_forest',
-                'screens/orientation_forest/assets/audio/bgm/bgm.mp3', () => this.playLevelBGM());
-        }
-    }
-
-    /* ─── Layout ─── */
-
-    L() {
-        const w = this.cameras.main.width;
-        const h = this.cameras.main.height;
-        const hudH = 80;
-        const play = h - hudH;
-        return {
-            w, h, hudH,
-            squirrelX: Math.round(w * 0.50),
-            squirrelY: Math.round(hudH + play * 0.32),
-            clueOffset: Phaser.Math.Clamp(Math.round(Math.min(w, play) * 0.19), 100, 170),
-            btnY: Math.round(hudH + play * 0.68),
-            btnSize: Phaser.Math.Clamp(Math.round(Math.min(w, play) * 0.115), 68, 100),
-            btnGap: Phaser.Math.Clamp(Math.round(w * 0.025), 14, 30),
-            progressY: Math.round(hudH + play * 0.87),
-        };
-    }
-
-    /* ─── Background ─── */
-
-    createBackground(w, h) {
-        const bg = this.theme?.background;
-        let mode = 'none';
-        if (typeof ScreenLevelBackground !== 'undefined' && bg) {
-            mode = ScreenLevelBackground.createLayer(this, w, h, bg, { depth: 0, videoRef: 'levelBgVideo' });
-        } else if (this.textures.exists('orientation_forest_bg')) {
-            this.add.image(w / 2, h / 2, 'orientation_forest_bg').setDisplaySize(w, h).setDepth(0);
-            mode = 'image';
-        }
-        this.usesArtBackground = mode === 'image' || mode === 'video';
-        if (mode === 'none') {
             const g = this.add.graphics().setDepth(0);
             g.fillGradientStyle(0x90ee90, 0x98fb98, 0x228b22, 0x2e8b57, 1);
             g.fillRect(0, 0, w, h * 0.55);
             g.fillStyle(0x6b8e23);
             g.fillRect(0, h * 0.55, w, h * 0.45);
         }
-    }
-
-    /* ─── Squirrel (centered for visual puzzle) ─── */
-
-    createSquirrel(w, h) {
-        if (typeof SquirrelCharacter === 'undefined') return;
-        const l = this.L();
-        this.squirrelCharacter = new SquirrelCharacter(this);
-        this.squirrel = this.squirrelCharacter.create({
-            width: w, height: h, usesArtBackground: this.usesArtBackground,
-        });
-        this.tweens.killTweensOf(this.squirrel);
-        this.squirrel.setPosition(l.squirrelX, l.squirrelY);
-        this.squirrelCharacter.startIdleMotion();
-
-        this._squirrelPlatform = this.add.graphics().setDepth(24);
-        this._squirrelPlatform.fillStyle(0xffffff, 0.18);
-        this._squirrelPlatform.fillCircle(l.squirrelX, l.squirrelY + 18, 34);
-        this._squirrelPlatform.lineStyle(2, 0xffffff, 0.28);
-        this._squirrelPlatform.strokeCircle(l.squirrelX, l.squirrelY + 18, 34);
-    }
-
-    /* ─── Speech bubble (minimal text — voice is primary) ─── */
-
-    showSquirrelBubble(text, durationMs) {
-        if (this.squirrelBubble) { this.squirrelBubble.destroy(); this.squirrelBubble = null; }
-        if (!this.squirrel?.scene) return;
-        const w = this.cameras.main.width;
-        const bx = Phaser.Math.Clamp(this.squirrel.x + 70, 130, w - 130);
-        const by = this.squirrel.y - 95;
-        const wrap = Math.min(400, w * 0.52);
-
-        const t = this.add.text(bx, by, text, {
-            fontSize: '22px', fontFamily: 'Comic Sans MS, Arial', color: '#2d4a1c', fontStyle: 'bold',
-            align: 'center', wordWrap: { width: wrap }, backgroundColor: '#f5ffe8', padding: { x: 14, y: 10 },
-        }).setOrigin(0.5).setDepth(60);
-
-        this.squirrelBubble = t;
-        t.setAlpha(0);
-        this.tweens.add({ targets: t, alpha: 1, y: by - 6, duration: 250, ease: 'Back.easeOut' });
-        this.time.delayedCall(durationMs || 3500, () => {
-            if (!t.active) return;
-            this.tweens.add({
-                targets: t, alpha: 0, y: by - 18, duration: 300,
-                onComplete: () => { t.destroy(); if (this.squirrelBubble === t) this.squirrelBubble = null; },
-            });
-        });
-    }
-
-    /* ─── Progress row (visual — emoji slots) ─── */
-
-    createSignProgressRow(w, h) {
-        const l = this.L();
-        const count = this.totalPuzzles;
-        const slotR = 32;
-        const gap = 10;
-        const totalW = count * slotR * 2 + (count - 1) * gap;
-        const startX = (w - totalW) / 2 + slotR;
-
-        this.signProgressSlots = [];
-        for (let i = 0; i < count; i++) {
-            const x = startX + i * (slotR * 2 + gap);
-            const slot = this.add.container(x, l.progressY).setDepth(21);
-            const bg = this.add.graphics();
-            bg.fillStyle(0xffffff, 0.32);
-            bg.lineStyle(3, 0x228b22, 0.85);
-            bg.strokeCircle(0, 0, slotR);
-            bg.fillCircle(0, 0, slotR);
-            const label = this.add.text(0, 0, '·', { fontSize: '28px', color: '#bbb' }).setOrigin(0.5);
-            slot.add([bg, label]);
-            this.signProgressSlots.push({ container: slot, label, filled: false });
-        }
-
-        this.signProgressTitle = this.add.text(w / 2, l.progressY - 44,
-            `🪧 ${this.solvedCount} / ${count}`, {
-                fontSize: '20px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold',
-                color: '#fffef0', stroke: '#1a3d14', strokeThickness: 3,
-            }).setOrigin(0.5).setDepth(22);
-    }
-
-    updateSignProgressTitle() {
-        if (this.signProgressTitle) {
-            this.signProgressTitle.setText(`🪧 ${this.solvedCount} / ${this.totalPuzzles}`);
+        // Sóc the squirrel — the character the child helps
+        const sx = w / 2;
+        const sy = h * 0.42;
+        this.squirrelPos = { x: sx, y: sy };
+        const key = this.textures.exists('spr_squirrel_front') ? 'spr_squirrel_front' : null;
+        if (key) {
+            this.squirrel = this.add.image(sx, sy, key).setDepth(80);
+            const tex = this.squirrel.texture.getSourceImage();
+            this.squirrel.setScale(110 / tex.height);
+            this.tweens.add({ targets: this.squirrel, y: sy - 5, duration: 1400, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
         }
     }
 
-    fillSignProgressSlot(index, emoji) {
-        const slot = this.signProgressSlots[index];
-        if (!slot || slot.filled) return;
-        slot.filled = true;
-        slot.label.setText(emoji).setFontSize(36).setScale(0.2);
-        this.tweens.add({
-            targets: slot.label, scale: 1.05, duration: 350, ease: 'Back.easeOut', yoyo: true,
-            onComplete: () => this.tweens.add({ targets: slot.label, scale: 1, duration: 100 }),
-        });
+    introText() {
+        return {
+            1: 'Sóc bị lạc rồi! Nhìn xem vật ở bên TRÁI hay bên PHẢI của Sóc nhé!',
+            2: 'Sóc cần biết hướng đi! Vật ở TRÁI, PHẢI, TRƯỚC hay SAU Sóc nhỉ?',
+            3: 'Hãy ghi nhớ các mũi tên rồi dẫn Sóc đi theo đúng trình tự để tìm hạt dẻ!',
+        }[this.level];
     }
 
-    /* ─── Round logic ─── */
-
-    choiceCountForRound() {
-        if (this.currentRound <= 1) return 2;
-        if (this.currentRound <= 3) return 3;
-        return 4;
+    presentRound(index, diff) {
+        this.clearRound();
+        if (this.level === 3) this.presentSequence(diff);
+        else this.presentDirection(diff);
     }
 
-    clearRoundUI() {
-        if (this.roundRoot) { this.roundRoot.destroy(true); this.roundRoot = null; }
-        this._clueObj = null;
-        this._clueRing = null;
+    track(obj) { this.roundObjects.push(obj); return obj; }
+
+    clearRound() {
+        this.roundObjects.forEach(o => { if (o?.active) o.destroy(true); });
+        this.roundObjects = [];
+        this.sequenceProgress = 0;
     }
 
-    clueOffset(dirId) {
-        const d = this.L().clueOffset;
-        switch (dirId) {
-            case 'left': return { dx: -d, dy: 0 };
-            case 'right': return { dx: d, dy: 0 };
-            case 'forward': return { dx: 0, dy: -d * 0.85 };
-            case 'back': return { dx: 0, dy: d * 0.75 };
-            default: return { dx: 0, dy: -d };
-        }
-    }
-
-    startRound() {
-        if (this.currentRound >= this.totalPuzzles) { this.completeLevel(); return; }
-        this.clearRoundUI();
-        const numChoices = this.choiceCountForRound();
-        const fallback = { clueEmoji: '🌳', correctId: 'left',
-            choices: (this.theme?.directionPool || OrientationForestPuzzle.directionPool).slice(0, numChoices) };
-        const prob = this.theme?.buildRound
-            ? this.theme.buildRound(numChoices, this.questionHistory)
-            : fallback;
-        this.currentProblem = prob;
-
-        const l = this.L();
-        const root = this.add.container(0, 0).setDepth(50);
-        this.roundRoot = root;
-
-        this.buildVisualClue(root, prob, l);
-        this.buildArrowButtons(root, prob, l);
-    }
-
-    /** Hiển thị vật clue tại vị trí tương đối so với Sóc + vòng sáng. */
-    buildVisualClue(root, prob, l) {
-        if (!this.squirrel) return;
-        const cx = this.squirrel.x;
-        const cy = this.squirrel.y;
-        const { dx, dy } = this.clueOffset(prob.correctId);
-        const clueX = cx + dx;
-        const clueY = cy + dy;
-
-        const ring = this.add.graphics().setDepth(49);
-        ring.fillStyle(0xfff8dc, 0.22);
-        ring.fillCircle(clueX, clueY, 46);
-        ring.lineStyle(3, 0xffd700, 0.7);
-        ring.strokeCircle(clueX, clueY, 46);
-        root.add(ring);
-        this._clueRing = ring;
-
-        this.tweens.add({
-            targets: ring, alpha: 0.45, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
-        });
-
-        const emoji = this.add.text(clueX, clueY, prob.clueEmoji, {
-            fontSize: '50px', fontFamily: 'Arial',
-        }).setOrigin(0.5).setDepth(51);
-        root.add(emoji);
-        this._clueObj = emoji;
-
-        emoji.setScale(0);
-        this.tweens.add({
-            targets: emoji, scale: 1, duration: 420, ease: 'Back.easeOut',
-        });
-
-        this.tweens.add({
-            targets: emoji, y: clueY - 5, duration: 1600,
-            yoyo: true, repeat: -1, ease: 'Sine.easeInOut', delay: 450,
-        });
-    }
-
-    /** Nút mũi tên tròn lớn — không label chữ. */
-    buildArrowButtons(root, prob, l) {
-        const { btnY, btnSize, btnGap } = l;
-        const n = prob.choices.length;
-        const totalW = n * btnSize + (n - 1) * btnGap;
-        let sx = l.w / 2 - totalW / 2 + btnSize / 2;
-
-        const palettes = [
-            { fill: 0x98d98e, border: 0x228b22 },
-            { fill: 0xb0e0e6, border: 0x4682b4 },
-            { fill: 0xf0e68c, border: 0xdaa520 },
-            { fill: 0xffb6c1, border: 0xdb7093 },
+    directions(count) {
+        const all = [
+            { id: 'left', icon: '⬅️', label: 'Bên trái', dx: -1, dy: 0 },
+            { id: 'right', icon: '➡️', label: 'Bên phải', dx: 1, dy: 0 },
+            { id: 'forward', icon: '⬆️', label: 'Phía trước', dx: 0, dy: -1 },
+            { id: 'back', icon: '⬇️', label: 'Phía sau', dx: 0, dy: 1 },
         ];
-
-        prob.choices.forEach((dir, i) => {
-            const pal = palettes[i % palettes.length];
-            const r = btnSize / 2;
-            const g = this.add.graphics();
-            g.fillStyle(pal.fill, 1);
-            g.fillCircle(0, 0, r);
-            g.lineStyle(4, pal.border, 1);
-            g.strokeCircle(0, 0, r);
-
-            const arrow = this.add.text(0, 0, dir.icon, {
-                fontSize: Math.round(btnSize * 0.48) + 'px',
-                fontFamily: 'Arial', fontStyle: 'bold', color: '#1a1a1a',
-            }).setOrigin(0.5);
-
-            const btn = this.add.container(sx, btnY).setSize(btnSize, btnSize).setDepth(51);
-            btn.add([g, arrow]);
-            btn.setInteractive({ useHandCursor: true });
-            btn.setData('directionId', dir.id);
-            btn.setData('btnGraphics', g);
-            btn.setData('btnLabel', arrow);
-
-            btn.on('pointerover', () => { if (!this.checkingAnswer) this.tweens.add({ targets: btn, scale: 1.12, duration: 100 }); });
-            btn.on('pointerout', () => this.tweens.add({ targets: btn, scale: 1, duration: 100 }));
-            btn.on('pointerdown', () => {
-                if (this.checkingAnswer) return;
-                this.onDirectionTap(dir.id, btn);
-            });
-
-            this.tweens.add({
-                targets: btn, y: btnY - 3, duration: 1850 + i * 70,
-                yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
-            });
-            root.add(btn);
-            sx += btnSize + btnGap;
-        });
+        return count <= 2 ? all.slice(0, 2) : all;
     }
 
-    /* ─── Answer handling ─── */
+    // ════════════════════════════════════════
+    //  Màn 1 & 2 — choose the direction of the clue object
+    // ════════════════════════════════════════
 
-    onDirectionTap(directionId, btn) {
-        if (this.checkingAnswer || !this.currentProblem) return;
-        if (directionId === this.currentProblem.correctId) this.onCorrectAnswer();
-        else this.onWrongAnswer(directionId, btn);
-    }
+    presentDirection(diff) {
+        const w = this.cameras.main.width;
+        const h = this.cameras.main.height;
+        const dirs = this.directions(diff.choiceCount);
+        const correct = Phaser.Utils.Array.GetRandom(dirs);
+        this.expected = correct.id; // debug/test hook
+        const clues = (typeof OrientationForestPuzzle !== 'undefined' && OrientationForestPuzzle.cluePool)
+            ? OrientationForestPuzzle.cluePool
+            : [{ emoji: '🌳', name: 'cây' }];
+        const clue = Phaser.Utils.Array.GetRandom(clues);
 
-    onCorrectAnswer() {
-        this.checkingAnswer = true;
-        this.emitThemeEvent(this.theme?.events?.correct);
-        this.playVoice('voice_correct');
+        // Place clue relative to Sóc
+        const offset = Math.min(w, h) * 0.24;
+        const cx = this.squirrelPos.x + correct.dx * offset;
+        const cy = this.squirrelPos.y + correct.dy * offset;
+        const clueObj = this.track(this.add.text(cx, cy, clue.emoji, { fontSize: '56px' })
+            .setOrigin(0.5).setDepth(90).setScale(0));
+        this.tweens.add({ targets: clueObj, scale: 1, duration: 400, ease: 'Back.easeOut' });
+        this.tweens.add({ targets: clueObj, y: cy - 6, duration: 1100, yoyo: true, repeat: -1, delay: 400 });
 
-        const prob = this.currentProblem;
-        const dir = this.theme?.byId ? this.theme.byId(prob.correctId) : { icon: '↑' };
-        if (this.squirrelCharacter) {
-            this.squirrelCharacter.turnTo(prob.correctId);
-            this.time.delayedCall(200, () => this.squirrelCharacter.hopJoy());
-        }
+        const ring = this.track(this.add.graphics().setDepth(85));
+        ring.lineStyle(3, 0xffd700, 0.7);
+        ring.strokeCircle(cx, cy, 44);
+        this.tweens.add({ targets: ring, alpha: 0.3, duration: 800, yoyo: true, repeat: -1 });
 
-        if (typeof RewardFX !== 'undefined') {
-            const clueX = this._clueObj?.active ? this._clueObj.x : this.cameras.main.width / 2;
-            const clueY = this._clueObj?.active ? this._clueObj.y : this.cameras.main.height * 0.4;
-            RewardFX.correctAnswer(this, clueX, clueY);
-        }
+        this.companionSay(`${clue.emoji} đang ở hướng nào của Sóc?`, 2800);
 
-        this.flyClueToSquirrel(prob.clueEmoji || '⭐');
-        const idx = this.solvedCount;
-        this.time.delayedCall(400, () => {
-            this.fillSignProgressSlot(idx, prob.clueEmoji || dir.icon);
-            this.updateSignProgressTitle();
-        });
-
-        const emojiBubbles = ['👍 ✨', '🎉 🎉', '⭐ ✅', '💪 🌟'];
-        this.showSquirrelBubble(emojiBubbles[this.solvedCount % emojiBubbles.length], 2200);
-
-        this.collectedDirections.push(prob.correctId);
-        this.collectedClues.push(prob.clueEmoji || '⭐');
-        this.emitThemeEvent(this.theme?.events?.directionCollected);
-
-        this.solvedCount++;
-        this.currentRound++;
-        this.time.delayedCall(2200, () => { this.checkingAnswer = false; this.startRound(); });
-    }
-
-    onWrongAnswer(wrongId, btn) {
-        this.checkingAnswer = true;
-        this.emitThemeEvent(this.theme?.events?.wrong);
-        this.playVoice('voice_wrong');
-        this.showSquirrelBubble('🤔 ❌', 2400);
-        if (this.squirrelCharacter) this.squirrelCharacter.turnWrong(wrongId);
-
-        if (btn?.active) {
-            const ox = btn.x;
-            this.tweens.add({ targets: btn, x: ox - 8, duration: 55, yoyo: true, repeat: 5, onComplete: () => btn.setX(ox) });
-            const g = btn.getData('btnGraphics');
-            const arrow = btn.getData('btnLabel');
-            [g, arrow].forEach(o => {
-                if (o) {
-                    this.tweens.add({ targets: o, alpha: 0.35, duration: 180 });
-                    this.time.delayedCall(900, () => { if (o?.scene) this.tweens.add({ targets: o, alpha: 1, duration: 250 }); });
+        // Arrow buttons
+        const btnY = h * 0.82;
+        const options = Phaser.Utils.Array.Shuffle([...dirs]);
+        const buttons = this.createChoiceButtons(
+            options.map(d => ({ label: d.icon, value: d.id, dir: d })),
+            btnY,
+            (opt, btn) => {
+                if (opt.value === correct.id) {
+                    this.hopSquirrel(correct, () => this.answerCorrect(btn.x, btn.y));
+                } else {
+                    this.shake(btn);
+                    this.answerWrong(btn.x, btn.y);
                 }
-            });
-        }
-
-        if (this._clueObj?.active) {
-            this.tweens.add({
-                targets: this._clueObj, scale: 1.35, duration: 200,
-                yoyo: true, repeat: 2, ease: 'Sine.easeInOut',
-            });
-        }
-        if (this._clueRing?.active) {
-            this._clueRing.setAlpha(1);
-            this.tweens.add({
-                targets: this._clueRing, alpha: 0.5, duration: 250,
-                yoyo: true, repeat: 3,
-            });
-        }
-
-        this.time.delayedCall(600, () => { this.checkingAnswer = false; });
+            },
+            { size: Phaser.Math.Clamp(Math.round(w * 0.075), 76, 104), fontSize: 40 }
+        );
+        buttons.forEach(b => this.track(b));
     }
 
-    /** Clue emoji bay từ vị trí hiện tại đến Sóc. */
-    flyClueToSquirrel(emoji) {
-        if (!this.squirrel) return;
-        const from = this._clueObj;
-        const fx = from?.x || this.cameras.main.width / 2;
-        const fy = from?.y || this.L().squirrelY - 80;
-
-        const item = this.add.text(fx, fy, emoji, { fontSize: '52px', fontFamily: 'Arial' })
-            .setOrigin(0.5).setDepth(200);
-        item.setScale(0.4);
+    hopSquirrel(dir, done) {
+        if (!this.squirrel) { done(); return; }
+        const hop = 36;
         this.tweens.add({
-            targets: item, scale: 1.2, duration: 200, ease: 'Back.easeOut',
-            onComplete: () => {
-                this.tweens.add({
-                    targets: item, x: this.squirrel.x, y: this.squirrel.y - 18,
-                    scale: 0.85, alpha: 0.7, duration: 600, ease: 'Cubic.easeInOut',
-                    onComplete: () => item.destroy(),
-                });
-            },
+            targets: this.squirrel,
+            x: this.squirrelPos.x + dir.dx * hop,
+            y: this.squirrelPos.y + dir.dy * hop - 18,
+            duration: 220, yoyo: true, ease: 'Power2',
+            onComplete: done,
         });
     }
 
-    /* ─── Level complete ─── */
+    // ════════════════════════════════════════
+    //  Màn 3 — Dẫn Đường Cho Sóc (sequence memory)
+    // ════════════════════════════════════════
 
-    completeLevel() {
-        this.clearRoundUI();
-        this.checkingAnswer = true;
-        this.emitThemeEvent(this.theme?.events?.levelComplete);
-
-        if (typeof ScreenLevelBackground !== 'undefined') {
-            ScreenLevelBackground.fadeOutBackgroundMedia(this, {
-                soundProp: 'levelBGM', videoProp: 'levelBgVideo', duration: 450,
-            });
-        } else if (this.levelBGM) {
-            this.tweens.add({
-                targets: this.levelBGM, volume: 0, duration: 450,
-                onComplete: () => { if (this.levelBGM) { this.levelBGM.stop(); this.levelBGM.destroy(); this.levelBGM = null; } },
-            });
-        }
-        this.time.delayedCall(500, () => this.runForestCompleteSequence());
-    }
-
-    drawLitPath(w, h) {
-        const pathG = this.add.graphics().setDepth(15);
-        const y0 = h * 0.72;
-        const x0 = this.squirrel ? this.squirrel.x : w * 0.5;
-        const xm = w * 0.6;
-        const x1 = w * 0.8;
-        pathG.lineStyle(14, 0xffd700, 0.55);
-        pathG.beginPath();
-        pathG.moveTo(x0, y0);
-        pathG.lineTo(xm, y0 - 28);
-        pathG.lineTo(x1, y0 - 12);
-        pathG.strokePath();
-        pathG.setAlpha(0);
-        this.tweens.add({ targets: pathG, alpha: 1, duration: 700, ease: 'Sine.easeOut' });
-        return pathG;
-    }
-
-    buildFriendsGroup(x, y) {
-        const grp = this.add.container(x, y).setDepth(33).setAlpha(0);
-        const makeRabbit = (ox, tint) => {
-            const c = this.add.container(ox, 0);
-            const body = this.add.graphics();
-            body.fillStyle(tint, 1);
-            body.fillEllipse(0, 6, 28, 22);
-            const head = this.add.graphics();
-            head.fillStyle(tint, 1);
-            head.fillCircle(0, -8, 14);
-            const earL = this.add.graphics();
-            earL.fillStyle(tint, 1);
-            earL.fillTriangle(-6, -18, -10, -32, -2, -22);
-            const earR = this.add.graphics();
-            earR.fillStyle(tint, 1);
-            earR.fillTriangle(6, -18, 10, -32, 2, -22);
-            c.add([body, head, earL, earR]);
-            return c;
-        };
-        grp.add([makeRabbit(-36, 0xe8c4c4), makeRabbit(28, 0xd4a574)]);
-        grp.setScale(0.85);
-        return grp;
-    }
-
-    runForestCompleteSequence() {
+    presentSequence(diff) {
         const w = this.cameras.main.width;
         const h = this.cameras.main.height;
+        const len = Math.max(2, diff.sequenceLength);
+        const dirs = this.directions(4);
+        this.sequence = [];
+        for (let i = 0; i < len; i++) this.sequence.push(Phaser.Utils.Array.GetRandom(dirs));
+        this.sequenceProgress = 0;
 
-        this.createSparkles(w / 2, h / 2, 18);
-        this.drawLitPath(w, h);
+        // Goal acorn
+        this.track(this.add.text(w / 2, h * 0.2, '🌰', { fontSize: '44px' }).setOrigin(0.5).setDepth(90));
+        this.track(this.add.text(w / 2, h * 0.2 + 36, 'Dẫn Sóc tới hạt dẻ!', {
+            fontSize: '17px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold',
+            color: '#ffd700', stroke: '#000', strokeThickness: 2,
+        }).setOrigin(0.5).setDepth(90));
 
-        const friends = this.buildFriendsGroup(w * 0.8, h * 0.62);
-        this.tweens.add({ targets: friends, alpha: 1, duration: 600, delay: 400, ease: 'Quad.easeOut' });
+        // Sequence display row (icons appear one by one, then hide)
+        const rowY = h * 0.3;
+        const icons = this.sequence.map((d, i) => {
+            const x = w / 2 + (i - (len - 1) / 2) * 64;
+            return this.track(this.add.text(x, rowY, '❓', { fontSize: '34px' }).setOrigin(0.5).setDepth(120));
+        });
 
-        if (this.squirrel) {
-            this.tweens.killTweensOf(this.squirrel);
-            if (this.squirrelCharacter) this.squirrelCharacter.turnTo('forward');
-            this.tweens.add({
-                targets: this.squirrel, x: w * 0.62, y: h * 0.6, duration: 1200, ease: 'Cubic.easeInOut', delay: 500,
-                onComplete: () => {
-                    this.createSparkles(this.squirrel.x, this.squirrel.y - 20, 12);
-                    this.squirrelCharacter?.hopJoy();
-                },
+        this.acceptingInput = false;
+        this.companionSay('Nhìn kỹ và ghi nhớ các mũi tên nhé! 👀', 2500);
+        icons.forEach((icon, i) => {
+            this.time.delayedCall(900 + i * 750, () => {
+                if (this.sessionOver) return;
+                icon.setText(this.sequence[i].icon);
+                this.tweens.add({ targets: icon, scale: 1.35, duration: 280, yoyo: true });
             });
-        }
+        });
+        const revealMs = 900 + len * 750 + 500;
+        this.time.delayedCall(revealMs, () => {
+            if (this.sessionOver) return;
+            icons.forEach(icon => icon.setText('❓'));
+            this.acceptingInput = true;
+            this.companionSay('Bây giờ bấm lại đúng thứ tự nào! 🐿️', 2500);
+            this.startRoundTimer(diff.timeLimit); // timer starts after the reveal
+        });
 
-        this.playVoice('voice_complete');
-        this.showSquirrelBubble('🎉 ❤️ ✨', 4000);
-        this.time.delayedCall(3800, () => this.showRewardPanel());
+        // Arrow pad
+        const btnY = h * 0.78;
+        const buttons = this.createChoiceButtons(
+            dirs.map(d => ({ label: d.icon, value: d.id, dir: d })),
+            btnY,
+            (opt, btn) => this.tapSequenceArrow(opt, btn, icons),
+            { size: Phaser.Math.Clamp(Math.round(w * 0.07), 72, 96), fontSize: 38 }
+        );
+        buttons.forEach(b => this.track(b));
     }
 
-    /* ─── Reward panel (emoji-heavy, minimal text) ─── */
-
-    showRewardPanel() {
-        const w = this.cameras.main.width;
-        const h = this.cameras.main.height;
-
-        const overlay = this.add.graphics().setDepth(250);
-        overlay.fillStyle(0x000000, 0.55);
-        overlay.fillRect(0, 0, w, h);
-
-        const pw = Math.min(w * 0.62, 520);
-        const ph = Math.min(h * 0.52, 380);
-        const px = (w - pw) / 2;
-        const py = (h - ph) / 2;
-
-        const panel = this.add.graphics().setDepth(251);
-        panel.fillStyle(0xf5fff0, 0.97);
-        panel.fillRoundedRect(px, py, pw, ph, 20);
-        panel.lineStyle(4, 0x228b22, 1);
-        panel.strokeRoundedRect(px, py, pw, ph, 20);
-
-        this.add.text(w / 2, py + ph * 0.14, '🌳 ⭐ 🎉', {
-            fontSize: '38px', fontFamily: 'Arial',
-        }).setOrigin(0.5).setDepth(252);
-
-        const clueIcons = this.collectedClues.join('  ') || '🌳 🍄 🌸 🦋 ⭐ 🎈';
-        this.add.text(w / 2, py + ph * 0.38, clueIcons, {
-            fontSize: '38px', fontFamily: 'Arial',
-        }).setOrigin(0.5).setDepth(252);
-
-        const arrows = this.collectedDirections.map(id => (this.theme?.byId(id)?.icon) || '?').join('  ');
-        this.add.text(w / 2, py + ph * 0.56, arrows || '← → ↑ ↓', {
-            fontSize: '30px', fontFamily: 'Arial', color: '#3a6b3a',
-        }).setOrigin(0.5).setDepth(252);
-
-        const btnW = 200;
-        const btnH = 54;
-        const btnY = py + ph * 0.8;
-        const btnBg = this.add.graphics().setDepth(252);
-        btnBg.fillStyle(0x2d5016);
-        btnBg.fillRoundedRect(w / 2 - btnW / 2, btnY - btnH / 2, btnW, btnH, 12);
-        btnBg.lineStyle(3, 0x9acd32);
-        btnBg.strokeRoundedRect(w / 2 - btnW / 2, btnY - btnH / 2, btnW, btnH, 12);
-
-        this.add.zone(w / 2, btnY, btnW, btnH).setInteractive({ useHandCursor: true }).setDepth(253)
-            .on('pointerdown', () => {
-                this.sound.stopAll();
-                this.scene.stop('UIScreen');
-                this.scene.start('MenuScreen');
-            });
-
-        this.add.text(w / 2, btnY, '▶', {
-            fontSize: '28px', fontFamily: 'Arial', fontStyle: 'bold', color: '#c8f7c5',
-        }).setOrigin(0.5).setDepth(253);
-    }
-
-    /* ─── Intro (voice is primary — bubbles use emoji) ─── */
-
-    showIntroductionDialogue() {
-        if (typeof IntroHelper !== 'undefined') {
-            IntroHelper.play(this, {
-                text: '🐿️ lạc đường! 👆 đúng hướng để dẫn đường nhé! ← → ↑ ↓',
-                voiceKey: 'voice_intro_1',
-                voiceRate: 1.3,
-                showText: (t, ms) => this.showSquirrelBubble(t, ms),
-                onComplete: () => this.startRound(),
-            });
+    tapSequenceArrow(opt, btn, icons) {
+        const expected = this.sequence[this.sequenceProgress];
+        if (opt.value === expected.id) {
+            icons[this.sequenceProgress].setText(opt.label);
+            AudioEngine.emit('SequenceStep', { index: this.sequenceProgress });
+            this.sequenceProgress++;
+            this.hopSquirrel(opt.dir, () => {});
+            this.spawnSparkles(btn.x, btn.y, 4);
+            if (this.sequenceProgress >= this.sequence.length) {
+                this.answerCorrect(this.squirrelPos.x, this.squirrelPos.y - 60);
+            }
         } else {
-            this.startRound();
-        }
-    }
-
-    /* ─── Audio ─── */
-
-    playLevelBGM() {
-        if (typeof ScreenLevelBackground !== 'undefined' && ScreenLevelBackground.hasLoadedVideo(this)) return;
-        if (this.cache.audio.exists('bgm_orientation_forest') && window.gameData?.musicEnabled !== false) {
-            this.levelBGM = this.sound.add('bgm_orientation_forest', { volume: 0.42, loop: true });
-            this.levelBGM.play();
-        }
-    }
-
-    playVoice(key) {
-        if (this.currentVoice) { this.currentVoice.stop(); this.currentVoice = null; }
-        if (this.cache.audio.exists(key)) {
-            this.currentVoice = this.sound.add(key, { volume: 0.4 });
-            this.currentVoice.play();
-        }
-    }
-
-    emitThemeEvent(name) {
-        if (this.events && name) this.events.emit(name);
-    }
-
-    /* ─── Ambient ─── */
-
-    createSparkles(x, y, count) {
-        const colors = [0xffd700, 0x98fb98, 0x87ceeb, 0xff69b4, 0xfffacd];
-        for (let i = 0; i < count; i++) {
-            const s = this.add.graphics().setDepth(200);
-            s.fillStyle(colors[Phaser.Math.Between(0, colors.length - 1)], 0.85);
-            s.fillCircle(0, 0, Phaser.Math.Between(2, 5));
-            s.setPosition(x, y);
-            const a = Phaser.Math.DegToRad(Phaser.Math.Between(0, 360));
-            const d = Phaser.Math.Between(28, 78);
-            this.tweens.add({
-                targets: s, x: x + Math.cos(a) * d, y: y + Math.sin(a) * d,
-                alpha: 0, scale: 0, duration: 600, onComplete: () => s.destroy(),
+            this.answerWrong(btn.x, btn.y, { message: 'Sai mất rồi! Xem lại trình tự nhé! 🔁' });
+            // Gentle: replay the sequence once, progress resets
+            this.sequenceProgress = 0;
+            icons.forEach(icon => icon.setText('❓'));
+            this.acceptingInput = false;
+            this.clearRoundTimer();
+            this.sequence.forEach((d, i) => {
+                this.time.delayedCall(1200 + i * 700, () => {
+                    if (this.sessionOver) return;
+                    icons[i].setText(d.icon);
+                    this.tweens.add({ targets: icons[i], scale: 1.3, duration: 260, yoyo: true });
+                });
+            });
+            this.time.delayedCall(1200 + this.sequence.length * 700 + 400, () => {
+                if (this.sessionOver) return;
+                icons.forEach(icon => icon.setText('❓'));
+                this.acceptingInput = true;
+                this.startRoundTimer(this.adaptive.current().timeLimit);
             });
         }
     }
 
-    createAmbientCreatures(w, h) {
-        if (typeof generateButterflies === 'function' && typeof createMenuButterfly === 'function') {
-            generateButterflies(this, 3).forEach(data => {
-                const b = createMenuButterfly(this, data);
-                if (b) { b.x = Phaser.Math.Between(w * 0.12, w * 0.88); b.y = Phaser.Math.Between(h * 0.18, h * 0.52); this.butterflies.push(b); }
-            });
+    showHintVisual(hint) {
+        if (hint.style === 'conceptual') return;
+        // Flash the next needed arrow (direct) or the squirrel (partial)
+        const target = this.level === 3 && this.sequence[this.sequenceProgress]
+            ? this.sequence[this.sequenceProgress]
+            : null;
+        if (target && hint.style === 'direct') {
+            this.companionSay(`💡 Mũi tên tiếp theo: ${target.icon} ${target.label}`, 2500);
         }
-        if (typeof generateFireflies === 'function' && typeof createMenuFirefly === 'function') {
-            generateFireflies(this, 4).forEach(data => {
-                const f = createMenuFirefly(this, data);
-                if (f) { f.x = Phaser.Math.Between(w * 0.08, w * 0.92); f.y = Phaser.Math.Between(h * 0.22, h * 0.62); this.fireflies.push(f); }
-            });
-        }
-        if (typeof generateMagicParticles === 'function' && typeof createMenuMagicParticle === 'function') {
-            generateMagicParticles(this, 5).forEach(data => {
-                const p = createMenuMagicParticle(this, data);
-                if (p) { p.x = Phaser.Math.Between(w * 0.1, w * 0.9); p.y = Phaser.Math.Between(h * 0.28, h * 0.68); this.magicParticles.push(p); }
-            });
-        }
-    }
-
-    update() {
-        const tick = (g) => g.forEach(o => { const bs = o.getData('behaviorSystem'); if (bs?.update) bs.update(g); });
-        tick(this.butterflies);
-        tick(this.fireflies);
-        tick(this.magicParticles);
-    }
-
-    shutdown() {
-        this.sound.stopAll();
-        if (this.currentVoice) { this.currentVoice.stop(); this.currentVoice = null; }
-        if (typeof ScreenLevelBackground !== 'undefined') {
-            ScreenLevelBackground.destroyVideo(this, 'levelBgVideo');
-        }
-        if (this.levelBGM) { this.levelBGM.stop(); this.levelBGM = null; }
-        this.clearRoundUI();
     }
 }

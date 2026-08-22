@@ -39,8 +39,8 @@
         console.error('OrientationForestScreen not defined!');
         return;
     }
-    if (typeof UIScreen === 'undefined') {
-        console.error('UIScreen not defined!');
+    if (typeof GameShell === 'undefined') {
+        console.error('GameShell (Game Engine) not defined!');
         return;
     }
     
@@ -75,11 +75,14 @@
         scene: [
             BootScreen,
             MenuScreen,
+            LevelSelectScreen,
+            StickerAlbumScreen,
+            AudioSettingsScreen,
+            ResultScreen,
             CountingForestScreen,
             MirrorCityScreen,
             SubtractionHillScreen,
-            OrientationForestScreen,
-            UIScreen
+            OrientationForestScreen
         ],
         input: {
             activePointers: 3 // Support multiple touch points

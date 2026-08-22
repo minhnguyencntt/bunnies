@@ -98,9 +98,110 @@ class MenuScreen extends Phaser.Scene {
 
         // Create world map markers
         this.createWorldMapMarkers(width, height);
-        
+
+        // Knowledge World progression HUD (XP, gems, sticker album, next goal)
+        this.createProgressionHUD(width, height);
+
+        // Audio system: attach, ambient world sound, settings button
+        if (typeof AudioEngine !== 'undefined') {
+            AudioEngine.attachScene(this);
+            AudioEngine.loadSettings();
+            AudioEvents.register();
+            AmbienceEngine.start('forest');
+        }
+
         // Initialize speech synthesis for audio descriptions
         this.initSpeechSynthesis();
+    }
+
+    /**
+     * Progression HUD — Knowledge Level, gems, world progress, sticker album.
+     * Makes Score → Stars → Awards → Stickers → XP visible on the world map.
+     */
+    createProgressionHUD(width, height) {
+        if (typeof SaveEngine === 'undefined' || typeof ProgressionEngine === 'undefined') return;
+        const profile = SaveEngine.load();
+        const wp = ProgressionEngine.worldProgress(profile);
+
+        const barH = 54;
+        const bar = this.add.graphics().setDepth(400);
+        bar.fillStyle(0x2c1810, 0.72);
+        bar.fillRoundedRect(10, 8, Math.min(560, width * 0.62), barH, 14);
+        bar.lineStyle(2, 0xffd700, 0.6);
+        bar.strokeRoundedRect(10, 8, Math.min(560, width * 0.62), barH, 14);
+
+        this.add.text(28, 8 + barH / 2, `🎓 Cấp ${wp.knowledgeLevel.level}`, {
+            fontSize: '19px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold',
+            color: '#FFD700', stroke: '#000', strokeThickness: 2,
+        }).setOrigin(0, 0.5).setDepth(401);
+
+        // XP progress bar
+        const xpBarX = 128;
+        const xpBarW = 130;
+        const xpBg = this.add.graphics().setDepth(401);
+        xpBg.fillStyle(0x000000, 0.4);
+        xpBg.fillRoundedRect(xpBarX, 8 + barH / 2 - 7, xpBarW, 14, 7);
+        const ratio = Phaser.Math.Clamp(wp.knowledgeLevel.intoLevel / wp.knowledgeLevel.needed, 0, 1);
+        xpBg.fillGradientStyle(0x8bc34a, 0x8bc34a, 0x558b2f, 0x558b2f, 1);
+        xpBg.fillRoundedRect(xpBarX, 8 + barH / 2 - 7, Math.max(10, xpBarW * ratio), 14, 7);
+
+        this.add.text(xpBarX + xpBarW + 14, 8 + barH / 2, `⭐ ${wp.stars}/${wp.maxStars}`, {
+            fontSize: '18px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold',
+            color: '#fff', stroke: '#000', strokeThickness: 2,
+        }).setOrigin(0, 0.5).setDepth(401);
+
+        this.add.text(xpBarX + xpBarW + 128, 8 + barH / 2, `💎 ${wp.gems}`, {
+            fontSize: '18px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold',
+            color: '#4fc3f7', stroke: '#000', strokeThickness: 2,
+        }).setOrigin(0, 0.5).setDepth(401);
+
+        // Sticker Album button (top right)
+        const albumBtn = this.add.container(width - 130, 8 + barH / 2).setDepth(401);
+        const abg = this.add.graphics();
+        abg.fillStyle(0xe65100, 1);
+        abg.fillRoundedRect(-105, -25, 210, 50, 25);
+        abg.lineStyle(3, 0xffd700, 0.9);
+        abg.strokeRoundedRect(-105, -25, 210, 50, 25);
+        albumBtn.add(abg);
+        albumBtn.add(this.add.text(0, 0, `🎟 Album (${wp.stickers.owned}/${wp.stickers.total})`, {
+            fontSize: '18px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold', color: '#fff',
+            stroke: '#00000066', strokeThickness: 2,
+        }).setOrigin(0.5));
+        albumBtn.setSize(210, 50);
+        albumBtn.setInteractive({ useHandCursor: true });
+        albumBtn.on('pointerdown', () => {
+            AudioEngine.emit('Transition');
+            this.scene.start('StickerAlbumScreen');
+        });
+        albumBtn.on('pointerover', () => albumBtn.setScale(1.07));
+        albumBtn.on('pointerout', () => albumBtn.setScale(1));
+        this.tweens.add({ targets: albumBtn, scale: 1.04, duration: 1200, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+
+        // Audio settings button (left of the album button)
+        const setBtn = this.add.container(width - 262, 8 + barH / 2).setDepth(401);
+        const sbg = this.add.graphics();
+        sbg.fillStyle(0x546e7a, 1);
+        sbg.fillCircle(0, 0, 24);
+        sbg.lineStyle(3, 0xffd700, 0.8);
+        sbg.strokeCircle(0, 0, 24);
+        setBtn.add(sbg);
+        setBtn.add(this.add.text(0, 0, '⚙️', { fontSize: '20px' }).setOrigin(0.5));
+        setCenteredInput(setBtn, 52, 52);
+        setBtn.on('pointerdown', () => {
+            AudioEngine.emit('UITap');
+            this.scene.launch('AudioSettingsScreen');
+        });
+        setBtn.on('pointerover', () => setBtn.setScale(1.12));
+        setBtn.on('pointerout', () => setBtn.setScale(1));
+
+        // Next goal hint (bottom center)
+        const goal = ProgressionEngine.nextGoal(profile);
+        const goalText = this.add.text(width / 2, height - 24, `${goal.icon} ${goal.text}`, {
+            fontSize: '18px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold',
+            color: '#fff', stroke: '#000', strokeThickness: 3,
+            backgroundColor: '#2c1810bb', padding: { x: 16, y: 6 },
+        }).setOrigin(0.5).setDepth(401);
+        this.tweens.add({ targets: goalText, alpha: 0.75, duration: 1600, yoyo: true, repeat: -1 });
     }
 
 
@@ -990,17 +1091,18 @@ class MenuScreen extends Phaser.Scene {
      * Play menu scene background music
      */
     playMenuBGM() {
+        if (typeof MusicEngine !== 'undefined' && this.cache.audio.exists('bgm_menu')) {
+            // Route through MusicEngine: channel volumes, ducking, intensity
+            MusicEngine.playTheme(this, 'bgm_menu', 'screens/menu/assets/audio/bgm/menu_bgm.mp3', { volume: 0.35 });
+            return;
+        }
         if (this.cache.audio.exists('bgm_menu') && window.gameData?.musicEnabled !== false) {
-            // Stop any existing sounds
             this.sound.stopAll();
-            
-            // Create and play menu BGM
             this.menuBGM = this.sound.add('bgm_menu', {
                 volume: 0.35,
                 loop: true
             });
             this.menuBGM.play();
-            console.log('🎵 Playing menu BGM');
         }
     }
     
@@ -1208,6 +1310,26 @@ class MenuScreen extends Phaser.Scene {
             repeat: -1,
             ease: 'Linear'
         });
+
+        // Huy hiệu sao tích lũy cho các thành phố có trò chơi (Knowledge World progression)
+        if (city.screenKey && typeof GameConfig !== 'undefined' && typeof ProgressionEngine !== 'undefined') {
+            const gameDef = GameConfig.getByScene(city.screenKey);
+            if (gameDef) {
+                const state = ProgressionEngine.cityState(SaveEngine.load(), gameDef.gameId);
+                const tierIcon = { none: '', bronze: '🥉', silver: '🥈', gold: '🥇' }[state.tier];
+                const badge = this.add.container(0, markerSize + 16 * scale);
+                const bbg = this.add.graphics();
+                bbg.fillStyle(0x2c1810, 0.8);
+                bbg.fillRoundedRect(-44, -13, 88, 26, 13);
+                bbg.lineStyle(2, state.tier === 'gold' ? 0xffd700 : 0xffffff, 0.7);
+                bbg.strokeRoundedRect(-44, -13, 88, 26, 13);
+                badge.add(bbg);
+                badge.add(this.add.text(0, 0, `${tierIcon}⭐${state.stars}/9`, {
+                    fontSize: '14px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold', color: '#ffd700',
+                }).setOrigin(0.5));
+                markerContainer.add(badge);
+            }
+        }
 
         // Label tên (ẩn, chỉ hiện khi hover) — nằm trên icon
         const nameLabel = this.createCityNameLabel(city.name, markerSize, scale, screenWidth, x);
@@ -1607,21 +1729,30 @@ class MenuScreen extends Phaser.Scene {
     onMarkerClick(markerContainer, city) {
         console.log(`Clicked on city: ${city.name}`, city);
         
-        // Navigate to city screen if screenKey exists
+        // Navigate to the city's level selection if a game exists there
         if (city.screenKey) {
             // Play click sound if available
             if (this.cache.audio.exists('voice_city_click')) {
                 this.sound.play('voice_city_click', { volume: 0.7 });
             }
-            
+
             // Stop menu BGM
             this.stopMenuBGM();
-            
+
             // Stop any playing city description
             this.stopCityDescription();
-            
-            // Navigate to city screen
-            this.scene.start(city.screenKey);
+
+            if (typeof AudioEngine !== 'undefined') {
+                AudioEngine.emit('Transition');
+                AmbienceEngine.stop();
+            }
+
+            const gameDef = typeof GameConfig !== 'undefined' ? GameConfig.getByScene(city.screenKey) : null;
+            if (gameDef) {
+                this.scene.start('LevelSelectScreen', { gameId: gameDef.gameId });
+            } else {
+                this.scene.start(city.screenKey);
+            }
         } else {
             console.warn(`City ${city.name} has no screenKey configured`);
         }

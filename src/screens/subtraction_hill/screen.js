@@ -40,7 +40,6 @@ class SubtractionHillScreen extends GameShell {
             fox.setScale(100 / tex.height);
             this.tweens.add({ targets: fox, y: fox.y - 5, duration: 1500, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
         }
-        this.startLevelBGM('bgm_subtraction_hill', 'screens/subtraction_hill/assets/audio/bgm/bgm.mp3');
     }
 
     introText() {
@@ -152,6 +151,7 @@ class SubtractionHillScreen extends GameShell {
         this.tweens.killTweensOf(it);
         this.collected++;
         this.analytics.recordExploration(1, 0);
+        AudioEngine.emit('ObjectCollected', { count: this.collected });
         const w = this.cameras.main.width;
         const h = this.cameras.main.height;
         this.tweens.add({
@@ -226,6 +226,7 @@ class SubtractionHillScreen extends GameShell {
             it.on('dragstart', () => {
                 this.tweens.killTweensOf(it); // idle bob must not fight the drag
                 it.setDepth(250).setScale(1.15);
+                AudioEngine.emit('ObjectDragged');
             });
             it.on('drag', (_p, dx, dy) => { it.x = dx; it.y = dy; });
             it.on('dragend', () => this.handlePackDrop(it));

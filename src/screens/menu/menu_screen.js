@@ -102,6 +102,14 @@ class MenuScreen extends Phaser.Scene {
         // Knowledge World progression HUD (XP, gems, sticker album, next goal)
         this.createProgressionHUD(width, height);
 
+        // Audio system: attach, ambient world sound, settings button
+        if (typeof AudioEngine !== 'undefined') {
+            AudioEngine.attachScene(this);
+            AudioEngine.loadSettings();
+            AudioEvents.register();
+            AmbienceEngine.start('forest');
+        }
+
         // Initialize speech synthesis for audio descriptions
         this.initSpeechSynthesis();
     }
@@ -162,12 +170,29 @@ class MenuScreen extends Phaser.Scene {
         albumBtn.setSize(210, 50);
         albumBtn.setInteractive({ useHandCursor: true });
         albumBtn.on('pointerdown', () => {
-            this.sound.stopAll();
+            AudioEngine.emit('Transition');
             this.scene.start('StickerAlbumScreen');
         });
         albumBtn.on('pointerover', () => albumBtn.setScale(1.07));
         albumBtn.on('pointerout', () => albumBtn.setScale(1));
         this.tweens.add({ targets: albumBtn, scale: 1.04, duration: 1200, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+
+        // Audio settings button (left of the album button)
+        const setBtn = this.add.container(width - 262, 8 + barH / 2).setDepth(401);
+        const sbg = this.add.graphics();
+        sbg.fillStyle(0x546e7a, 1);
+        sbg.fillCircle(0, 0, 24);
+        sbg.lineStyle(3, 0xffd700, 0.8);
+        sbg.strokeCircle(0, 0, 24);
+        setBtn.add(sbg);
+        setBtn.add(this.add.text(0, 0, '⚙️', { fontSize: '20px' }).setOrigin(0.5));
+        setCenteredInput(setBtn, 52, 52);
+        setBtn.on('pointerdown', () => {
+            AudioEngine.emit('UITap');
+            this.scene.launch('AudioSettingsScreen');
+        });
+        setBtn.on('pointerover', () => setBtn.setScale(1.12));
+        setBtn.on('pointerout', () => setBtn.setScale(1));
 
         // Next goal hint (bottom center)
         const goal = ProgressionEngine.nextGoal(profile);
@@ -1066,17 +1091,18 @@ class MenuScreen extends Phaser.Scene {
      * Play menu scene background music
      */
     playMenuBGM() {
+        if (typeof MusicEngine !== 'undefined' && this.cache.audio.exists('bgm_menu')) {
+            // Route through MusicEngine: channel volumes, ducking, intensity
+            MusicEngine.playTheme(this, 'bgm_menu', 'screens/menu/assets/audio/bgm/menu_bgm.mp3', { volume: 0.35 });
+            return;
+        }
         if (this.cache.audio.exists('bgm_menu') && window.gameData?.musicEnabled !== false) {
-            // Stop any existing sounds
             this.sound.stopAll();
-            
-            // Create and play menu BGM
             this.menuBGM = this.sound.add('bgm_menu', {
                 volume: 0.35,
                 loop: true
             });
             this.menuBGM.play();
-            console.log('🎵 Playing menu BGM');
         }
     }
     
@@ -1715,6 +1741,11 @@ class MenuScreen extends Phaser.Scene {
 
             // Stop any playing city description
             this.stopCityDescription();
+
+            if (typeof AudioEngine !== 'undefined') {
+                AudioEngine.emit('Transition');
+                AmbienceEngine.stop();
+            }
 
             const gameDef = typeof GameConfig !== 'undefined' ? GameConfig.getByScene(city.screenKey) : null;
             if (gameDef) {

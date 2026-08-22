@@ -30,7 +30,6 @@ class CountingForestScreen extends GameShell {
             g.fillStyle(0x228b22);
             g.fillRect(0, h * 0.65, w, h * 0.35);
         }
-        this.startLevelBGM('bgm_counting_forest', 'screens/counting_forest/assets/audio/bgm/bgm.mp3');
     }
 
     introText() {
@@ -135,6 +134,7 @@ class CountingForestScreen extends GameShell {
             apple.on('dragstart', () => {
                 this.tweens.killTweensOf(apple); // idle bob must not fight the drag
                 apple.setScale(1.15).setDepth(250);
+                AudioEngine.emit('ObjectDragged');
             });
             apple.on('drag', (_p, dx, dy) => { apple.x = dx; apple.y = dy; });
             apple.on('dragend', () => this.handleAppleDrop(apple));
@@ -161,6 +161,7 @@ class CountingForestScreen extends GameShell {
         apple.removeAllListeners();
         this.collected++;
         this.analytics.recordExploration(1, 0);
+        AudioEngine.emit('ObjectCollected', { count: this.collected });
         this.tweens.add({
             targets: apple, x: z.x, y: z.y - 10, scale: 0.4, duration: 300,
             onComplete: () => {

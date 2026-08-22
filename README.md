@@ -23,6 +23,17 @@ Game phiêu lưu giáo dục offline HTML5 cho trẻ em 3-15 tuổi, xây bằng
 - [docs/GAME_REDESIGN.md](docs/GAME_REDESIGN.md) — thiết kế lại từng game 26 mục (Phase 2)
 - [docs/GAME_ENGINE.md](docs/GAME_ENGINE.md) — kiến trúc Game Engine (Phase 3)
 - [docs/UI_UX_REDESIGN.md](docs/UI_UX_REDESIGN.md) — hệ thống màn hình UI/UX (Phase 4)
+- [docs/AUDIO_DESIGN.md](docs/AUDIO_DESIGN.md) — hệ thống âm thanh hoàn chỉnh (voice, nhạc động, SFX, ambience)
+
+### Hệ thống âm thanh
+
+- ✅ **Voice hướng dẫn theo ngữ cảnh** — 63 câu thoại tiếng Việt tạo bằng edge-tts (theo màn/độ tuổi), fallback Web Speech, đa ngôn ngữ sẵn sàng
+- ✅ **Nhạc nền động** — chủ đề riêng mỗi khu vực + lớp cường độ (khám phá → chơi → thử thách → chiến thắng)
+- ✅ **SFX tổng hợp** (Web Audio, không cần file) — mọi tương tác đều có âm thanh, có biến tấu chống nhàm
+- ✅ **Ambience thủ tục** — gió, chim, chuông… theo từng thế giới
+- ✅ **Voice ducking + ưu tiên + cooldown** — giọng nói luôn rõ, không bao giờ ồn
+- ✅ **Cài đặt âm thanh** — 5 thanh trượt + bật/tắt, lưu bền
+- ✅ **Đếm số bằng giọng nói** đồng bộ với thao tác thu thập (giáo dục)
 
 ---
 
@@ -111,6 +122,8 @@ bunnies/
 │   ├── GameFlowConfig.js        # legacy flow (xem core/engine/GameConfig.js)
 │   ├── ASSETS_MANIFEST.json
 │   ├── core/
+│   │   ├── audio/               # Hệ thống âm thanh: AudioEngine, SFX, Music, Voice, Ambience
+│   │   │   ├── assets/voice/    # 63 câu thoại vi-VN (edge-tts) · assets/bgm/ chủ đề thưởng
 │   │   ├── engine/              # Knowledge World Game Engine (13 engine, data-driven)
 │   │   │   ├── GameConfig.js    # định nghĩa game × 3 màn: difficulty/scoring/reward/hint/award/sticker
 │   │   │   ├── SaveEngine.js · AnalyticsEngine.js · ScoringEngine.js · StarEngine.js

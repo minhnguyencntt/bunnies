@@ -11,6 +11,7 @@ class CandyGardenScreen extends VisualMathScreen {
     }
 
     onPreload() {
+        this.load.image('candy_garden_bg', 'screens/candy_garden/assets/backgrounds/bg.png');
         this.preloadCommonAudio('candy_garden');
     }
 

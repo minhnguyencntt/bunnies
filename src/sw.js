@@ -38,6 +38,10 @@ const CORE_ASSETS = [
     './core/characters/bird/BirdBehaviorSystem.js',
     './core/characters/magic_particle/MagicParticleBehaviorSystem.js',
 
+    // Design system
+    './core/design/DesignTokens.js',
+    './core/design/UISystem.js',
+
     // Shared helpers
     './core/ui/IntroHelper.js',
     './core/effects/RewardFX.js',

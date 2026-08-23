@@ -50,16 +50,7 @@ class AudioSettingsScreen extends Phaser.Scene {
 
         // Close
         const btnY = py + ph - 40;
-        const bg = this.add.graphics();
-        bg.fillStyle(0x66bb6a, 1);
-        bg.fillRoundedRect(w / 2 - 90, btnY - 24, 180, 48, 24);
-        bg.lineStyle(3, 0xffffff, 0.9);
-        bg.strokeRoundedRect(w / 2 - 90, btnY - 24, 180, 48, 24);
-        this.add.text(w / 2, btnY, '✔ Xong', {
-            fontSize: '20px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold', color: '#fff',
-        }).setOrigin(0.5);
-        this.add.zone(w / 2, btnY, 180, 48).setInteractive({ useHandCursor: true })
-            .on('pointerdown', () => { AudioEngine.emit('UITap'); this.scene.stop(); });
+        UISystem.primaryButton(this, w / 2, btnY, '✔ Xong', () => this.scene.stop(), { width: 180, height: 48 });
     }
 
     createSlider(cx, y, width, label, channel, value) {

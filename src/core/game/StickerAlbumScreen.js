@@ -44,18 +44,10 @@ class StickerAlbumScreen extends Phaser.Scene {
         });
 
         // Back
-        const back = this.add.container(56, 46).setDepth(10);
-        const bg = this.add.graphics();
-        bg.fillStyle(0x4a90e2, 1);
-        bg.fillCircle(0, 0, 26);
-        bg.lineStyle(3, 0xffffff, 0.8);
-        bg.strokeCircle(0, 0, 26);
-        back.add(bg);
-        back.add(this.add.text(0, 0, '🗺', { fontSize: '22px' }).setOrigin(0.5));
-        setCenteredInput(back, 56, 56);
-        back.on('pointerdown', () => { AudioEngine.emit('Transition'); this.scene.start('MenuScreen'); });
-        back.on('pointerover', () => back.setScale(1.12));
-        back.on('pointerout', () => back.setScale(1));
+        UISystem.iconButton(this, 56, 46, '🗺', () => {
+            AudioEngine.emit('Transition');
+            this.scene.start('MenuScreen');
+        }, { radius: 26, fontSize: 22 }).setDepth(10);
 
         // Hint bubble (created on demand)
         this.hintBubble = null;

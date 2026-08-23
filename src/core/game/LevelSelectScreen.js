@@ -55,17 +55,17 @@ class LevelSelectScreen extends Phaser.Scene {
             this.createLevelCard(x, y, cardW, cardH, gameDef, gp, level, profile);
         }
 
-        // Back button
-        UISystem.iconButton(this, 60, 50, '🗺', () => {
+        // Top-left = BACK to the world map (previous screen)
+        UISystem.navButton(this, 60, 50, DesignTokens.icons.back, () => {
             AudioEngine.emit('Transition');
             this.scene.start('MenuScreen');
-        }, { radius: 26, fontSize: 22 }).setDepth(10);
+        }).setDepth(10);
     }
 
     createLevelCard(x, y, cw, ch, gameDef, gp, level, profile) {
         const cfg = gameDef.levels[level];
         const lp = gp.levels[level];
-        const unlocked = ProgressionEngine.isLevelUnlocked(profile, this.gameId, level);
+        const unlocked = true; // no access locking — Discover → Tap → Play
 
         const c = this.add.container(x, y);
         const bg = this.add.graphics();
@@ -96,39 +96,25 @@ class LevelSelectScreen extends Phaser.Scene {
             fontSize: '34px',
         }).setOrigin(0.5));
 
-        if (unlocked) {
-            if (lp.bestScore > 0) {
-                c.add(this.add.text(0, 40, `Kỷ lục: ${lp.bestScore}`, {
-                    fontSize: '15px', fontFamily: 'Comic Sans MS, Arial', color: '#6d4c41',
-                }).setOrigin(0.5));
-            }
-            const playBtn = UISystem.primaryButton(this, 0, ch / 2 - 43, '▶ Chơi', () => {}, { width: 140, height: 46 });
-            // card itself handles the tap; the button is visual affordance
-            playBtn.disableInteractive();
-            c.add(playBtn);
-        } else {
-            c.add(this.add.text(0, 40, '🔒', { fontSize: '36px' }).setOrigin(0.5));
-            c.add(this.add.text(0, ch / 2 - 46, `Hoàn thành\nMàn ${level - 1} nhé!`, {
-                fontSize: '15px', fontFamily: 'Comic Sans MS, Arial', color: '#fafafa',
-                align: 'center', fontStyle: 'bold',
+        if (lp.bestScore > 0) {
+            c.add(this.add.text(0, 40, `Kỷ lục: ${lp.bestScore}`, {
+                fontSize: '15px', fontFamily: 'Comic Sans MS, Arial', color: '#6d4c41',
             }).setOrigin(0.5));
         }
+        // The PLAY button itself is directly tappable (not just the card)
+        const startLevel = () => {
+            AudioEngine.emit('Transition');
+            this.scene.start(gameDef.sceneKey, { gameId: this.gameId, level });
+        };
+        const playBtn = UISystem.primaryButton(this, 0, ch / 2 - 43, '▶ Chơi', startLevel, { width: 140, height: 46 });
+        c.add(playBtn);
 
-        if (unlocked) {
-            setCenteredInput(c, cw, ch);
-            c.on('pointerover', () => c.setScale(1.04));
-            c.on('pointerout', () => c.setScale(1));
-            c.on('pointerdown', () => {
-                AudioEngine.emit('Transition');
-                this.scene.start(gameDef.sceneKey, { gameId: this.gameId, level });
-            });
-            c.setScale(0);
-            this.tweens.add({ targets: c, scale: 1, duration: 300, delay: level * 120, ease: 'Back.easeOut' });
-        } else {
-            c.setSize(cw, ch);
-            c.setInteractive({ useHandCursor: true });
-            c.on('pointerdown', () => AudioEngine.emit('Locked'));
-        }
+        setCenteredInput(c, cw, ch);
+        c.on('pointerover', () => c.setScale(1.04));
+        c.on('pointerout', () => c.setScale(1));
+        c.on('pointerdown', startLevel);
+        c.setScale(0);
+        this.tweens.add({ targets: c, scale: 1, duration: 300, delay: level * 120, ease: 'Back.easeOut' });
     }
 }
 

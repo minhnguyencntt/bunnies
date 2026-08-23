@@ -94,11 +94,15 @@ def build_layered_bgm(
     n = int(sample_rate * duration_seconds)
     t = np.linspace(0, duration_seconds, n, endpoint=False)
 
+    # Warm bass: fundamental + soft odd harmonics (triangle-ish, not pure sine)
     bass_wave = np.zeros_like(t)
     bass_wave += 0.12 * np.sin(2 * np.pi * NOTES["C2"] * t)
     bass_wave += 0.08 * np.sin(2 * np.pi * NOTES["C3"] * t)
     bass_wave += 0.04 * np.sin(2 * np.pi * NOTES["C2"] * 2 * t)
+    bass_wave += 0.02 * np.sin(2 * np.pi * NOTES["C2"] * 3 * t)
 
+    # Warm harmony: each chord tone gets detuned doubles (chorus) + soft 3rd
+    # partial — removes the pure-sine "MIDI" feel.
     harmony_wave = np.zeros_like(t)
     current_time = 0.0
     for chord_notes, chord_duration in chord_progression:
@@ -108,12 +112,17 @@ def build_layered_bgm(
         if start_idx >= n:
             break
         chord_t = t[start_idx:end_idx] - t[start_idx]
+        # slow swell per chord (breathing pad, not organ)
+        swell = 0.55 + 0.45 * np.sin(np.pi * np.clip(chord_t / max(chord_duration, 0.01), 0, 1))
         for note_name in chord_notes:
             if note_name not in NOTES:
                 continue
             freq = NOTES[note_name]
-            cw = harmony_note_gain * np.sin(2 * np.pi * freq * chord_t)
-            cw += harmony_octave_gain * np.sin(2 * np.pi * freq * 2 * chord_t)
+            cw = harmony_note_gain * swell * np.sin(2 * np.pi * freq * chord_t)
+            cw += harmony_note_gain * 0.5 * swell * np.sin(2 * np.pi * freq * 1.003 * chord_t)
+            cw += harmony_note_gain * 0.4 * swell * np.sin(2 * np.pi * freq * 0.997 * chord_t)
+            cw += harmony_octave_gain * swell * np.sin(2 * np.pi * freq * 2 * chord_t)
+            cw += harmony_octave_gain * 0.5 * swell * np.sin(2 * np.pi * freq * 3 * chord_t)
             harmony_wave[start_idx:end_idx] += cw
         current_time += chord_duration
         if current_time >= duration_seconds:
@@ -139,9 +148,12 @@ def build_layered_bgm(
                 if start_idx >= n:
                     break
                 note_t = t[start_idx:end_idx] - t[start_idx]
-                envelope = np.exp(-note_t * 1.5) * (1 - np.exp(-note_t * 10))
+                # softer attack + longer body (music-box / marimba-like, not beeps)
+                envelope = np.exp(-note_t * 1.2) * (1 - np.exp(-note_t * 6))
                 note_wave = melody_note_gain * envelope * np.sin(2 * np.pi * freq * note_t)
+                note_wave += melody_note_gain * 0.45 * envelope * np.sin(2 * np.pi * freq * 1.003 * note_t)
                 note_wave += melody_octave_gain * envelope * np.sin(2 * np.pi * freq * 2 * note_t)
+                note_wave += melody_octave_gain * 0.4 * envelope * np.sin(2 * np.pi * freq * 3 * note_t)
                 melody_wave[start_idx:end_idx] += note_wave
 
     sparkle_wave = np.zeros_like(t)
@@ -171,6 +183,11 @@ def build_layered_bgm(
     pad_wave += 0.03 * lfo * np.sin(2 * np.pi * pad_freq * 1.5 * t)
 
     combined = bass_wave + harmony_wave + melody_wave + sparkle_wave + pad_wave
+
+    # Gentle one-pole lowpass — rounds off harsh high frequencies (warmth)
+    from scipy.signal import lfilter
+    alpha = 0.32
+    combined = lfilter([alpha], [1.0, alpha - 1.0], combined)
 
     fs = int(sample_rate * fade_seconds)
     fs = min(fs, n // 2)

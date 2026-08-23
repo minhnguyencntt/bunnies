@@ -96,6 +96,19 @@ const UISystem = {
         return c;
     },
 
+    /**
+     * Navigation button (Back/Home) — top-left standard. Bigger, elevated,
+     * high-contrast so it stays visible over every world background.
+     */
+    navButton(scene, x, y, icon, onTap, opts = {}) {
+        return this.iconButton(scene, x, y, icon, onTap, {
+            radius: 26,
+            fontSize: 22,
+            color: opts.color ?? DesignTokens.colors.primary,
+            ...opts,
+        });
+    },
+
     /** Big gameplay answer button (numbers must be extra readable). */
     answerButton(scene, x, y, label, onTap, opts = {}) {
         const size = opts.size || DesignTokens.touch.answerTarget;

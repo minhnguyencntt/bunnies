@@ -76,6 +76,28 @@ const DesignTokens = {
     press: { down: 0.94, overshoot: 1.03, ms: 70 },
 
     touch: { minTarget: 46, answerTarget: 96 },
+
+    /**
+     * Semantic icon map — one icon per action across the whole game.
+     * Emoji render as crisp vector glyphs on all DPIs; never mix in
+     * raster icon files or alternate glyphs for the same action.
+     */
+    icons: {
+        back: '◀',
+        home: '🏠',
+        map: '🗺️',
+        settings: '⚙️',
+        album: '🎟',
+        hint: '💡',
+        pause: '⏸️',
+        play: '▶',
+        close: '✕',
+        sound: '🔊',
+        music: '🎵',
+        star: '⭐',
+        gems: '💎',
+        level: '🎓',
+    },
 };
 
 if (typeof module !== 'undefined' && module.exports) {

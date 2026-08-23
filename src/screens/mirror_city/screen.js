@@ -232,7 +232,7 @@ class MirrorCityScreen extends GameShell {
     createProgressPips(total) {
         const w = this.cameras.main.width;
         this.pips = [];
-        const pipRow = this.track(this.add.container(w / 2, 104).setDepth(150));
+        const pipRow = this.track(this.add.container(w / 2, DesignTokens.layout.equationY).setDepth(150));
         const bg = this.add.graphics();
         bg.fillStyle(0x000000, 0.45);
         bg.fillRoundedRect(-total * 26 - 16, -22, total * 52 + 32, 44, 22);

@@ -69,7 +69,7 @@ class CountingForestScreen extends GameShell {
         this.analytics.recordExploration(0, this.roundTarget);
 
         // Visual equation: 🍎🍎 + 🍎 = ?
-        const eq = this.track(this.add.container(w / 2, 108).setDepth(150));
+        const eq = this.track(this.add.container(w / 2, DesignTokens.layout.equationY).setDepth(150));
         const eqBg = this.add.graphics();
         eqBg.fillStyle(0x5c3a1e, 0.9);
         eqBg.fillRoundedRect(-190, -26, 380, 52, 16);

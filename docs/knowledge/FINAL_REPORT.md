@@ -1,88 +1,89 @@
-# Master Refactor — Final Report (2026-08-23)
+# Unified Navigation & Calm Screens — Report (2026-08-23)
 
 ## A. Previous Work Status
 
 ```text
-DONE (verified by audit + E2E):
-- Game Engine (13 engines, data-driven), 3-level system, reward pipeline
-- Audio system (events, ducking, cooldowns, voice library, ambience)
-- Knowledge system (AGENTS.md hierarchy, skills, ADRs, changelog)
-- Addition & subtraction games with visual learning + 3-answer system
-- Non-blocking speech; skippable intros; crash-isolated audio
+DONE (verified, still true):
+- Game Engine (13 engines), 3-level system, reward pipeline
+- Multi-layer audio, warm BGM, non-blocking VoiceEngine
+- Addition / subtraction visual math + 3-answer system
+- No access locking (Discover → Tap → Play)
+- Knowledge tree (AGENTS / skills / ADRs)
 
-PARTIAL (found by audit, now fixed):
-- Button system: level-card Play was display-only → now directly tappable
-- Navigation: top-left was Home in gameplay, inconsistent elsewhere → ◀ Back everywhere
-- Top-left nav visibility: 21px low-contrast → 26px elevated navButton
-- Music: pure-sine layered BGM sounded MIDI-like → warm engine + all themes regenerated
-- Icon consistency: ad-hoc glyphs → DesignTokens.icons semantic map
+BROKEN (previous report marked DONE — second audit found otherwise):
+- Navigation: hover-first map (first tap ≠ play on touch)
+- Marker hit-areas offset to the bottom-right of the icon
+- Hopping bunnies stole taps from southern cities
+- Result / Pause “Bản đồ” skipped Level Select
+- MenuScreen reused stale cityMarkers after Back (dead taps)
+- Game HUD: dark full-width bar + 50-char title overlapping equations
 
-BROKEN (found by audit, now fixed):
-- Level/world access locking (sequential level gates + world lock) → removed (ADR-005)
-
-MISSING: none remaining.
+FIXED this pass:
+- All of the above
 ```
 
 ## B. Global Systems
 
-DesignTokens (colors/typography/spacing/radius/shadows/motion/icons) · UISystem
-(primary/secondary/icon/nav/answer buttons, panel, progressBar, speechBubble) ·
-GameEngine (13 engines) · AudioEngine (channels/priority/ducking/cooldowns) ·
-SFXEngine · MusicEngine (dynamic intensity) · VoiceEngine · AmbienceEngine ·
-GameShell · VisualMathScreen · character emotion system.
+- `NavSystem` — only leave/back/home path
+- `IconSystem` — vector Back / Home / Pause / Hint / Settings / Close / Play
+- `UISystem.chip` + `playButton` — storybook chrome
+- `DesignTokens.layout` — HUD / equation / answer safe zones
 
 ## C. Screens Migrated
 
-Menu (world map + HUD + album/settings buttons) · LevelSelectScreen ·
-ResultScreen · StickerAlbumScreen · AudioSettingsScreen · GameShell HUD/pause/
-choices/bubbles (all 6 game scenes inherit) · IntroHelper.
+Menu (world map) · LevelSelect · GameShell HUD + pause (all 6 games) ·
+Result · Album · Settings · VisualMath + Counting Forest / Subtraction Hill /
+Mirror City equation Y.
 
 ## D. Legacy Removed
 
-- `UIScreen.js` (dead HUD overlay) deleted
-- Level/world access locks (config + UI + engine)
-- Display-only Play button
-- Pure-sine MIDI-feel BGM (all 10 themes regenerated warm)
-- Ad-hoc button/icon styles on shared screens
+- Hover dim overlay + hover speech on the map
+- Offset marker hit-areas
+- Interactive hopping bunnies
+- Dark full-width game HUD
+- Result/Pause dump-to-map
+- Mixed emoji nav glyphs for Back/Home/Pause/Hint/Settings
 
 ## E. Navigation
 
-Top-left = **◀ Back** (previous screen: gameplay → level select → world map),
-26px elevated high-contrast `navButton`. **Home** is explicit: 🗺 Bản đồ in the
-pause menu and result screen. Navigation is instant — never waits for speech,
-audio, or animation.
+```
+Map  --tap city / ▶ Chơi-->  Level Select  --Chơi-->  Game  -->  Result
+ ↑ Back                         ↑ Back                  ↑ Back = Level Select
+ Home = Map                     Home (pause/result) = Map
+```
+
+Top-left is always Back. Home is an explicit house when it is not the same
+as Back. Leave never waits for speech, music, or animation.
 
 ## F. Audio
 
-BGM engine upgraded: detuned chorus doubles, 3rd harmonics, per-chord swell,
-softer melody attacks, gentle lowpass. All 10 themes regenerated (menu, boot,
-6 worlds, reward, album). Multi-layer: ambience + music + intensity layers +
-gameplay SFX + voice + reward SFX, with priority ducking and cooldowns.
+Unchanged layered system. Map hover speech removed so speech cannot gate
+the first tap.
 
 ## G. Gameplay
 
-Addition (Counting Forest, Candy Garden) and subtraction (Subtraction Hill,
-Forest Adventure): concrete objects animate the operation (combine / fly away),
-then exactly 3 large plausible choices; guided count-aloud retry after 2 misses.
+Unchanged visual addition/subtraction. Layout Y uses `DesignTokens.layout`
+so the equation no longer sits under the HUD.
 
 ## H. Testing
 
 ```text
-Total screens: 8 (menu, level select, 6 game scenes, result, album, settings)
-Total games: 6 · Total worlds: 6 · Sessions E2E: 18/18 pass, 0 page errors
-Navigation flows tested: 10/10 (city tap, play button, back×3, album, pause home, no-lock UI)
-Engine unit tests: all pass (scoring, stars, rewards, no-lock policy, audio config)
-Defects found this round: 6 (lock policy, back semantics, nav visibility,
-  display-only play button, MIDI-feel music, icon map) — all fixed
-Remaining defects: none known
+Total screens audited: menu, 6× level select, 6× gameplay, result, album, settings
+Total games: 6   Total worlds: 6
+Navigation flows: city first-tap, Back×2, Home from game, Result → Level Select
+Playable cities start + Back: 6/6
+Candy Garden L1 played to Result, Back → Level Select
+Page errors: 0
+Defects found this pass: 7   Defects fixed: 7
+Remaining: world-map cities still sit on a busy painted map (art, not UI)
 ```
 
 ## I. Knowledge System
 
 ```text
-AGENTS.md: root + src/ + docs/ hierarchy (updated with no-lock + nav rules)
-SKILL.md: gameplay, multiple-choice, ui, navigation, icon-system, animation, audio, content
-ADR: 001 design system · 002 non-blocking speech · 003 motion · 004 world architecture · 005 navigation & no-lock
-CHANGELOG: docs/knowledge/CHANGELOG.md (2026-08-23 master refactor entry)
+AGENTS.md: root + src + design-system (NavSystem / IconSystem)
+SKILL.md: skills/ui/navigation.md, skills/ui/icon-system.md
+ADR-005: amended (hover-gate, hit-areas, Result stack)
+CHANGELOG: 2026-08-23 unified navigation entry
 Audit: docs/knowledge/MASTER_AUDIT.md
 ```

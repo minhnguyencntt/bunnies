@@ -56,6 +56,17 @@ class MenuScreen extends Phaser.Scene {
 
     create() {
         console.log('MenuScreen: create() called');
+        this.bunnies = [];
+        this.sparkles = [];
+        this.fireflies = [];
+        this.birds = [];
+        this.magicParticles = [];
+        this.cityMarkers = [];
+        this.currentHoveredMarker = null;
+        this.blurOverlay = null;
+        this.highlightMask = null;
+        this.currentCityAudio = null;
+        this._resetOverlay = null;
         const width = this.cameras.main.width;
         const height = this.cameras.main.height;
 
@@ -123,61 +134,87 @@ class MenuScreen extends Phaser.Scene {
         const profile = SaveEngine.load();
         const wp = ProgressionEngine.worldProgress(profile);
 
-        const barH = 54;
-        const bar = this.add.graphics().setDepth(400);
-        bar.fillStyle(0x2c1810, 0.72);
-        bar.fillRoundedRect(10, 8, Math.min(560, width * 0.62), barH, 14);
-        bar.lineStyle(2, 0xffd700, 0.6);
-        bar.strokeRoundedRect(10, 8, Math.min(560, width * 0.62), barH, 14);
+        const y = DesignTokens.layout.chromeY;
+        const levelChip = UISystem.chip(this, 78, y, `Cấp ${wp.knowledgeLevel.level}`, {
+            minWidth: 88, height: 42, fontSize: 16,
+        });
+        levelChip.setDepth(401);
 
-        this.add.text(28, 8 + barH / 2, `🎓 Cấp ${wp.knowledgeLevel.level}`, {
-            fontSize: '19px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold',
-            color: '#FFD700', stroke: '#000', strokeThickness: 2,
-        }).setOrigin(0, 0.5).setDepth(401);
-
-        // XP progress bar
-        const xpBarX = 128;
-        const xpBarW = 130;
-        const xpBg = this.add.graphics().setDepth(401);
-        xpBg.fillStyle(0x000000, 0.4);
-        xpBg.fillRoundedRect(xpBarX, 8 + barH / 2 - 7, xpBarW, 14, 7);
+        const xpW = 110;
+        const xp = this.add.container(178, y).setDepth(401);
+        const xpG = this.add.graphics();
+        xpG.fillStyle(DesignTokens.shadow.color, 0.16);
+        xpG.fillRoundedRect(-xpW / 2, -8, xpW, 16, 8);
+        xpG.fillStyle(0x000000, 0.12);
+        xpG.fillRoundedRect(-xpW / 2, -8, xpW, 16, 8);
         const ratio = Phaser.Math.Clamp(wp.knowledgeLevel.intoLevel / wp.knowledgeLevel.needed, 0, 1);
-        xpBg.fillGradientStyle(0x8bc34a, 0x8bc34a, 0x558b2f, 0x558b2f, 1);
-        xpBg.fillRoundedRect(xpBarX, 8 + barH / 2 - 7, Math.max(10, xpBarW * ratio), 14, 7);
+        xpG.fillStyle(DesignTokens.colors.xp, 1);
+        xpG.fillRoundedRect(-xpW / 2, -8, Math.max(12, xpW * ratio), 16, 8);
+        xp.add(xpG);
 
-        this.add.text(xpBarX + xpBarW + 14, 8 + barH / 2, `⭐ ${wp.stars}/${wp.maxStars}`, {
-            fontSize: '18px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold',
-            color: '#fff', stroke: '#000', strokeThickness: 2,
-        }).setOrigin(0, 0.5).setDepth(401);
+        UISystem.chip(this, 292, y, `⭐ ${wp.stars}/${wp.maxStars}`, {
+            minWidth: 96, height: 42, fontSize: 16,
+        }).setDepth(401);
+        UISystem.chip(this, 412, y, `💎 ${wp.gems}`, {
+            minWidth: 84, height: 42, fontSize: 16,
+        }).setDepth(401);
 
-        this.add.text(xpBarX + xpBarW + 128, 8 + barH / 2, `💎 ${wp.gems}`, {
-            fontSize: '18px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold',
-            color: '#4fc3f7', stroke: '#000', strokeThickness: 2,
-        }).setOrigin(0, 0.5).setDepth(401);
+        UISystem.iconButton(this, width - 286, y, 'reset',
+            () => this.confirmStartOver(), { radius: 24, color: 0x8d6e63 })
+            .setDepth(401);
 
-        // Sticker Album button (top right) — design-system primary button
-        const albumBtn = UISystem.primaryButton(this, width - 130, 8 + barH / 2,
-            `${DesignTokens.icons.album} Album (${wp.stickers.owned}/${wp.stickers.total})`,
-            () => {
-                AudioEngine.emit('Transition');
-                this.scene.start('StickerAlbumScreen');
-            }, { width: 210, height: 50, color: 0xe65100, fontSize: 18 });
+        UISystem.iconButton(this, width - 228, y, 'settings',
+            () => this.scene.launch('AudioSettingsScreen'), { radius: 24, color: 0x6d7b8a })
+            .setDepth(401);
+
+        const albumBtn = UISystem.primaryButton(this, width - 108, y,
+            `Album ${wp.stickers.owned}/${wp.stickers.total}`,
+            () => NavSystem.go(this, 'StickerAlbumScreen'),
+            { width: 168, height: 48, color: 0xe65100, fontSize: 16 });
         albumBtn.setDepth(401);
-        this.tweens.add({ targets: albumBtn, scale: 1.04, duration: 1200, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
 
-        // Audio settings button (left of the album button)
-        const setBtn = UISystem.iconButton(this, width - 262, 8 + barH / 2, DesignTokens.icons.settings,
-            () => this.scene.launch('AudioSettingsScreen'), { radius: 24, color: 0x546e7a });
-        setBtn.setDepth(401);
-
-        // Next goal hint (bottom center)
         const goal = ProgressionEngine.nextGoal(profile);
-        const goalText = this.add.text(width / 2, height - 24, `${goal.icon} ${goal.text}`, {
-            fontSize: '18px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold',
-            color: '#fff', stroke: '#000', strokeThickness: 3,
-            backgroundColor: '#2c1810bb', padding: { x: 16, y: 6 },
-        }).setOrigin(0.5).setDepth(401);
-        this.tweens.add({ targets: goalText, alpha: 0.75, duration: 1600, yoyo: true, repeat: -1 });
+        UISystem.chip(this, width / 2, height - 28, `${goal.icon}  ${goal.text}`, {
+            minWidth: 220, height: 36, fontSize: 14,
+        }).setDepth(401);
+
+        UISystem.secondaryButton(this, 132, height - 28, 'Chơi lại từ đầu', () => this.confirmStartOver(), {
+            width: 200, height: 40, fontSize: 15,
+        }).setDepth(401);
+    }
+
+    confirmStartOver() {
+        if (this._resetOverlay) return;
+        const w = this.cameras.main.width;
+        const h = this.cameras.main.height;
+        const o = this.add.container(0, 0).setDepth(900);
+        const dim = this.add.graphics();
+        dim.fillStyle(0x1a0f2e, 0.72);
+        dim.fillRect(0, 0, w, h);
+        o.add(dim);
+        const pw = Math.min(460, w * 0.78);
+        const ph = 280;
+        o.add(UISystem.panel(this, w / 2, h / 2, pw, ph));
+        o.add(this.add.text(w / 2, h / 2 - 88, 'Chơi lại từ đầu?', {
+            fontSize: '28px', fontFamily: DesignTokens.typography.fontFamily, fontStyle: 'bold',
+            color: DesignTokens.css.ink,
+        }).setOrigin(0.5));
+        o.add(this.add.text(w / 2, h / 2 - 28, 'Xóa sao, sticker, điểm và phần thưởng đã lưu.\nBắt đầu như lần đầu chơi.', {
+            fontSize: '17px', fontFamily: DesignTokens.typography.fontFamily,
+            color: DesignTokens.css.inkSoft, align: 'center',
+        }).setOrigin(0.5));
+        const cancel = UISystem.secondaryButton(this, w / 2 - 100, h / 2 + 72, 'Hủy', () => {
+            o.destroy(true);
+            this._resetOverlay = null;
+        }, { width: 160, height: 50 });
+        const wipe = UISystem.primaryButton(this, w / 2 + 100, h / 2 + 72, 'Xóa hết', () => {
+            SaveEngine.reset({ keepAudio: true });
+            o.destroy(true);
+            this._resetOverlay = null;
+            NavSystem.home(this);
+        }, { width: 170, height: 50, color: DesignTokens.colors.warning });
+        o.add([cancel, wipe]);
+        this._resetOverlay = o;
     }
 
 
@@ -510,7 +547,7 @@ class MenuScreen extends Phaser.Scene {
             const tint = tints[i % tints.length];
             if (tint !== 0xFFFFFF) bunny.setTint(tint);
             bunny.setDepth(50);
-            bunny.setInteractive({ useHandCursor: true });
+            // Decorative only — never steal taps from city markers.
             bunny.setData('baseScale', baseScale);
             bunny.setData('busy', false);
             this.bunnies.push(bunny);
@@ -643,8 +680,7 @@ class MenuScreen extends Phaser.Scene {
         bunny.setData('charConfig', charConfig);
         bunny.setData('bunnyChar', bunnyChar);
         bunny.setData('idleTexture', idleTexture); // Store idle texture for easy access
-        // Note: bunny is an image/sprite here, not graphics, so normal interactive is fine
-        bunny.setInteractive({ useHandCursor: true });
+        // Decorative fallback bunny — do not steal city taps.
 
         // Hopping animation - switch to jumping texture during hop
         const hop = () => {
@@ -800,11 +836,7 @@ class MenuScreen extends Phaser.Scene {
         bunny.y = startY;
         bunny.setData('name', name);
         bunny.setData('originalY', startY);
-        // For graphics objects, provide a hitArea
-        const bunnyHitArea = new Phaser.Geom.Circle(0, 0, 30);
-        bunny.setInteractive(bunnyHitArea, Phaser.Geom.Circle.Contains, {
-            useHandCursor: true
-        });
+        // Decorative fallback bunny — do not steal city taps.
 
         const hop = () => {
             const targetX = Phaser.Math.Between(80, width - 80);
@@ -1130,9 +1162,6 @@ class MenuScreen extends Phaser.Scene {
         const scaleY = height / mapH;
         const scale = Math.min(scaleX, scaleY);
 
-        // Create blur overlay (initially hidden)
-        this.createBlurOverlay(width, height);
-
         WORLD_MAP_CITIES.forEach(city => {
             if (city.visible === false) {
                 return;
@@ -1287,50 +1316,41 @@ class MenuScreen extends Phaser.Scene {
             ease: 'Linear'
         });
 
-        // Huy hiệu sao tích lũy cho các thành phố có trò chơi (Knowledge World progression)
-        // No access locking — badges show earned progress only.
-        if (city.screenKey && typeof GameConfig !== 'undefined' && typeof ProgressionEngine !== 'undefined') {
-            const gameDef = GameConfig.getByScene(city.screenKey);
-            if (gameDef) {
-                const profile = SaveEngine.load();
-                const state = ProgressionEngine.cityState(profile, gameDef.gameId);
-                const tierIcon = { none: '', bronze: '🥉', silver: '🥈', gold: '🥇' }[state.tier];
-                const badge = this.add.container(0, markerSize + 16 * scale);
-                const bbg = this.add.graphics();
-                bbg.fillStyle(0x2c1810, 0.8);
-                bbg.fillRoundedRect(-44, -13, 88, 26, 13);
-                bbg.lineStyle(2, state.tier === 'gold' ? 0xffd700 : 0xffffff, 0.7);
-                bbg.strokeRoundedRect(-44, -13, 88, 26, 13);
-                badge.add(bbg);
-                badge.add(this.add.text(0, 0, `${tierIcon}⭐${state.stars}/9`, {
-                    fontSize: '14px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold', color: '#ffd700',
-                }).setOrigin(0.5));
-                markerContainer.add(badge);
-            }
-        }
-
-        // Label tên (ẩn, chỉ hiện khi hover) — nằm trên icon
         const nameLabel = this.createCityNameLabel(city.name, markerSize, scale, screenWidth, x);
         const labelBgHeight = nameLabel.getData('bgHeight') || 30;
-        nameLabel.y = -(markerSize + 14 * scale + labelBgHeight / 2);
-        nameLabel.setAlpha(0);
-        nameLabel.setVisible(false);
+        nameLabel.y = -(markerSize + 10 * scale + labelBgHeight / 2);
+        nameLabel.setAlpha(1);
+        nameLabel.setVisible(true);
         markerContainer.add(nameLabel);
         markerContainer.setData('nameLabel', nameLabel);
 
-        // Vùng chạm tròn lớn, đúng tâm icon (tối thiểu ~88px đường kính)
-        // Lưu ý: hitArea của Container tính từ góc trái-trên của size box
-        // (displayOrigin = width/2, height/2), nên tâm hình tròn ở (hitRadius, hitRadius)
-        const hitRadius = Math.max(markerSize * 1.5, 44);
-        markerContainer.setSize(hitRadius * 2, hitRadius * 2);
-        markerContainer.setInteractive(new Phaser.Geom.Circle(hitRadius, hitRadius, hitRadius), Phaser.Geom.Circle.Contains);
-        markerContainer.input.cursor = 'pointer';
+        if (city.screenKey) {
+            const play = this.add.text(0, markerSize + 18 * scale, '▶  Chơi', {
+                fontSize: `${Math.max(13, Math.round(15 * scale))}px`,
+                fontFamily: DesignTokens.typography.fontFamily,
+                fontStyle: 'bold',
+                color: '#fff8e7',
+                backgroundColor: '#66bb6acc',
+                padding: { x: 10, y: 4 },
+            }).setOrigin(0.5);
+            markerContainer.add(play);
+        }
+
+        const hitRadius = Math.max(markerSize * 2.1, 56);
+        setCenteredInput(markerContainer, hitRadius * 2, hitRadius * 2.4);
 
         markerContainer.on('pointerover', () => {
-            this.onMarkerHover(markerContainer, city, screenWidth, screenHeight);
+            this.tweens.killTweensOf(markerContainer);
+            this.tweens.add({
+                targets: markerContainer, scaleX: 1.12, scaleY: 1.12,
+                duration: DesignTokens.motion.micro, ease: DesignTokens.motion.easeOut,
+            });
         });
         markerContainer.on('pointerout', () => {
-            this.onMarkerOut(markerContainer);
+            this.tweens.add({
+                targets: markerContainer, scaleX: 1, scaleY: 1,
+                duration: DesignTokens.motion.micro, ease: DesignTokens.motion.easeSoft,
+            });
         });
         markerContainer.on('pointerdown', () => {
             this.onMarkerClick(markerContainer, city);
@@ -1368,17 +1388,17 @@ class MenuScreen extends Phaser.Scene {
      * Create city name label (pill nền tối, chữ trắng) — dùng khi hover
      */
     createCityNameLabel(name, markerSize, scale, screenWidth, markerX) {
-        const fontSize = Math.max(14, Math.round(17 * scale));
-        const padding = 12 * scale;
-        const verticalPadding = 8 * scale;
+        const fontSize = Math.max(13, Math.round(15 * scale));
+        const padding = 10 * scale;
+        const verticalPadding = 5 * scale;
 
         const nameText = this.add.text(0, 0, name, {
             fontSize: `${fontSize}px`,
             fill: '#FFFFFF',
-            fontFamily: 'Poppins, Baloo, Nunito, Comic Sans MS, Arial Rounded MT Bold, Arial',
+            fontFamily: DesignTokens.typography.fontFamily,
             fontStyle: 'bold',
             align: 'center',
-            wordWrap: { width: 180 * scale }
+            wordWrap: { width: 130 * scale }
         }).setOrigin(0.5);
 
         nameText.updateText();
@@ -1705,34 +1725,13 @@ class MenuScreen extends Phaser.Scene {
      * Handle marker click - navigate to city screen
      */
     onMarkerClick(markerContainer, city) {
-        console.log(`Clicked on city: ${city.name}`, city);
-        
-        // Navigate to the city's level selection if a game exists there
-        if (city.screenKey) {
-            // Play click sound if available
-            if (this.cache.audio.exists('voice_city_click')) {
-                this.sound.play('voice_city_click', { volume: 0.7 });
-            }
-
-            // Stop menu BGM
-            this.stopMenuBGM();
-
-            // Stop any playing city description
-            this.stopCityDescription();
-
-            if (typeof AudioEngine !== 'undefined') {
-                AudioEngine.emit('Transition');
-                AmbienceEngine.stop();
-            }
-
-            const gameDef = typeof GameConfig !== 'undefined' ? GameConfig.getByScene(city.screenKey) : null;
-            if (gameDef) {
-                this.scene.start('LevelSelectScreen', { gameId: gameDef.gameId });
-            } else {
-                this.scene.start(city.screenKey);
-            }
+        if (!city || !city.screenKey) return;
+        UISystem.press(this, markerContainer);
+        const gameDef = typeof GameConfig !== 'undefined' ? GameConfig.getByScene(city.screenKey) : null;
+        if (gameDef) {
+            NavSystem.go(this, 'LevelSelectScreen', { gameId: gameDef.gameId });
         } else {
-            console.warn(`City ${city.name} has no screenKey configured`);
+            NavSystem.go(this, city.screenKey);
         }
     }
 

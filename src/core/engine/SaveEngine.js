@@ -49,8 +49,27 @@ const SaveEngine = {
         return profile.games[gameId];
     },
 
-    reset() {
-        try { localStorage.removeItem(this.KEY); } catch (e) { /* ignore */ }
+    /** Wipe progress so the child can play from the beginning. */
+    reset(opts = {}) {
+        const keepAudio = opts.keepAudio !== false;
+        let audio = null;
+        if (keepAudio) {
+            try { audio = this.load().audioSettings || null; } catch (e) { audio = null; }
+        }
+        try {
+            localStorage.removeItem(this.KEY);
+            const extra = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const k = localStorage.key(i);
+                if (k && (k.startsWith('bunnies_') || k.startsWith('bunnine_'))) extra.push(k);
+            }
+            extra.forEach((k) => localStorage.removeItem(k));
+        } catch (e) { /* ignore */ }
+        if (audio) {
+            const fresh = this.defaultProfile();
+            fresh.audioSettings = audio;
+            this.save(fresh);
+        }
     },
 };
 

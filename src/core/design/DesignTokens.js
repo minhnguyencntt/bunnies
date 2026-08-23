@@ -75,28 +75,44 @@ const DesignTokens = {
     // Button press physics: 1.0 → 0.94 → 1.03 → 1.0 (tactile, fast)
     press: { down: 0.94, overshoot: 1.03, ms: 70 },
 
-    touch: { minTarget: 46, answerTarget: 96 },
+    touch: { minTarget: 52, answerTarget: 96 },
 
     /**
-     * Semantic icon map — one icon per action across the whole game.
-     * Emoji render as crisp vector glyphs on all DPIs; never mix in
-     * raster icon files or alternate glyphs for the same action.
+     * Safe layout — every screen shares these zones so HUD / play / answers
+     * never collide. Values are for the 1280×720 design canvas.
+     */
+    layout: {
+        chromeY: 40,
+        backX: 44,
+        hudH: 76,
+        contentTop: 92,
+        equationY: 102,
+        playY: 0.46,
+        answerY: 0.80,
+        companionX: 0.10,
+        companionY: 0.70,
+    },
+
+    /**
+     * Semantic icon keys — drawn by IconSystem (vector). Never swap in a
+     * different glyph for the same action.
      */
     icons: {
-        back: '◀',
-        home: '🏠',
-        map: '🗺️',
-        settings: '⚙️',
-        album: '🎟',
-        hint: '💡',
-        pause: '⏸️',
-        play: '▶',
-        close: '✕',
-        sound: '🔊',
-        music: '🎵',
-        star: '⭐',
-        gems: '💎',
-        level: '🎓',
+        back: 'back',
+        home: 'home',
+        map: 'map',
+        settings: 'settings',
+        album: 'album',
+        hint: 'hint',
+        pause: 'pause',
+        play: 'play',
+        close: 'close',
+        reset: 'reset',
+        sound: 'sound',
+        music: 'sound',
+        star: 'star',
+        gems: 'gems',
+        level: 'level',
     },
 };
 

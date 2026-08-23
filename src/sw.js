@@ -5,7 +5,7 @@
  *   sau lần tải đầu → chơi xong 1 lần là offline hoàn toàn.
  */
 
-const CACHE_VERSION = 'bunnies-pwa-v5';
+const CACHE_VERSION = 'bunnies-pwa-v6';
 const PRECACHE = `${CACHE_VERSION}-core`;
 const RUNTIME = `${CACHE_VERSION}-runtime`;
 
@@ -40,7 +40,9 @@ const CORE_ASSETS = [
 
     // Design system
     './core/design/DesignTokens.js',
+    './core/design/IconSystem.js',
     './core/design/UISystem.js',
+    './core/design/NavSystem.js',
 
     // Shared helpers
     './core/ui/IntroHelper.js',

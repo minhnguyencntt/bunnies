@@ -202,7 +202,22 @@ class GameShell extends Phaser.Scene {
         this.clearRoundTimer();
 
         const par = this.getParTimeMs();
-        const rewards = RewardEngine.finishSession(this.gameId, this.level, this.analytics, par);
+        let rewards;
+        try {
+            rewards = RewardEngine.finishSession(this.gameId, this.level, this.analytics, par);
+        } catch (e) {
+            console.error('RewardEngine failed', e);
+            rewards = {
+                gameId: this.gameId, level: this.level,
+                gameDef: this.gameDef, levelCfg: this.levelCfg,
+                score: 0, stars: 1, isNewBest: false,
+                xp: 0, gems: 0, awards: [], stickers: [],
+                knowledgeLevel: { level: 1, intoLevel: 0, needed: 100 },
+                leveledUp: false,
+                worldProgress: { percent: 0, stars: 0, maxStars: 54 },
+                metrics: this.analytics ? this.analytics.getMetrics() : { correctAnswers: 0 },
+            };
+        }
 
         this.companionReact('celebrate');
         AmbienceEngine.stop();
@@ -214,7 +229,7 @@ class GameShell extends Phaser.Scene {
             this.time.delayedCall(i * 70, () => this.spawnSparkles(
                 Phaser.Math.Between(80, w - 80), Phaser.Math.Between(90, h - 80), 7));
         }
-        this.time.delayedCall(1400, () => {
+        this.time.delayedCall(450, () => {
             try {
                 this.scene.pause();
                 this.scene.launch('ResultScreen', { rewards, gameId: this.gameId, level: this.level });
@@ -276,61 +291,62 @@ class GameShell extends Phaser.Scene {
     // ─── HUD ──────────────────────────────────────────────────
 
     createHUD(w, h) {
-        const hudH = 64;
-        const g = this.add.graphics().setDepth(400);
-        g.fillStyle(0x2c1810, 0.8);
-        g.fillRect(0, 0, w, hudH);
-        g.lineStyle(2, 0xffd700, 0.5);
-        g.lineBetween(0, hudH, w, hudH);
+        const L = DesignTokens.layout;
+        const y = L.chromeY;
 
-        // Top-left = BACK (previous screen: level select of this game)
-        const backBtn = UISystem.navButton(this, 44, hudH / 2, DesignTokens.icons.back, () => this.goBack());
-        backBtn.setDepth(402);
+        NavSystem.mount(this, {
+            onBack: () => this.goBack(),
+            depth: 402,
+        });
 
-        this.hudTitle = this.add.text(80, hudH / 2, '', {
-            fontSize: '19px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold',
-            color: '#FFD700', stroke: '#000', strokeThickness: 2,
-        }).setOrigin(0, 0.5).setDepth(401);
-        this.updateRoundLabel();
+        this.titleChip = UISystem.chip(this, 200, y, this.shortTitle(), {
+            minWidth: 168, height: 42, fontSize: 16,
+        });
+        this.titleChip.setDepth(401);
+        this.hudTitle = this.titleChip.listText;
 
-        // Score + star meter (right side)
-        this.scoreText = this.add.text(w - 260, hudH / 2, 'Điểm 0', {
-            fontSize: '20px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold',
-            color: '#fff', stroke: '#000', strokeThickness: 2,
-        }).setOrigin(0, 0.5).setDepth(401);
+        this.scoreChip = UISystem.chip(this, w - 318, y, '0', {
+            minWidth: 72, height: 42, fontSize: 16, fill: 0xfff3d6,
+        });
+        this.scoreChip.setDepth(401);
+        this.scoreText = this.scoreChip.listText;
 
-        this.starMeterX = w - 130;
-        this.starMeter = this.add.text(this.starMeterX, hudH / 2, '☆☆☆', {
-            fontSize: '22px', fontFamily: 'Comic Sans MS, Arial',
-            color: '#ffd700', stroke: '#000', strokeThickness: 2,
-        }).setOrigin(0.5).setDepth(401);
+        this.starChip = UISystem.chip(this, w - 210, y, '☆☆☆', {
+            minWidth: 88, height: 42, fontSize: 18,
+        });
+        this.starChip.setDepth(401);
+        this.starMeter = this.starChip.listText;
 
-        this.hudButton(w - 40, hudH / 2, '⏸', () => this.showPause());
-        this.hudButton(w - 90, hudH / 2, '💡', () => this.useHint());
+        this.hudButton(w - 118, y, 'hint', () => this.useHint());
+        this.hudButton(w - 48, y, 'pause', () => this.showPause());
 
-        // Timer bar under HUD (center)
-        this.timerBarWidth = Math.min(360, w * 0.3);
+        this.timerBarWidth = Math.min(280, w * 0.28);
         this.timerBarFill = this.add.graphics().setDepth(400);
-        this.timerBarFill.setPosition(w / 2, hudH + 12);
+        this.timerBarFill.setPosition(w / 2, L.hudH - 4);
 
-        this.comboText = this.add.text(w / 2, hudH + 34, '', {
-            fontSize: '18px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold',
-            color: '#ffb300', stroke: '#000', strokeThickness: 3,
+        this.comboText = this.add.text(w / 2, L.hudH + 14, '', {
+            fontSize: '16px', fontFamily: DesignTokens.typography.fontFamily, fontStyle: 'bold',
+            color: DesignTokens.css.warning, stroke: '#00000055', strokeThickness: 2,
         }).setOrigin(0.5).setDepth(401);
     }
 
+    shortTitle() {
+        if (!this.gameDef || !this.levelCfg) return '';
+        const q = this.levelCfg.rounds
+            ? ` · ${Math.min(this.roundIndex + 1, this.levelCfg.rounds)}/${this.levelCfg.rounds}`
+            : '';
+        return `${this.gameDef.icon}  Màn ${this.level}${q}`;
+    }
+
     hudButton(x, y, icon, onTap) {
-        const c = UISystem.iconButton(this, x, y, icon, onTap, { radius: 23, fontSize: 19 });
+        const c = UISystem.iconButton(this, x, y, icon, onTap, { radius: 24, iconSize: 18 });
         c.setDepth(402);
         return c;
     }
 
     updateRoundLabel() {
-        if (!this.hudTitle || !this.gameDef) return;
-        const l = this.levelCfg;
-        this.hudTitle.setText(
-            `${this.gameDef.icon} ${this.gameDef.name} · Màn ${this.level} ${l.label.icon} ${l.label.rank}` +
-            (l.rounds ? `  ·  Câu ${Math.min(this.roundIndex + 1, l.rounds)}/${l.rounds}` : ''));
+        if (!this.titleChip || !this.gameDef) return;
+        this.titleChip.setLabel(this.shortTitle());
     }
 
     refreshLiveScore() {
@@ -341,13 +357,16 @@ class GameShell extends Phaser.Scene {
             from: this.displayScore, to: target, duration: 400,
             onUpdate: (tw) => {
                 this.displayScore = Math.round(tw.getValue());
-                if (this.scoreText) this.scoreText.setText(`Điểm ${this.displayScore}`);
+                if (this.scoreChip) this.scoreChip.setLabel(`${this.displayScore}`);
+                else if (this.scoreText) this.scoreText.setText(`${this.displayScore}`);
             },
         });
-        if (this.starMeter) {
+        if (this.starChip || this.starMeter) {
             const th = this.levelCfg.scoring.starThresholds;
             const stars = StarEngine.starsForScore(target, th);
-            this.starMeter.setText('⭐'.repeat(stars) + '☆'.repeat(3 - stars));
+            const label = '⭐'.repeat(stars) + '☆'.repeat(3 - stars);
+            if (this.starChip) this.starChip.setLabel(label);
+            else this.starMeter.setText(label);
         }
         if (this.comboText) {
             const streak = this.analytics.currentStreak;
@@ -390,7 +409,7 @@ class GameShell extends Phaser.Scene {
         o.add(dim);
 
         const pw = Math.min(420, w * 0.7);
-        const ph = 340;
+        const ph = 420;
         const panel = this.add.graphics();
         panel.fillStyle(0xfff8dc, 0.98);
         panel.fillRoundedRect(w / 2 - pw / 2, h / 2 - ph / 2, pw, ph, 24);
@@ -407,12 +426,13 @@ class GameShell extends Phaser.Scene {
             o.add(b);
         };
 
-        mkBtn(h / 2 - 40, '▶ Chơi tiếp', DesignTokens.colors.success, () => this.hidePause());
-        mkBtn(h / 2 + 30, '🔄 Chơi lại', DesignTokens.colors.secondary, () => {
+        mkBtn(h / 2 - 70, 'Chơi tiếp', DesignTokens.colors.success, () => this.hidePause());
+        mkBtn(h / 2, 'Chơi lại', DesignTokens.colors.secondary, () => {
             this.hidePause();
             this.scene.restart({ gameId: this.gameId, level: this.level });
         });
-        mkBtn(h / 2 + 100, '🗺 Về bản đồ', DesignTokens.colors.primary, () => this.exitToMenu());
+        mkBtn(h / 2 + 70, 'Chọn màn', DesignTokens.colors.primary, () => this.goBack());
+        mkBtn(h / 2 + 140, 'Về nhà', 0x7c5cbf, () => this.exitToMenu());
 
         o.setAlpha(0);
         this.tweens.add({ targets: o, alpha: 1, duration: 200 });
@@ -424,29 +444,22 @@ class GameShell extends Phaser.Scene {
         if (this.pauseOverlay) { this.pauseOverlay.destroy(true); this.pauseOverlay = null; }
     }
 
-    /** Back = previous screen in the flow (level select of this game). */
+    /** Back = previous screen (level select of this game). Never Home. */
     goBack() {
-        if (this.sessionOver) { this.exitToMenu(); return; }
         this.hidePause();
-        AudioEngine.emit('Transition');
-        this.sound.stopAll();
-        this.scene.stop();
-        this.scene.start('LevelSelectScreen', { gameId: this.gameId });
+        NavSystem.backToLevels(this, this.gameId);
     }
 
     exitToMenu() {
         this.hidePause();
-        AudioEngine.emit('Transition');
-        this.sound.stopAll();
-        this.scene.stop();
-        this.scene.start('MenuScreen');
+        NavSystem.home(this);
     }
 
     // ─── Bunnine companion ────────────────────────────────────
 
     createCompanion(w, h) {
-        const x = 74;
-        const y = h - 74;
+        const x = Math.round(w * DesignTokens.layout.companionX);
+        const y = Math.round(h * DesignTokens.layout.companionY + 80);
         const key = this.textures.exists('spr_bunny_idle') ? 'spr_bunny_idle' : null;
         if (!key) { this.companion = null; return; }
         this.companion = this.add.image(x, y, key).setDepth(350);

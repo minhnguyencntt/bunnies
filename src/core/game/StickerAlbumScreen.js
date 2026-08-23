@@ -43,11 +43,10 @@ class StickerAlbumScreen extends Phaser.Scene {
             this.createAlbumRow(w, y, rowH, album);
         });
 
-        // Top-left = BACK to the world map (previous screen)
-        UISystem.navButton(this, 56, 46, DesignTokens.icons.back, () => {
-            AudioEngine.emit('Transition');
-            this.scene.start('MenuScreen');
-        }).setDepth(10);
+        NavSystem.mount(this, {
+            onBack: () => NavSystem.home(this),
+            depth: 20,
+        });
 
         // Hint bubble (created on demand)
         this.hintBubble = null;

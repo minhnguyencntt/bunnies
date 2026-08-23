@@ -2,26 +2,39 @@
 
 ## Status
 
-Accepted (2026-08-23)
+Accepted (2026-08-23) · Amended (same day — second audit)
 
 ## Context
 
-Navigation was inconsistent (🏠 Home top-left in gameplay, 🗺 elsewhere; faint
-21px targets), level cards had a display-only Play button, and levels/worlds
-were access-locked behind progression — inappropriate friction for children.
+A first pass swapped the HUD glyph to ◀ and removed locks, but navigation
+was still broken for children:
+
+- World-map hover fired speech + a full-screen dim before play (mobile first
+  tap ≠ play).
+- Marker hit-areas were offset to the bottom-right of the icon.
+- Hopping bunnies stole taps from southern cities.
+- Result / Pause “Bản đồ” skipped Level Select, so the child had to hunt the
+  city again to pick the next level.
+- Each screen invented its own Back/Home callbacks.
 
 ## Decision
 
-1. **Top-left = BACK (◀)** everywhere: gameplay → its level select → world map.
-   Home (🗺 Bản đồ) is explicit in the pause menu and result screen.
-2. Nav controls use `UISystem.navButton`: 26px radius, elevated, high-contrast
-   primary color — visible over every world background.
-3. **No access locking**: `ProgressionEngine.isLevelUnlocked/isGameUnlocked`
-   always return true. Progression drives rewards, recommendations (next-goal
-   banner), and celebration — never access. Discover → Tap → Play.
-4. The level-card **Play button is itself tappable** (not just the card).
+1. **One `NavSystem`** owns leave/back/home. Leave is immediate (speech, music,
+   and animation never gate a tap).
+2. **Top-left = BACK** (vector chevron). Back is always the previous screen:
+   gameplay → Level Select → world map. Result Back = Level Select.
+3. **Home is explicit** (vector house). Home = `MenuScreen`. Shown when it
+   differs from Back (gameplay pause, result chrome).
+4. **World map: first tap plays.** No hover-speech, no dim overlay. City name
+   and a “▶ Chơi” label are always visible. Hit-area is centered
+   (`setCenteredInput`). Decorative bunnies are not interactive.
+5. **No access locking** (unchanged): Discover → Tap → Play.
+6. Icons for nav/HUD actions are **vector `IconSystem` drawings**, not mixed
+   emoji.
 
 ## Consequences
 
-- Predictable navigation; no confusing lock states; zero access frustration.
-- Stars/levels remain as achievement markers (⭐n/9, 🥉🥈🥇), not gates.
+- Predictable stack: a child can always go Back to the last meaningful screen
+  or Home to the map.
+- Map cities behave like Play buttons.
+- Stars remain rewards, never gates.

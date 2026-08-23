@@ -1,7 +1,7 @@
 /**
- * ResultScreen.js — celebration & reward overlay shown after every session.
- * Priority order: Celebration → Score → Stars → Rewards → Progress → Next action.
- * Launched on top of the paused game scene by GameShell.finishSession().
+ * ResultScreen — award screen shown after every session.
+ * The child must see what they earned: stars, awards, NEW STICKERS, and a
+ * spoken line ("Sticker mới: …"). Rewards are visible immediately.
  */
 class ResultScreen extends Phaser.Scene {
     constructor() {
@@ -9,237 +9,190 @@ class ResultScreen extends Phaser.Scene {
     }
 
     init(data) {
-        this.rewards = data.rewards;
+        this.rewards = data.rewards || {};
         this.gameId = data.gameId;
         this.level = data.level;
     }
 
     create() {
-        const r = this.rewards;
+        const r = this.normalize(this.rewards);
+        this.rewards = r;
         const w = this.cameras.main.width;
         const h = this.cameras.main.height;
 
-        AudioEngine.attachScene(this);
-        const areaAudio = AudioConfig.AREA_AUDIO.result;
-        MusicEngine.playTheme(this, areaAudio.theme.key, areaAudio.theme.url, { volume: areaAudio.theme.volume });
+        try {
+            AudioEngine.attachScene(this);
+            const areaAudio = AudioConfig.AREA_AUDIO.result;
+            if (areaAudio) MusicEngine.playTheme(this, areaAudio.theme.key, areaAudio.theme.url, { volume: areaAudio.theme.volume });
+        } catch (e) { console.warn('Result audio', e); }
 
-        this.add.graphics().fillStyle(0x1a0f2e, 0.72).fillRect(0, 0, w, h);
+        this.add.graphics().fillStyle(0x1a0f2e, 0.78).fillRect(0, 0, w, h);
 
-        const pw = Math.min(560, w * 0.82);
-        const ph = Math.min(600, h * 0.9);
-        const px = w / 2 - pw / 2;
-        const py = h / 2 - ph / 2;
-
-        const panel = UISystem.panel(this, w / 2, h / 2, pw, ph, { borderWidth: 5 });
-        panel.setScale(0.9).setAlpha(0);
-        this.tweens.add({ targets: panel, scale: 1, alpha: 1, duration: DesignTokens.motion.uiTransition, ease: DesignTokens.motion.easeOut });
-
-        let y = py + 46;
-        const center = w / 2;
-        const steps = [];
-
-        // 1. Celebration
-        const title = this.add.text(center, y, r.stars >= 3 ? '🎉 TUYỆT VỜI!' : '🎉 GIỎI LẮM!', {
-            fontSize: '36px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold',
-            color: '#e65100', stroke: '#ffd700', strokeThickness: 2,
-        }).setOrigin(0.5).setScale(0);
-        steps.push(() => this.tweens.add({ targets: title, scale: 1, duration: 400, ease: 'Back.easeOut' }));
-        y += 52;
-
-        // Solved count (child-friendly "how many did I get")
-        const solved = this.add.text(center, y, `✅ Đúng ${r.metrics.correctAnswers}/${r.levelCfg.rounds} câu`, {
-            fontSize: '18px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold', color: '#33691e',
-        }).setOrigin(0.5).setAlpha(0);
-        steps.push(() => this.tweens.add({ targets: solved, alpha: 1, duration: 250 }));
-        y += 30;
-
-        // 2. Score count-up
-        const scoreText = this.add.text(center, y, 'Điểm: 0', {
-            fontSize: '30px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold', color: '#5c3a1e',
-        }).setOrigin(0.5).setAlpha(0);
-        steps.push(() => {
-            scoreText.setAlpha(1);
-            let lastTick = 0;
-            this.tweens.addCounter({
-                from: 0, to: r.score, duration: 900,
-                onUpdate: (tw) => {
-                    scoreText.setText(`Điểm: ${Math.round(tw.getValue())}`);
-                    const now = Date.now();
-                    if (now - lastTick > 90) { lastTick = now; AudioEngine.emit('ScoreTick'); }
-                },
-            });
+        NavSystem.mount(this, {
+            onBack: () => this.go('levels'),
+            onHome: () => this.go('map'),
+            depth: 950,
         });
+
+        const pw = Math.min(640, w * 0.9);
+        const ph = Math.min(640, h * 0.92);
+        UISystem.panel(this, w / 2, h / 2, pw, ph, { borderWidth: 5 });
+
+        const cx = w / 2;
+        let y = h / 2 - ph / 2 + 42;
+
+        this.add.text(cx, y, r.stars >= 3 ? '🎉  TUYỆT VỜI!' : '🎉  GIỎI LẮM!', {
+            fontSize: '32px', fontFamily: DesignTokens.typography.fontFamily, fontStyle: 'bold',
+            color: '#e65100',
+        }).setOrigin(0.5);
         y += 40;
 
-        if (r.isNewBest) {
-            const best = this.add.text(center, y, '🏅 Kỷ lục mới!', {
-                fontSize: '18px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold', color: '#c62828',
-            }).setOrigin(0.5).setAlpha(0);
-            steps.push(() => this.tweens.add({ targets: best, alpha: 1, duration: 250 }));
-            y += 28;
-        }
-
-        // 3. Stars
-        const starRow = this.add.container(center, y + 8);
-        const starObjs = [];
-        for (let i = 0; i < 3; i++) {
-            const s = this.add.text((i - 1) * 64, 0, i < r.stars ? '⭐' : '☆', {
-                fontSize: '52px',
-            }).setOrigin(0.5).setScale(0);
-            starObjs.push(s);
-            starRow.add(s);
-        }
-        steps.push(() => {
-            starObjs.forEach((s, i) => {
-                this.time.delayedCall(i * 280, () => {
-                    this.tweens.add({ targets: s, scale: 1, duration: 350, ease: 'Back.easeOut' });
-                    if (i < r.stars) {
-                        this.spawnStarBurst(center + (i - 1) * 64, y + 8);
-                        AudioEngine.emit('StarEarned', { index: i }); // synced with each star pop
-                        if (i === 2) this.time.delayedCall(300, () => AudioEngine.emit('ThreeStars'));
-                    }
-                });
-            });
-        });
-        y += 78;
-
-        // 4. XP bar + gems
-        const kl = r.knowledgeLevel;
-        const barW = pw * 0.7;
-        const xpLabel = this.add.text(center, y, `+${r.xp} XP · Cấp ${kl.level}`, {
-            fontSize: '20px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold', color: '#33691e',
-        }).setOrigin(0.5).setAlpha(0);
-        const barBg = this.add.graphics();
-        barBg.fillStyle(0x000000, 0.15);
-        barBg.fillRoundedRect(center - barW / 2, y + 16, barW, 16, 8);
-        const barFill = this.add.graphics();
-        steps.push(() => {
-            xpLabel.setAlpha(1);
-            AudioEngine.emit('XPGranted');
-            const ratio = Phaser.Math.Clamp(kl.intoLevel / kl.needed, 0, 1);
-            this.tweens.addCounter({
-                from: 0, to: ratio, duration: 800,
-                onUpdate: (tw) => {
-                    barFill.clear();
-                    barFill.fillGradientStyle(0x8bc34a, 0x8bc34a, 0x558b2f, 0x558b2f, 1);
-                    barFill.fillRoundedRect(center - barW / 2, y + 16, Math.max(10, barW * tw.getValue()), 16, 8);
-                },
-            });
-        });
-        y += 46;
-
-        if (r.leveledUp) {
-            const lu = this.add.text(center, y, `🆙 Lên cấp ${kl.level}!`, {
-                fontSize: '20px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold', color: '#6a1b9a',
-            }).setOrigin(0.5).setAlpha(0);
-            steps.push(() => {
-                lu.setScale(0.6);
-                this.tweens.add({ targets: lu, alpha: 1, scale: 1, duration: 350, ease: 'Back.easeOut' });
-                AudioEngine.emit('LevelUp');
-            });
-            y += 30;
-        }
-
-        const gems = this.add.text(center, y, `💎 +${r.gems} Đá Tri Thức`, {
-            fontSize: '20px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold', color: '#0277bd',
-        }).setOrigin(0.5).setAlpha(0);
-        steps.push(() => this.tweens.add({ targets: gems, alpha: 1, duration: 250 }));
+        this.add.text(cx, y, `Đúng ${r.metrics.correctAnswers}/${r.levelCfg.rounds} câu   ·   Điểm ${r.score}`, {
+            fontSize: '18px', fontFamily: DesignTokens.typography.fontFamily, fontStyle: 'bold',
+            color: DesignTokens.css.ink,
+        }).setOrigin(0.5);
         y += 36;
 
-        // 5. Awards
-        if (r.awards.length) {
-            const a = r.awards[0];
-            const awardText = this.add.text(center, y, `🏆 Huy hiệu mới: ${a.icon} ${a.name}`, {
-                fontSize: '19px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold', color: '#8e24aa',
-            }).setOrigin(0.5).setScale(0);
-            steps.push(() => {
-                this.tweens.add({ targets: awardText, scale: 1, duration: 350, ease: 'Back.easeOut' });
-                AudioEngine.emit('AwardUnlocked');
+        const starRow = this.add.container(cx, y);
+        for (let i = 0; i < 3; i++) {
+            const s = this.add.text((i - 1) * 58, 0, i < r.stars ? '⭐' : '☆', { fontSize: '46px' }).setOrigin(0.5);
+            starRow.add(s);
+            if (i < r.stars) this.time.delayedCall(80 * i, () => AudioEngine.emit('StarEarned', { index: i }));
+        }
+        y += 48;
+
+        this.add.text(cx, y, `+${r.xp} XP    💎 +${r.gems} Đá Tri Thức`, {
+            fontSize: '18px', fontFamily: DesignTokens.typography.fontFamily, fontStyle: 'bold',
+            color: DesignTokens.css.ink,
+        }).setOrigin(0.5);
+        y += 34;
+
+        // ── Award stage (always visible) ──
+        this.add.text(cx, y, 'Phần thưởng của bạn', {
+            fontSize: '20px', fontFamily: DesignTokens.typography.fontFamily, fontStyle: 'bold',
+            color: DesignTokens.css.primary,
+        }).setOrigin(0.5);
+        y += 28;
+
+        const cards = [];
+        r.stickers.forEach((s) => cards.push({ kind: 'sticker', icon: s.icon, name: s.name, tag: 'Sticker mới' }));
+        r.awards.forEach((a) => cards.push({ kind: 'award', icon: a.icon, name: a.name, tag: 'Huy hiệu mới' }));
+
+        if (!cards.length) {
+            const nxt = StickerEngine.nextHint(SaveEngine.load(), this.gameId);
+            cards.push({
+                kind: 'hint',
+                icon: nxt ? nxt.icon : '⭐',
+                name: nxt ? nxt.name : 'Sao vàng',
+                tag: nxt ? `Chơi tiếp để mở` : 'Phần thưởng',
             });
-            y += 32;
-            if (r.awards.length > 1) {
-                const more = this.add.text(center, y, `+${r.awards.length - 1} huy hiệu nữa!`, {
-                    fontSize: '15px', fontFamily: 'Comic Sans MS, Arial', color: '#8e24aa',
-                }).setOrigin(0.5).setAlpha(0);
-                steps.push(() => this.tweens.add({ targets: more, alpha: 1, duration: 250 }));
-                y += 24;
-            }
         }
 
-        // 6. Stickers
-        if (r.stickers.length) {
-            const row = this.add.container(center, y + 6);
-            const label = this.add.text(0, -22, '🎟 Sticker mới!', {
-                fontSize: '17px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold', color: '#e65100',
-            }).setOrigin(0.5);
-            row.add(label);
-            r.stickers.slice(0, 4).forEach((s, i) => {
-                const t = this.add.text((i - (Math.min(r.stickers.length, 4) - 1) / 2) * 56, 14, s.icon, {
-                    fontSize: '38px',
-                }).setOrigin(0.5).setScale(0);
-                row.add(t);
-                steps.push(() => this.time.delayedCall(120 * i, () => {
-                    this.tweens.add({ targets: t, scale: 1, duration: 350, ease: 'Back.easeOut' });
-                    AudioEngine.emit('StickerUnlocked', { rarity: s.rarity });
-                }));
-            });
-            y += 62;
-        }
+        const shown = cards.slice(0, 4);
+        const cardW = Math.min(168, (pw - 48) / shown.length - 10);
+        const cardH = 168;
+        const gap = 16;
+        const total = shown.length * cardW + (shown.length - 1) * gap;
+        shown.forEach((item, i) => {
+            const x = cx - total / 2 + cardW / 2 + i * (cardW + gap);
+            this.rewardCard(x, y + cardH / 2, cardW, cardH, item);
+        });
+        y += cardH + 36;
 
-        // 7. World progress
-        const wp = r.worldProgress;
-        const prog = this.add.text(center, y, `🗺 Thế Giới Tri Thức: ${wp.percent}% · ⭐ ${wp.stars}/${wp.maxStars}`, {
-            fontSize: '16px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold', color: '#4e342e',
-        }).setOrigin(0.5).setAlpha(0);
-        steps.push(() => this.tweens.add({ targets: prog, alpha: 1, duration: 250 }));
+        const speech = this.announceLine(r);
+        const bubble = UISystem.speechBubble(this, cx, y + 8, speech, {
+            maxWidth: pw - 80, fontSize: 18,
+        });
+        try { VoiceEngine.speakRaw(speech); } catch (e) { /* ignore */ }
+        if (r.stickers.length) AudioEngine.emit('StickerUnlocked', { rarity: r.stickers[0].rarity });
+        else if (r.awards.length) AudioEngine.emit('AwardUnlocked');
 
-        // 8. Buttons
-        const btnY = py + ph - 46;
+        const btnY = h / 2 + ph / 2 - 44;
         const profile = SaveEngine.load();
         const hasNext = this.level < 3 && ProgressionEngine.isLevelUnlocked(profile, this.gameId, this.level + 1);
         const buttons = [
-            { label: '🔄 Chơi lại', color: 0x42a5f5, cb: () => this.go('replay') },
+            { label: 'Chơi lại', color: 0x42a5f5, cb: () => this.go('replay') },
         ];
-        if (hasNext) buttons.push({ label: `▶ Màn ${this.level + 1}`, color: 0x66bb6a, cb: () => this.go('next') });
-        buttons.push({ label: '🗺 Bản đồ', color: 0xab47bc, cb: () => this.go('map') });
+        if (hasNext) buttons.push({ label: `Màn ${this.level + 1}`, color: 0x2bb673, cb: () => this.go('next') });
+        buttons.push({ label: 'Chọn màn', color: DesignTokens.colors.primary, cb: () => this.go('levels') });
 
         const bw = 150;
-        const gap = 18;
-        const totalW = buttons.length * bw + (buttons.length - 1) * gap;
+        const bgap = 14;
+        const tw = buttons.length * bw + (buttons.length - 1) * bgap;
         buttons.forEach((b, i) => {
-            const bx = w / 2 - totalW / 2 + bw / 2 + i * (bw + gap);
-            UISystem.primaryButton(this, bx, btnY, b.label, b.cb, { width: bw, height: 52, color: b.color, fontSize: 19 });
+            const bx = cx - tw / 2 + bw / 2 + i * (bw + bgap);
+            UISystem.primaryButton(this, bx, btnY, b.label, b.cb, { width: bw, height: 50, color: b.color, fontSize: 18 });
         });
 
-        // Play the reveal sequence (snappy: ~220ms per beat)
-        steps.forEach((fn, i) => this.time.delayedCall(300 + i * 220, fn));
+        void bubble;
     }
 
-    spawnStarBurst(x, y) {
-        for (let i = 0; i < 8; i++) {
-            const s = this.add.text(x, y, '✨', { fontSize: '16px' }).setOrigin(0.5);
-            const a = Phaser.Math.DegToRad(i * 45);
-            this.tweens.add({
-                targets: s, x: x + Math.cos(a) * 46, y: y + Math.sin(a) * 46,
-                alpha: 0, duration: 500, onComplete: () => s.destroy(),
-            });
+    normalize(raw) {
+        const r = raw || {};
+        const levelCfg = r.levelCfg || GameConfig.getLevel(this.gameId, this.level) || { rounds: 1 };
+        return {
+            stars: r.stars || 0,
+            score: r.score || 0,
+            xp: r.xp || 0,
+            gems: r.gems || 0,
+            awards: Array.isArray(r.awards) ? r.awards : [],
+            stickers: Array.isArray(r.stickers) ? r.stickers : [],
+            metrics: r.metrics || { correctAnswers: 0 },
+            levelCfg,
+            knowledgeLevel: r.knowledgeLevel || { level: 1, intoLevel: 0, needed: 100 },
+            leveledUp: !!r.leveledUp,
+            worldProgress: r.worldProgress || { percent: 0, stars: 0, maxStars: 54 },
+        };
+    }
+
+    announceLine(r) {
+        const bits = [];
+        if (r.stickers.length) {
+            bits.push(`Sticker mới: ${r.stickers.map((s) => s.name).join(', ')}`);
         }
+        if (r.awards.length) {
+            bits.push(`Huy hiệu mới: ${r.awards.map((a) => a.name).join(', ')}`);
+        }
+        if (bits.length) return bits.join('. ') + '!';
+        return 'Giỏi lắm! Phần thưởng đã vào album của bạn!';
+    }
+
+    rewardCard(x, y, cw, ch, item) {
+        const c = this.add.container(x, y);
+        const g = this.add.graphics();
+        g.fillStyle(DesignTokens.shadow.color, 0.18);
+        g.fillRoundedRect(-cw / 2, -ch / 2 + 5, cw, ch, 18);
+        g.fillStyle(DesignTokens.colors.surface, 1);
+        g.fillRoundedRect(-cw / 2, -ch / 2, cw, ch, 18);
+        g.lineStyle(4, item.kind === 'sticker' ? 0xe65100 : DesignTokens.colors.accent, 1);
+        g.strokeRoundedRect(-cw / 2, -ch / 2, cw, ch, 18);
+        c.add(g);
+        c.add(this.add.text(0, -ch / 2 + 22, item.tag, {
+            fontSize: '14px', fontFamily: DesignTokens.typography.fontFamily, fontStyle: 'bold',
+            color: item.kind === 'sticker' ? '#e65100' : DesignTokens.css.primary,
+        }).setOrigin(0.5));
+        c.add(this.add.text(0, 4, item.icon || '🎁', { fontSize: '52px' }).setOrigin(0.5));
+        c.add(this.add.text(0, ch / 2 - 28, item.name, {
+            fontSize: '15px', fontFamily: DesignTokens.typography.fontFamily, fontStyle: 'bold',
+            color: DesignTokens.css.ink, align: 'center', wordWrap: { width: cw - 16 },
+        }).setOrigin(0.5));
+        c.setScale(0.86);
+        this.tweens.add({ targets: c, scale: 1, duration: 320, ease: 'Back.easeOut' });
+        return c;
     }
 
     go(action) {
         const gameDef = GameConfig.get(this.gameId);
-        const sceneKey = gameDef.sceneKey;
-        AudioEngine.emit('Transition');
-        MusicEngine.stopTheme(250);
-        this.sound.stopAll();
-        this.scene.stop();
-        this.scene.stop(sceneKey);
-        if (action === 'replay') {
-            this.scene.start(sceneKey, { gameId: this.gameId, level: this.level });
-        } else if (action === 'next') {
-            this.scene.start(sceneKey, { gameId: this.gameId, level: this.level + 1 });
+        const sceneKey = gameDef ? gameDef.sceneKey : null;
+        if (sceneKey) this.scene.stop(sceneKey);
+        if (action === 'replay' && sceneKey) {
+            NavSystem.go(this, sceneKey, { gameId: this.gameId, level: this.level });
+        } else if (action === 'next' && sceneKey) {
+            NavSystem.go(this, sceneKey, { gameId: this.gameId, level: this.level + 1 });
+        } else if (action === 'levels') {
+            NavSystem.backToLevels(this, this.gameId);
         } else {
-            this.scene.start('MenuScreen');
+            NavSystem.home(this);
         }
     }
 }

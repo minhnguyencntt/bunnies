@@ -33,17 +33,15 @@ class LevelSelectScreen extends Phaser.Scene {
         }
         this.add.graphics().fillStyle(0x1a0f2e, 0.55).fillRect(0, 0, w, h);
 
-        // Header
-        this.add.text(w / 2, 70, `${gameDef.icon} ${gameDef.name}`, {
-            fontSize: '38px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold',
-            color: '#FFD700', stroke: '#000', strokeThickness: 3,
+        this.add.text(w / 2, 64, `${gameDef.icon}  ${gameDef.name}`, {
+            fontSize: '34px', fontFamily: DesignTokens.typography.fontFamily, fontStyle: 'bold',
+            color: DesignTokens.css.surface, stroke: DesignTokens.css.ink, strokeThickness: 4,
         }).setOrigin(0.5);
-        this.add.text(w / 2, 112, gameDef.educationalGoal, {
-            fontSize: '17px', fontFamily: 'Comic Sans MS, Arial', color: '#fff',
-            stroke: '#000', strokeThickness: 2,
+        this.add.text(w / 2, 104, gameDef.educationalGoal, {
+            fontSize: '16px', fontFamily: DesignTokens.typography.fontFamily,
+            color: DesignTokens.css.surface,
         }).setOrigin(0.5);
 
-        // Level cards
         const cardW = Math.min(300, w * 0.26);
         const cardH = Math.min(340, h * 0.52);
         const gap = 30;
@@ -55,38 +53,35 @@ class LevelSelectScreen extends Phaser.Scene {
             this.createLevelCard(x, y, cardW, cardH, gameDef, gp, level, profile);
         }
 
-        // Top-left = BACK to the world map (previous screen)
-        UISystem.navButton(this, 60, 50, DesignTokens.icons.back, () => {
-            AudioEngine.emit('Transition');
-            this.scene.start('MenuScreen');
-        }).setDepth(10);
+        NavSystem.mount(this, {
+            onBack: () => NavSystem.home(this),
+            depth: 20,
+        });
     }
 
     createLevelCard(x, y, cw, ch, gameDef, gp, level, profile) {
         const cfg = gameDef.levels[level];
         const lp = gp.levels[level];
-        const unlocked = true; // no access locking — Discover → Tap → Play
-
         const c = this.add.container(x, y);
         const bg = this.add.graphics();
-        bg.fillStyle(unlocked ? 0xfff8dc : 0x9e9e9e, unlocked ? 1 : 0.85);
-        bg.fillRoundedRect(-cw / 2, -ch / 2, cw, ch, 22);
-        bg.lineStyle(4, unlocked ? 0xffd700 : 0x757575, 1);
-        bg.strokeRoundedRect(-cw / 2, -ch / 2, cw, ch, 22);
+        bg.fillStyle(DesignTokens.colors.surface, 1);
+        bg.fillRoundedRect(-cw / 2, -ch / 2, cw, ch, DesignTokens.radius.lg);
+        bg.lineStyle(4, DesignTokens.colors.accent, 1);
+        bg.strokeRoundedRect(-cw / 2, -ch / 2, cw, ch, DesignTokens.radius.lg);
         c.add(bg);
 
         c.add(this.add.text(0, -ch / 2 + 34, `Màn ${level}`, {
-            fontSize: '26px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold',
-            color: unlocked ? '#5c3a1e' : '#616161',
+            fontSize: '26px', fontFamily: DesignTokens.typography.fontFamily, fontStyle: 'bold',
+            color: DesignTokens.css.ink,
         }).setOrigin(0.5));
 
         c.add(this.add.text(0, -ch / 2 + 68, `${cfg.label.icon} ${cfg.label.rank}`, {
-            fontSize: '18px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold',
-            color: unlocked ? '#8e24aa' : '#616161',
+            fontSize: '18px', fontFamily: DesignTokens.typography.fontFamily, fontStyle: 'bold',
+            color: DesignTokens.css.primary,
         }).setOrigin(0.5));
 
         c.add(this.add.text(0, -ch / 2 + 104, cfg.title, {
-            fontSize: '17px', fontFamily: 'Comic Sans MS, Arial', color: unlocked ? '#4e342e' : '#757575',
+            fontSize: '17px', fontFamily: DesignTokens.typography.fontFamily, color: DesignTokens.css.ink,
             wordWrap: { width: cw - 30 }, align: 'center',
         }).setOrigin(0.5));
 
@@ -103,18 +98,24 @@ class LevelSelectScreen extends Phaser.Scene {
         }
         // The PLAY button itself is directly tappable (not just the card)
         const startLevel = () => {
-            AudioEngine.emit('Transition');
-            this.scene.start(gameDef.sceneKey, { gameId: this.gameId, level });
+            NavSystem.go(this, gameDef.sceneKey, { gameId: this.gameId, level });
         };
-        const playBtn = UISystem.primaryButton(this, 0, ch / 2 - 43, '▶ Chơi', startLevel, { width: 140, height: 46 });
+        const playBtn = UISystem.playButton(this, 0, ch / 2 - 43, 'Chơi', startLevel, {
+            width: 168, height: 54, fontSize: 22,
+        });
         c.add(playBtn);
 
         setCenteredInput(c, cw, ch);
         c.on('pointerover', () => c.setScale(1.04));
         c.on('pointerout', () => c.setScale(1));
         c.on('pointerdown', startLevel);
-        c.setScale(0);
-        this.tweens.add({ targets: c, scale: 1, duration: 300, delay: level * 120, ease: 'Back.easeOut' });
+        c.setAlpha(0);
+        this.tweens.add({
+            targets: c, alpha: 1, y: y - 8,
+            duration: DesignTokens.motion.uiTransition,
+            delay: (level - 1) * 80,
+            ease: DesignTokens.motion.easeOut,
+        });
     }
 }
 

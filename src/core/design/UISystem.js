@@ -5,6 +5,16 @@
  *
  * Never hand-style a one-off button/card — extend these factories instead.
  */
+function setCenteredInput(obj, width, height, opts = {}) {
+    obj.setSize(width, height);
+    obj.setInteractive(Object.assign({
+        hitArea: new Phaser.Geom.Rectangle(-width / 2, -height / 2, width, height),
+        hitAreaCallback: Phaser.Geom.Rectangle.Contains,
+        useHandCursor: true,
+    }, opts));
+    return obj;
+}
+
 const UISystem = {
     T: () => DesignTokens,
 
@@ -57,6 +67,17 @@ const UISystem = {
         return c;
     },
 
+    /** The one Play / Chơi control — vivid green, never look disabled. */
+    playButton(scene, x, y, label, onTap, opts = {}) {
+        return this.primaryButton(scene, x, y, label || 'Chơi', onTap, {
+            width: opts.width || 168,
+            height: opts.height || 54,
+            fontSize: opts.fontSize || 22,
+            color: 0x2bb673,
+            ...opts,
+        });
+    },
+
     /** Secondary action: Back / Settings / optional. */
     secondaryButton(scene, x, y, label, onTap, opts = {}) {
         const w = opts.width || 180;
@@ -74,36 +95,76 @@ const UISystem = {
         return c;
     },
 
+    /** Soft storybook info chip (score, stars, level). */
+    chip(scene, x, y, label, opts = {}) {
+        const h = opts.height || 40;
+        const pad = opts.pad ?? 18;
+        const t = scene.add.text(0, 0, label, {
+            fontSize: (opts.fontSize || 16) + 'px',
+            fontFamily: DesignTokens.typography.fontFamily, fontStyle: 'bold',
+            color: opts.textColor || DesignTokens.css.ink,
+        }).setOrigin(0.5);
+        const w = Math.max(opts.minWidth || 72, t.width + pad * 2);
+        const c = scene.add.container(x, y);
+        const g = scene.add.graphics();
+        g.fillStyle(DesignTokens.shadow.color, 0.18);
+        g.fillRoundedRect(-w / 2, -h / 2 + 3, w, h, h / 2);
+        g.fillStyle(opts.fill ?? DesignTokens.colors.surface, opts.alpha ?? 0.96);
+        g.fillRoundedRect(-w / 2, -h / 2, w, h, h / 2);
+        g.lineStyle(2, opts.border ?? DesignTokens.colors.accent, 0.85);
+        g.strokeRoundedRect(-w / 2, -h / 2, w, h, h / 2);
+        c.add(g);
+        c.add(t);
+        c.listText = t;
+        c.setLabel = (s) => {
+            t.setText(s);
+            const nw = Math.max(opts.minWidth || 72, t.width + pad * 2);
+            g.clear();
+            g.fillStyle(DesignTokens.shadow.color, 0.18);
+            g.fillRoundedRect(-nw / 2, -h / 2 + 3, nw, h, h / 2);
+            g.fillStyle(opts.fill ?? DesignTokens.colors.surface, opts.alpha ?? 0.96);
+            g.fillRoundedRect(-nw / 2, -h / 2, nw, h, h / 2);
+            g.lineStyle(2, opts.border ?? DesignTokens.colors.accent, 0.85);
+            g.strokeRoundedRect(-nw / 2, -h / 2, nw, h, h / 2);
+        };
+        return c;
+    },
+
     /** Icon button: sound / settings / close / home / pause / hint. */
     iconButton(scene, x, y, icon, onTap, opts = {}) {
-        const r = opts.radius || 23;
+        const r = opts.radius || 24;
         const c = scene.add.container(x, y);
         const g = scene.add.graphics();
         g.fillStyle(DesignTokens.shadow.color, DesignTokens.shadow.alpha);
-        g.fillCircle(0, 3, r);
+        g.fillCircle(0, 4, r);
         g.fillStyle(opts.color ?? DesignTokens.colors.secondary, 1);
         g.fillCircle(0, 0, r);
-        g.fillStyle(0xffffff, 0.25);
-        g.fillEllipse(-r * 0.25, -r * 0.4, r * 1.1, r * 0.55);
-        g.lineStyle(2.5, 0xffffff, 0.85);
+        g.fillStyle(0xffffff, 0.28);
+        g.fillEllipse(-r * 0.22, -r * 0.38, r * 1.05, r * 0.5);
+        g.lineStyle(3, 0xffffff, 0.95);
         g.strokeCircle(0, 0, r);
         c.add(g);
-        c.add(scene.add.text(0, 0, icon, { fontSize: (opts.fontSize || 20) + 'px' }).setOrigin(0.5));
+        const glyphSize = opts.iconSize || Math.round(r * 0.85);
+        if (typeof IconSystem !== 'undefined' && typeof icon === 'string' && !/[\u0080-\uFFFF]/.test(icon) && icon.length < 16) {
+            c.add(IconSystem.make(scene, icon, glyphSize, 0xffffff));
+        } else {
+            c.add(scene.add.text(0, 0, icon, { fontSize: (opts.fontSize || 20) + 'px' }).setOrigin(0.5));
+        }
         setCenteredInput(c, Math.max(r * 2, DesignTokens.touch.minTarget), Math.max(r * 2, DesignTokens.touch.minTarget));
         c.on('pointerdown', () => { this.press(scene, c); AudioEngine.emit('UITap'); onTap(); });
-        c.on('pointerover', () => c.setScale(1.1));
+        c.on('pointerover', () => c.setScale(1.08));
         c.on('pointerout', () => c.setScale(1));
         return c;
     },
 
     /**
      * Navigation button (Back/Home) — top-left standard. Bigger, elevated,
-     * high-contrast so it stays visible over every world background.
+     * high-contrast cream disc so it stays visible over every world.
      */
     navButton(scene, x, y, icon, onTap, opts = {}) {
         return this.iconButton(scene, x, y, icon, onTap, {
-            radius: 26,
-            fontSize: 22,
+            radius: 28,
+            iconSize: 22,
             color: opts.color ?? DesignTokens.colors.primary,
             ...opts,
         });

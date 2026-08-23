@@ -43,6 +43,14 @@
         console.error('GameShell (Game Engine) not defined!');
         return;
     }
+    if (typeof CandyGardenScreen === 'undefined') {
+        console.error('CandyGardenScreen not defined!');
+        return;
+    }
+    if (typeof ForestAdventureScreen === 'undefined') {
+        console.error('ForestAdventureScreen not defined!');
+        return;
+    }
     
     // Game Configuration
     const config = {
@@ -82,7 +90,9 @@
             CountingForestScreen,
             MirrorCityScreen,
             SubtractionHillScreen,
-            OrientationForestScreen
+            OrientationForestScreen,
+            CandyGardenScreen,
+            ForestAdventureScreen
         ],
         input: {
             activePointers: 3 // Support multiple touch points

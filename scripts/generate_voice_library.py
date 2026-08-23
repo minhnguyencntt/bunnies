@@ -72,7 +72,7 @@ async def gen(line_id: str, line: dict, force: bool) -> bool:
 
 
 async def main_async(force: bool) -> int:
-    data = json.loads(MANIFEST.read_text(encoding="utf-8")) if MANIFEST.exists() else dump_manifest()
+    data = dump_manifest()  # AudioConfig.js is the source of truth — always re-dump
     lines = data.get("lines", {})
     sem = asyncio.Semaphore(6)
 

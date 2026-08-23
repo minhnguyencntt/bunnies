@@ -466,6 +466,60 @@
       "voice": "narrator",
       "game": "orientation_forest",
       "level": 3
+    },
+    "instr_candy_garden_1": {
+      "text": {
+        "vi": "Đếm kẹo hai bên, rồi chọn đáp án đúng nhé!",
+        "en": "Count the candies on both sides, then pick the right answer!"
+      },
+      "voice": "narrator",
+      "game": "candy_garden",
+      "level": 1
+    },
+    "instr_candy_garden_2": {
+      "text": {
+        "vi": "Gộp hai nhóm kẹo lại và chọn tổng đúng nào!",
+        "en": "Combine the two candy groups and pick the right total!"
+      },
+      "voice": "narrator",
+      "game": "candy_garden",
+      "level": 2
+    },
+    "instr_candy_garden_3": {
+      "text": {
+        "vi": "Những phép cộng khó hơn đang chờ bạn. Sẵn sàng chưa?",
+        "en": "Harder additions await. Ready?"
+      },
+      "voice": "narrator",
+      "game": "candy_garden",
+      "level": 3
+    },
+    "instr_forest_adventure_1": {
+      "text": {
+        "vi": "Nấm bay đi mất rồi! Đếm xem còn lại bao nhiêu nhé!",
+        "en": "Some mushrooms flew away! Count how many are left!"
+      },
+      "voice": "narrator",
+      "game": "forest_adventure",
+      "level": 1
+    },
+    "instr_forest_adventure_2": {
+      "text": {
+        "vi": "Bớt đi rồi đếm phần còn lại nào!",
+        "en": "Take some away, then count what is left!"
+      },
+      "voice": "narrator",
+      "game": "forest_adventure",
+      "level": 2
+    },
+    "instr_forest_adventure_3": {
+      "text": {
+        "vi": "Đêm trong rừng thật bí ẩn. Tính xem còn lại bao nhiêu!",
+        "en": "The forest night is mysterious. Work out how many remain!"
+      },
+      "voice": "narrator",
+      "game": "forest_adventure",
+      "level": 3
     }
   }
 }

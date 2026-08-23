@@ -4,6 +4,7 @@
  *
  *   forest  — gentle wind, bird chirps, magical sparkle pings
  *   mystery — low night wind, soft chimes, distant creaks
+ *   candy   — soft breeze, sugary sparkle pings, bubble pops
  *
  * All sources route through the ambient channel (own volume setting,
  * ducked under voice). No audio assets required.
@@ -24,7 +25,9 @@ const AmbienceEngine = {
 
         this._startWind(profile === 'mystery'
             ? { freq: 220, gain: 0.05, lfoHz: 0.07 }
-            : { freq: 420, gain: 0.04, lfoHz: 0.11 });
+            : profile === 'candy'
+                ? { freq: 520, gain: 0.03, lfoHz: 0.14 }
+                : { freq: 420, gain: 0.04, lfoHz: 0.11 });
 
         this._scheduler = setInterval(() => this._randomEvent(), 900);
     },
@@ -76,7 +79,23 @@ const AmbienceEngine = {
         } else if (this.profile === 'mystery') {
             if (r < 0.18) this._chime();
             else if (r < 0.26) this._creak();
+        } else if (this.profile === 'candy') {
+            if (r < 0.3) this._sparklePing();
+            else if (r < 0.4) this._bubblePop();
         }
+    },
+
+    _bubblePop() {
+        const t = this.ctx.currentTime;
+        const o = this.ctx.createOscillator();
+        const g = this.ctx.createGain();
+        o.type = 'sine';
+        o.frequency.setValueAtTime(500 + Math.random() * 300, t);
+        o.frequency.exponentialRampToValueAtTime(1100 + Math.random() * 400, t + 0.08);
+        g.gain.setValueAtTime(0.03, t);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.1);
+        o.connect(g).connect(this.out);
+        o.start(t); o.stop(t + 0.12);
     },
 
     _birdChirp() {

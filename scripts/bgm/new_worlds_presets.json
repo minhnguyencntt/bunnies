@@ -1,0 +1,51 @@
+{
+  "version": 1,
+  "presets": {
+    "candy_garden": {
+      "description": "Vườn Kẹo Ngọt — cheerful, magical, playful (candy world)",
+      "output": "src/screens/candy_garden/assets/audio/bgm/bgm.wav",
+      "duration_sec": 32,
+      "chords": {
+        "mode": "repeat",
+        "steps": [
+          { "notes": ["C3", "E3", "G3"], "sec": 4 },
+          { "notes": ["F3", "A3", "C4"], "sec": 4 },
+          { "notes": ["D3", "F3", "A3"], "sec": 4 },
+          { "notes": ["G3", "B3", "D4"], "sec": 4 }
+        ]
+      },
+      "melody_patterns": [
+        ["E4", "G4", "A4", "C5", "A4", "G4", "E4", "G4"],
+        ["F4", "A4", "C5", "D5", "C5", "A4", "F4", "G4"],
+        ["D4", "F4", "A4", "D5", "A4", "F4", "D4", "E4"]
+      ],
+      "melody_note_gain": 0.11,
+      "sparkle_interval": 2.5,
+      "sparkle_gain": 0.13,
+      "normalize_peak": 0.8
+    },
+    "forest_adventure": {
+      "description": "Rừng Diệu Kỳ — nature-inspired, calm but energetic (magical forest)",
+      "output": "src/screens/forest_adventure/assets/audio/bgm/bgm.wav",
+      "duration_sec": 36,
+      "chords": {
+        "mode": "repeat",
+        "steps": [
+          { "notes": ["A2", "C3", "E3"], "sec": 6 },
+          { "notes": ["F3", "A3", "C4"], "sec": 6 },
+          { "notes": ["C3", "E3", "G3"], "sec": 6 },
+          { "notes": ["G3", "B3", "D4"], "sec": 6 }
+        ]
+      },
+      "melody_patterns": [
+        ["A3", "C4", "E4", "A4", "E4", "C4", "A3", "B3"],
+        ["F3", "A3", "C4", "F4", "C4", "A3", "F3", "G3"],
+        ["E4", "G4", "B4", "E5", "B4", "G4", "E4", "D4"]
+      ],
+      "melody_note_gain": 0.1,
+      "sparkle_interval": 3.5,
+      "sparkle_gain": 0.1,
+      "normalize_peak": 0.78
+    }
+  }
+}

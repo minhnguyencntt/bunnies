@@ -120,3 +120,13 @@ src/screens/<game>/assets/audio/
 
 Regenerate: `python3 scripts/generate_voice_library.py` ·
 `python3 scripts/generate_audio.py bgm all --presets-file scripts/bgm/reward_album_presets.json`
+
+## New world audio (Candy Garden & Forest Adventure)
+
+| World | Theme | Ambience | Instruction voice |
+|---|---|---|---|
+| 🍭 Vườn Kẹo Ngọt | `bgm_candy_garden` — bright, playful, sugary | `candy`: soft breeze, sparkle pings, bubble pops | 3 level lines (instr_candy_garden_1–3) |
+| 🌳 Rừng Diệu Kỳ | `bgm_forest_adventure` — nature, calm but energetic | `forest`: wind, birds, sparkles + fireflies | 3 level lines (instr_forest_adventure_1–3) |
+
+Guided-retry mode uses the educational counting voice (count_1..20) synchronized
+with each object highlight. All reward/feedback sounds come from the shared engine.

@@ -27,12 +27,13 @@ const WORLD_MAP_CITIES = [
     },
     {
         id: 3,
-        name: 'Thung lũng Phép Cộng',
+        name: 'Vườn Kẹo Ngọt',
         x: 510,
         y: 330,
-        description: 'Giải các bài toán cộng đơn giản dành cho trẻ em.',
+        description: 'Gộp các nhóm kẹo ngọt để học phép cộng cùng Bunnine.',
         puzzleTheme: 'Phép cộng',
-        visible: false // Ẩn marker trên bản đồ (chưa có màn chơi)
+        screenKey: 'CandyGardenScreen',
+        visible: true
     },
     {
         id: 4,
@@ -46,12 +47,13 @@ const WORLD_MAP_CITIES = [
     },
     {
         id: 5,
-        name: 'Thành phố Hình Khối',
+        name: 'Rừng Diệu Kỳ',
         x: 760,
         y: 300,
-        description: 'Nhận biết hình vuông, hình tròn, tam giác và ghép chúng lại.',
-        puzzleTheme: 'Hình học cơ bản',
-        visible: false
+        description: 'Khám phá khu rừng và học phép trừ cùng đom đóm.',
+        puzzleTheme: 'Phép trừ',
+        screenKey: 'ForestAdventureScreen',
+        visible: true
     },
     {
         id: 6,

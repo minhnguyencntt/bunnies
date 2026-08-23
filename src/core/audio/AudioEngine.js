@@ -118,7 +118,11 @@ const AudioEngine = {
      */
     emit(event, data = {}) {
         const handlers = this._listeners[event];
-        if (handlers) handlers.forEach(fn => fn(data));
+        if (!handlers) return;
+        // Audio must never crash gameplay — isolate handler failures
+        handlers.forEach(fn => {
+            try { fn(data); } catch (e) { console.warn(`AudioEvents: handler for ${event} failed`, e); }
+        });
     },
 
     /** Category rate-limit: returns true if the category may sound now. */

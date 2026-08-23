@@ -69,20 +69,26 @@ const IntroHelper = {
             voice.play();
         }
 
-        // Nút bỏ qua — góc phải dưới, dễ chạm
-        skipBtn = scene.add.container(w - 92, h - 34).setDepth(900);
+        // Nút "Chơi ngay" — to, rõ ràng, có glow nhấp nháy để trẻ biết có thể vào chơi
+        skipBtn = scene.add.container(w - 120, h - 52).setDepth(900);
         const btnBg = scene.add.graphics();
-        btnBg.fillStyle(0x9B7EDE, 0.95);
-        btnBg.fillRoundedRect(-78, -24, 156, 48, 24);
-        btnBg.lineStyle(3, 0xFFFFFF, 0.95);
-        btnBg.strokeRoundedRect(-78, -24, 156, 48, 24);
+        btnBg.fillStyle(0x66BB6A, 1);
+        btnBg.fillRoundedRect(-95, -30, 190, 60, 30);
+        btnBg.lineStyle(4, 0xFFFFFF, 0.95);
+        btnBg.strokeRoundedRect(-95, -30, 190, 60, 30);
         skipBtn.add(btnBg);
-        skipBtn.add(scene.add.text(0, 0, 'Bỏ qua ⏭', {
-            fontSize: '20px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold',
-            color: '#FFFFFF', stroke: '#5C3A8C', strokeThickness: 2,
+        const glow = scene.add.graphics();
+        glow.lineStyle(6, 0xFFF59D, 0.8);
+        glow.strokeRoundedRect(-99, -34, 198, 68, 34);
+        skipBtn.add(glow);
+        scene.tweens.add({ targets: glow, alpha: 0.25, duration: 700, yoyo: true, repeat: -1 });
+        skipBtn.add(scene.add.text(0, 0, 'Chơi ngay ▶', {
+            fontSize: '24px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold',
+            color: '#FFFFFF', stroke: '#2E7D32', strokeThickness: 3,
         }).setOrigin(0.5));
-        skipBtn.setSize(156, 48);
-        skipBtn.setInteractive({ useHandCursor: true });
+        skipBtn.setSize(190, 60);
+        skipBtn.setInteractive(new Phaser.Geom.Rectangle(-95, -30, 190, 60), Phaser.Geom.Rectangle.Contains);
+        skipBtn.input.cursor = 'pointer';
         skipBtn.on('pointerdown', finish);
         skipBtn.on('pointerover', () => skipBtn.setScale(1.08));
         skipBtn.on('pointerout', () => skipBtn.setScale(1));

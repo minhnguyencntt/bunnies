@@ -171,8 +171,9 @@ const MusicEngine = {
 
     _celebrate() {
         if (!this.ctx) return;
+        this._ensureScheduler(true); // creates layer gains if they don't exist yet
         const arp = this._layerGains.arp;
-        this._ensureScheduler(true);
+        if (!arp) return;
         const t = this.ctx.currentTime;
         arp.gain.cancelScheduledValues(t);
         arp.gain.setValueAtTime(0.9, t);

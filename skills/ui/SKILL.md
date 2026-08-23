@@ -16,14 +16,18 @@ Build any UI element with the one Bunnies visual language.
 | `progressBar` | XP / world progress (animated fill) |
 | `speechBubble` | all character speech (consistent tail + cream card) |
 
-All use `DesignTokens` and the global press physics (`1.0→0.94→1.03→1.0`).
+All use `DesignTokens` and `UISystem.bindTap`:
+IDLE → PRESSED (immediate scale) → TRIGGERED → ACTION.
+The bounce tween is async and never delays the callback. Hover must not
+override a pressed button. Navigation duplicates are ignored by `NavSystem.begin`.
 
 ## Rules
 
 - Never hand-draw a one-off button/card — extend UISystem.
 - Hit areas: containers need `setCenteredInput` (UISystem does it for you).
 - Touch targets ≥ 46px (icon) / ≥ 96px (answers).
-- Every tap: press animation + `AudioEngine.emit('UITap')` (built into factories).
+- Every tap: immediate press + `AudioEngine.emit('UITap')` (built into factories).
+- Never debounce taps with `sleep` / `delayedCall`. Use action transactions.
 - Disabled/locked states: gray + 🔒 + explain how to unlock.
 
 ## Anti-patterns

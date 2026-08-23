@@ -2,6 +2,21 @@
 
 Meaningful architectural/design decisions only — not trivial code changes.
 
+## 2026-08-23 (completion engine & instant interaction)
+
+### Changed
+- `CompletionEngine` owns the session-end state machine for every game
+- `RewardPresentationEngine` persists first, then presents real reward art
+- Shared `ResultScreen` always shows achievement, result, reward, one primary next action
+- Last correct answer opens completion immediately (removed 1600ms + 450ms waits)
+- `UISystem.bindTap` press state is immediate; hover no longer fights the press tween
+- `NavSystem` uses an action transaction instead of debounce sleep
+
+### Reason
+Completion felt cut off (last question → bunny hop, no reward, no next step).
+Buttons sometimes missed or delayed because press tweens and hover scaled the
+same object. These are engine problems, not per-screen bugs.
+
 ## 2026-08-23 (unified navigation & calm HUD)
 
 ### Changed

@@ -47,6 +47,8 @@ fs.mkdirSync(path.dirname(OUT), { recursive: true });
     console.log('ui', ui);
     if (!/Sticker mới/.test(ui)) throw new Error('award screen missing Sticker mới');
     if (!/Huy hiệu mới|Phần thưởng/.test(ui)) throw new Error('award screen missing huy hiệu');
+    if (!/TIẾP TỤC|CHƠI LẠI|CHỌN MÀN|VỀ NHÀ/.test(ui)) throw new Error('award screen missing next action');
+    if (!/Bạn muốn làm gì tiếp/.test(ui)) throw new Error('award screen dead-end');
     if (!info.stickers.length) throw new Error('engine granted no stickers');
     if (errors.length) throw new Error(errors.join(' | '));
     console.log('PASS award screen', OUT);

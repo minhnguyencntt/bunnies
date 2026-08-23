@@ -17,8 +17,12 @@ Gameplay metrics (AnalyticsEngine)
 
 - Child-friendly: hints cost a few points, never remove rewards.
 - No random loot: every sticker/award shows exactly how to earn it.
-- Result screen priority: celebration → solved count → score → stars → XP →
-  gems → awards → stickers → world progress → actions.
-- Reward audio is synchronized with the reveal animation (see audio-system.md).
+- Completion is owned by `CompletionEngine.completeGame()` — games must not
+  build their own result/reward screens.
+- `RewardPresentationEngine` persists first, then presents real sticker/award
+  artwork. Never say "added to album" unless persistence verified.
+- Result screen contract: achievement · result · visual reward · one primary
+  next action · secondary navigation. Buttons are enabled immediately.
+- Reward audio/animation are fire-and-forget (see audio-system.md).
 - New reward types need: visual identity + animation + sound + celebration +
   progress feedback — and a condition in AwardEngine/StickerEngine.

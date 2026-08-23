@@ -18,8 +18,19 @@ const NavSystem = {
     HOME: 'MenuScreen',
     LEVELS: 'LevelSelectScreen',
 
+    /**
+     * Claim a one-shot navigation on this scene. Duplicate taps are ignored
+     * without sleeping — the first action already started.
+     */
+    begin(scene) {
+        if (!scene || scene._navTx) return false;
+        scene._navTx = true;
+        return true;
+    },
+
     /** Instant scene change. Never awaits audio or tweens. */
     go(scene, target, data) {
+        if (!this.begin(scene)) return false;
         try { if (typeof AudioEngine !== 'undefined') AudioEngine.emit('Transition'); } catch (e) { /* ignore */ }
         try { if (typeof VoiceEngine !== 'undefined') VoiceEngine.stopCurrent(); } catch (e) { /* ignore */ }
         try { if (typeof AmbienceEngine !== 'undefined') AmbienceEngine.stop(); } catch (e) { /* ignore */ }
@@ -35,9 +46,10 @@ const NavSystem = {
 
         if (target === '__close__') {
             scene.scene.stop();
-            return;
+            return true;
         }
         scene.scene.start(target, data || {});
+        return true;
     },
 
     backToLevels(scene, gameId) {

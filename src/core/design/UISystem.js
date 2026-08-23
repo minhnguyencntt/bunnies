@@ -350,9 +350,9 @@ const UISystem = {
         c.add(g);
 
         const spriteKey = art.spriteKey && scene.textures.exists(art.spriteKey) ? art.spriteKey : null;
-        if (spriteKey && !locked) {
+        const src = spriteKey ? this.textureSource(scene, spriteKey) : null;
+        if (spriteKey && src && !locked) {
             const img = scene.add.image(0, medalY, spriteKey);
-            const src = scene.textures.get(spriteKey).getSourceImage();
             img.setDisplaySize(spec.glyph, spec.glyph * (src.height / src.width));
             c.add(img);
         } else {
@@ -418,6 +418,17 @@ const UISystem = {
             scene.tweens.add({ targets: c, scale: 1, duration: 300, ease: 'Back.easeOut' });
         }
         return c;
+    },
+
+    textureSource(scene, key) {
+        try {
+            if (!key || !scene || !scene.textures || !scene.textures.exists(key)) return null;
+            const src = scene.textures.get(key).getSourceImage();
+            if (!src || !src.width || !src.height) return null;
+            return src;
+        } catch (e) {
+            return null;
+        }
     },
 
     /** Speech bubble — consistent across all characters. */

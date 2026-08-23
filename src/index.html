@@ -213,9 +213,8 @@
         window.addEventListener('error', function(e) {
             console.error('Game error:', e.error);
             const loadingDiv = document.getElementById('loading');
-            if (loadingDiv) {
+            if (loadingDiv && !loadingDiv.classList.contains('hidden')) {
                 loadingDiv.textContent = 'Lỗi: ' + (e.error ? e.error.message : 'Unknown error');
-                loadingDiv.classList.remove('hidden');
                 loadingDiv.style.color = '#ff0000';
             }
         });

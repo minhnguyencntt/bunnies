@@ -65,27 +65,32 @@ class ResultScreen extends Phaser.Scene {
         const stageMid = (stageTop + stageBottom) / 2;
         const sideBySide = extras.length > 0 && pw >= 620;
 
-        if (hero) {
-            UISystem.awardCard(this, cx, stageMid, hero, { size: 'hero' });
-        } else {
-            this.drawValuesHero(cx, stageMid, r);
-        }
-
-        if (extras.length) {
-            if (sideBySide) {
-                const xs = extras.length === 1 ? [cx + 210] : [cx - 210, cx + 210];
-                extras.forEach((item, i) => {
-                    UISystem.awardCard(this, xs[i], stageMid, item, { size: 'support' });
-                });
+        try {
+            if (hero) {
+                UISystem.awardCard(this, cx, stageMid, hero, { size: 'hero' });
             } else {
-                const cardW = 120;
-                const gap = 14;
-                const total = extras.length * cardW + (extras.length - 1) * gap;
-                extras.forEach((item, i) => {
-                    const x = cx - total / 2 + cardW / 2 + i * (cardW + gap);
-                    UISystem.awardCard(this, x, stageBottom - 8, item, { size: 'support' });
-                });
+                this.drawValuesHero(cx, stageMid, r);
             }
+
+            if (extras.length) {
+                if (sideBySide) {
+                    const xs = extras.length === 1 ? [cx + 210] : [cx - 210, cx + 210];
+                    extras.forEach((item, i) => {
+                        UISystem.awardCard(this, xs[i], stageMid, item, { size: 'support' });
+                    });
+                } else {
+                    const cardW = 120;
+                    const gap = 14;
+                    const total = extras.length * cardW + (extras.length - 1) * gap;
+                    extras.forEach((item, i) => {
+                        const x = cx - total / 2 + cardW / 2 + i * (cardW + gap);
+                        UISystem.awardCard(this, x, stageBottom - 8, item, { size: 'support' });
+                    });
+                }
+            }
+        } catch (e) {
+            console.error('Award card render', e);
+            this.drawValuesHero(cx, stageMid, r);
         }
 
         this.drawRewardValues(cx, valuesY, r);
@@ -154,10 +159,10 @@ class ResultScreen extends Phaser.Scene {
         const key = this.textures.exists('spr_bunny_hop')
             ? 'spr_bunny_hop'
             : (this.textures.exists('spr_bunny_happy') ? 'spr_bunny_happy' : null);
-        if (!key) return;
+        const src = key ? UISystem.textureSource(this, key) : null;
+        if (!key || !src) return;
         const b = this.add.image(86, h - 70, key).setDepth(40);
-        const tex = this.textures.get(key).getSourceImage();
-        b.setScale(88 / tex.height);
+        b.setScale(88 / src.height);
         this.tweens.add({
             targets: b, y: h - 92, duration: 220, yoyo: true, repeat: 3, ease: 'Power2',
         });

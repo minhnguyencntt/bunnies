@@ -49,7 +49,6 @@ class MirrorCityScreen extends GameShell {
             g.fillGradientStyle(0x4a148c, 0x4a148c, 0x7b1fa2, 0x7b1fa2, 1);
             g.fillRect(0, 0, w, h);
         }
-        this.startLevelBGM('bgm_mirror_city', 'screens/mirror_city/assets/audio/bgm/bgm.mp3');
     }
 
     introText() {
@@ -87,23 +86,41 @@ class MirrorCityScreen extends GameShell {
     generateElements(theme, objectCount) {
         const pool = Phaser.Utils.Array.Shuffle([...theme.pool]);
         const elements = [];
+        const w = this.cameras.main.width;
+        const h = this.cameras.main.height;
+        const panelW = w * 0.42;
+        const panelH = h * 0.6;
+        const minDist = Math.min(panelW, panelH) * 0.2; // no overlapping hit targets
+
+        const placed = [];
+        const farEnough = (rx, ry) => placed.every(p =>
+            Math.hypot((p.rx - rx) * panelW, (p.ry - ry) * panelH) >= minDist);
+        const place = (rxRange, ryRange) => {
+            for (let tries = 0; tries < 40; tries++) {
+                const rx = Phaser.Math.FloatBetween(...rxRange);
+                const ry = Phaser.Math.FloatBetween(...ryRange);
+                if (farEnough(rx, ry)) { placed.push({ rx, ry }); return { rx, ry }; }
+            }
+            const rx = Phaser.Math.FloatBetween(...rxRange);
+            const ry = Phaser.Math.FloatBetween(...ryRange);
+            placed.push({ rx, ry });
+            return { rx, ry };
+        };
+
         const groupEmoji = pool[0];
-        const gx = Phaser.Math.FloatBetween(0.2, 0.8);
-        const gy = Phaser.Math.FloatBetween(0.25, 0.7);
+        const g0 = place([0.2, 0.8], [0.25, 0.7]);
         for (let i = 0; i < 3; i++) {
-            elements.push({
-                id: `g${i}`, group: 'group', emoji: groupEmoji,
-                rx: Phaser.Math.Clamp(gx + (i - 1) * 0.14, 0.08, 0.92),
-                ry: Phaser.Math.Clamp(gy + (i % 2) * 0.1, 0.12, 0.88),
-                scale: 1,
-            });
+                const rx = Phaser.Math.Clamp(g0.rx + (i - 1) * 0.16, 0.08, 0.92);
+                const ry = Phaser.Math.Clamp(g0.ry + (i % 2) * 0.12, 0.12, 0.88);
+                placed.push({ rx, ry });
+                elements.push({ id: `g${i}`, group: 'group', emoji: groupEmoji, rx, ry, scale: 1 });
         }
         const singles = Math.max(2, objectCount - 3);
         for (let i = 0; i < singles; i++) {
+            const { rx, ry } = place([0.1, 0.9], [0.15, 0.85]);
             elements.push({
                 id: `s${i}`, group: null, emoji: pool[(i + 1) % pool.length],
-                rx: Phaser.Math.FloatBetween(0.1, 0.9),
-                ry: Phaser.Math.FloatBetween(0.15, 0.85),
+                rx, ry,
                 scale: Phaser.Math.FloatBetween(0.9, 1.15),
             });
         }
@@ -193,7 +210,7 @@ class MirrorCityScreen extends GameShell {
                 const ey = panelY - panelH / 2 + props.ry * panelH;
                 const t = this.track(this.add.text(ex, ey, props.emoji, {
                     fontSize: `${Math.round(baseSize * props.scale)}px`,
-                }).setOrigin(0.5).setDepth(50));
+                }).setOrigin(0.5).setDepth(mutationType === 'position' ? 56 : 50));
                 if (props.flip) t.setFlipX(true);
                 if (props.angle) t.setAngle(props.angle);
                 t.setData('diffKey', diffKey);
@@ -237,6 +254,7 @@ class MirrorCityScreen extends GameShell {
         if (this.currentMutations.has(key)) {
             this.diffTargets.push(key);
             this.foundCount++;
+            AudioEngine.emit('Discovery');
             this.markFound(x, y);
             if (this.pips?.[this.foundCount - 1]) this.pips[this.foundCount - 1].setText('✅');
             if (this.foundCount >= this.currentMutations.size) {

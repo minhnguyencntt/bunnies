@@ -77,6 +77,7 @@
             MenuScreen,
             LevelSelectScreen,
             StickerAlbumScreen,
+            AudioSettingsScreen,
             ResultScreen,
             CountingForestScreen,
             MirrorCityScreen,

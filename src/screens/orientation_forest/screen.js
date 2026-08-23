@@ -43,7 +43,6 @@ class OrientationForestScreen extends GameShell {
             this.squirrel.setScale(110 / tex.height);
             this.tweens.add({ targets: this.squirrel, y: sy - 5, duration: 1400, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
         }
-        this.startLevelBGM('bgm_orientation_forest', 'screens/orientation_forest/assets/audio/bgm/bgm.mp3');
     }
 
     introText() {
@@ -200,6 +199,7 @@ class OrientationForestScreen extends GameShell {
         const expected = this.sequence[this.sequenceProgress];
         if (opt.value === expected.id) {
             icons[this.sequenceProgress].setText(opt.label);
+            AudioEngine.emit('SequenceStep', { index: this.sequenceProgress });
             this.sequenceProgress++;
             this.hopSquirrel(opt.dir, () => {});
             this.spawnSparkles(btn.x, btn.y, 4);

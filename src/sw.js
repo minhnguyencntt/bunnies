@@ -5,7 +5,7 @@
  *   sau lần tải đầu → chơi xong 1 lần là offline hoàn toàn.
  */
 
-const CACHE_VERSION = 'bunnies-pwa-v4';
+const CACHE_VERSION = 'bunnies-pwa-v5';
 const PRECACHE = `${CACHE_VERSION}-core`;
 const RUNTIME = `${CACHE_VERSION}-runtime`;
 
@@ -42,6 +42,15 @@ const CORE_ASSETS = [
     './core/ui/IntroHelper.js',
     './core/effects/RewardFX.js',
 
+    // Knowledge World Audio System
+    './core/audio/AudioConfig.js',
+    './core/audio/AudioEngine.js',
+    './core/audio/SFXEngine.js',
+    './core/audio/MusicEngine.js',
+    './core/audio/VoiceEngine.js',
+    './core/audio/AmbienceEngine.js',
+    './core/audio/AudioEvents.js',
+
     // Knowledge World Game Engine
     './core/engine/GameConfig.js',
     './core/engine/SaveEngine.js',
@@ -61,6 +70,7 @@ const CORE_ASSETS = [
     './core/game/ResultScreen.js',
     './core/game/LevelSelectScreen.js',
     './core/game/StickerAlbumScreen.js',
+    './core/game/AudioSettingsScreen.js',
 
     // Screens
     './screens/boot/BootScreen.js',

@@ -15,6 +15,12 @@ class StickerAlbumScreen extends Phaser.Scene {
         const albums = StickerEngine.albumData(profile);
         const totals = StickerEngine.totals(profile);
 
+        AudioEngine.attachScene(this);
+        AudioEngine.loadSettings();
+        AudioEvents.register();
+        const albumAudio = AudioConfig.AREA_AUDIO.album;
+        MusicEngine.playTheme(this, albumAudio.theme.key, albumAudio.theme.url, { volume: albumAudio.theme.volume });
+
         if (this.textures.exists('menu_bg')) {
             this.add.image(w / 2, h / 2, 'menu_bg').setDisplaySize(w, h).setAlpha(0.3);
         } else {
@@ -47,7 +53,7 @@ class StickerAlbumScreen extends Phaser.Scene {
         back.add(bg);
         back.add(this.add.text(0, 0, '🗺', { fontSize: '22px' }).setOrigin(0.5));
         setCenteredInput(back, 56, 56);
-        back.on('pointerdown', () => { this.sound.stopAll(); this.scene.start('MenuScreen'); });
+        back.on('pointerdown', () => { AudioEngine.emit('Transition'); this.scene.start('MenuScreen'); });
         back.on('pointerover', () => back.setScale(1.12));
         back.on('pointerout', () => back.setScale(1));
 
@@ -93,7 +99,10 @@ class StickerAlbumScreen extends Phaser.Scene {
         }).setOrigin(0.5));
 
         setCenteredInput(c, size, size);
-        c.on('pointerdown', () => this.showStickerInfo(x, y, sticker));
+        c.on('pointerdown', () => {
+            AudioEngine.emit(sticker.owned ? 'UIPop' : 'Locked');
+            this.showStickerInfo(x, y, sticker);
+        });
         if (sticker.owned) {
             this.tweens.add({ targets: c, scale: 1.06, duration: 1200, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
         }

@@ -1,0 +1,471 @@
+{
+  "version": 1,
+  "locale": "vi",
+  "lines": {
+    "correct_1": {
+      "text": {
+        "vi": "Giỏi quá!",
+        "en": "Great job!"
+      },
+      "voice": "bunnine"
+    },
+    "correct_2": {
+      "text": {
+        "vi": "Tuyệt vời!",
+        "en": "Wonderful!"
+      },
+      "voice": "bunnine"
+    },
+    "correct_3": {
+      "text": {
+        "vi": "Đúng rồi!",
+        "en": "That's right!"
+      },
+      "voice": "bunnine"
+    },
+    "correct_4": {
+      "text": {
+        "vi": "Xuất sắc!",
+        "en": "Excellent!"
+      },
+      "voice": "bunnine"
+    },
+    "correct_5": {
+      "text": {
+        "vi": "Hay quá!",
+        "en": "Awesome!"
+      },
+      "voice": "bunnine"
+    },
+    "correct_6": {
+      "text": {
+        "vi": "Chính xác!",
+        "en": "Exactly!"
+      },
+      "voice": "bunnine"
+    },
+    "correct_7": {
+      "text": {
+        "vi": "Bạn thật giỏi!",
+        "en": "You are so good!"
+      },
+      "voice": "bunnine"
+    },
+    "correct_8": {
+      "text": {
+        "vi": "Siêu đỉnh!",
+        "en": "Super!"
+      },
+      "voice": "bunnine"
+    },
+    "wrong_1": {
+      "text": {
+        "vi": "Gần đúng rồi! Thử lại nhé!",
+        "en": "Almost! Try again!"
+      },
+      "voice": "bunnine"
+    },
+    "wrong_2": {
+      "text": {
+        "vi": "Không sao, thử lại nào!",
+        "en": "It's okay, try again!"
+      },
+      "voice": "bunnine"
+    },
+    "wrong_3": {
+      "text": {
+        "vi": "Cố lên, bạn làm được!",
+        "en": "Keep going, you can do it!"
+      },
+      "voice": "bunnine"
+    },
+    "wrong_4": {
+      "text": {
+        "vi": "Suýt đúng rồi!",
+        "en": "So close!"
+      },
+      "voice": "bunnine"
+    },
+    "wrong_5": {
+      "text": {
+        "vi": "Thử lại một lần nữa nhé!",
+        "en": "Try one more time!"
+      },
+      "voice": "bunnine"
+    },
+    "wrong_6": {
+      "text": {
+        "vi": "Bunnine tin bạn mà!",
+        "en": "Bunnine believes in you!"
+      },
+      "voice": "bunnine"
+    },
+    "hint_1": {
+      "text": {
+        "vi": "Đây là gợi ý nhỏ này.",
+        "en": "Here is a little hint."
+      },
+      "voice": "narrator"
+    },
+    "hint_2": {
+      "text": {
+        "vi": "Nhìn kỹ nhé.",
+        "en": "Look carefully."
+      },
+      "voice": "narrator"
+    },
+    "hint_3": {
+      "text": {
+        "vi": "Bunnine giúp bạn này.",
+        "en": "Bunnine will help you."
+      },
+      "voice": "bunnine"
+    },
+    "start_1": {
+      "text": {
+        "vi": "Cùng chơi với Bunnine nhé!",
+        "en": "Let's play with Bunnine!"
+      },
+      "voice": "bunnine"
+    },
+    "start_2": {
+      "text": {
+        "vi": "Bắt đầu thôi!",
+        "en": "Let's go!"
+      },
+      "voice": "bunnine"
+    },
+    "near_done_1": {
+      "text": {
+        "vi": "Sắp xong rồi! Cố lên!",
+        "en": "Almost done! Keep going!"
+      },
+      "voice": "bunnine"
+    },
+    "complete_1": {
+      "text": {
+        "vi": "Bạn đã hoàn thành! Tuyệt vời!",
+        "en": "You did it! Wonderful!"
+      },
+      "voice": "bunnine"
+    },
+    "complete_2": {
+      "text": {
+        "vi": "Hoàn thành rồi! Giỏi lắm!",
+        "en": "Completed! Well done!"
+      },
+      "voice": "bunnine"
+    },
+    "sticker_new": {
+      "text": {
+        "vi": "Sticker mới!",
+        "en": "A new sticker!"
+      },
+      "voice": "bunnine"
+    },
+    "award_new": {
+      "text": {
+        "vi": "Huy hiệu mới!",
+        "en": "A new award!"
+      },
+      "voice": "bunnine"
+    },
+    "levelup": {
+      "text": {
+        "vi": "Lên cấp rồi!",
+        "en": "Level up!"
+      },
+      "voice": "bunnine"
+    },
+    "bunny_wow": {
+      "text": {
+        "vi": "Ồ ó!",
+        "en": "Whoa!"
+      },
+      "voice": "bunnine"
+    },
+    "bunny_letsgo": {
+      "text": {
+        "vi": "Đi thôi!",
+        "en": "Let's go!"
+      },
+      "voice": "bunnine"
+    },
+    "bunny_wedidit": {
+      "text": {
+        "vi": "Ta làm được rồi!",
+        "en": "We did it!"
+      },
+      "voice": "bunnine"
+    },
+    "bunny_hmm": {
+      "text": {
+        "vi": "Hừm…",
+        "en": "Hmm…"
+      },
+      "voice": "bunnine"
+    },
+    "bunny_keepgoing": {
+      "text": {
+        "vi": "Cố lên!",
+        "en": "Keep going!"
+      },
+      "voice": "bunnine"
+    },
+    "bunny_yay": {
+      "text": {
+        "vi": "Yeah!",
+        "en": "Yay!"
+      },
+      "voice": "bunnine"
+    },
+    "count_1": {
+      "text": {
+        "vi": "Một",
+        "en": "1"
+      },
+      "voice": "narrator"
+    },
+    "count_2": {
+      "text": {
+        "vi": "Hai",
+        "en": "2"
+      },
+      "voice": "narrator"
+    },
+    "count_3": {
+      "text": {
+        "vi": "Ba",
+        "en": "3"
+      },
+      "voice": "narrator"
+    },
+    "count_4": {
+      "text": {
+        "vi": "Bốn",
+        "en": "4"
+      },
+      "voice": "narrator"
+    },
+    "count_5": {
+      "text": {
+        "vi": "Năm",
+        "en": "5"
+      },
+      "voice": "narrator"
+    },
+    "count_6": {
+      "text": {
+        "vi": "Sáu",
+        "en": "6"
+      },
+      "voice": "narrator"
+    },
+    "count_7": {
+      "text": {
+        "vi": "Bảy",
+        "en": "7"
+      },
+      "voice": "narrator"
+    },
+    "count_8": {
+      "text": {
+        "vi": "Tám",
+        "en": "8"
+      },
+      "voice": "narrator"
+    },
+    "count_9": {
+      "text": {
+        "vi": "Chín",
+        "en": "9"
+      },
+      "voice": "narrator"
+    },
+    "count_10": {
+      "text": {
+        "vi": "Mười",
+        "en": "10"
+      },
+      "voice": "narrator"
+    },
+    "count_11": {
+      "text": {
+        "vi": "Mười một",
+        "en": "11"
+      },
+      "voice": "narrator"
+    },
+    "count_12": {
+      "text": {
+        "vi": "Mười hai",
+        "en": "12"
+      },
+      "voice": "narrator"
+    },
+    "count_13": {
+      "text": {
+        "vi": "Mười ba",
+        "en": "13"
+      },
+      "voice": "narrator"
+    },
+    "count_14": {
+      "text": {
+        "vi": "Mười bốn",
+        "en": "14"
+      },
+      "voice": "narrator"
+    },
+    "count_15": {
+      "text": {
+        "vi": "Mười lăm",
+        "en": "15"
+      },
+      "voice": "narrator"
+    },
+    "count_16": {
+      "text": {
+        "vi": "Mười sáu",
+        "en": "16"
+      },
+      "voice": "narrator"
+    },
+    "count_17": {
+      "text": {
+        "vi": "Mười bảy",
+        "en": "17"
+      },
+      "voice": "narrator"
+    },
+    "count_18": {
+      "text": {
+        "vi": "Mười tám",
+        "en": "18"
+      },
+      "voice": "narrator"
+    },
+    "count_19": {
+      "text": {
+        "vi": "Mười chín",
+        "en": "19"
+      },
+      "voice": "narrator"
+    },
+    "count_20": {
+      "text": {
+        "vi": "Hai mươi",
+        "en": "20"
+      },
+      "voice": "narrator"
+    },
+    "instr_counting_forest_1": {
+      "text": {
+        "vi": "Kéo táo vào giỏ giúp Bunnine nhé!",
+        "en": "Drag the apples into Bunnine's basket!"
+      },
+      "voice": "narrator",
+      "game": "counting_forest",
+      "level": 1
+    },
+    "instr_counting_forest_2": {
+      "text": {
+        "vi": "Cộng hai số, rồi chọn con đường có biển số đúng!",
+        "en": "Add the two numbers, then choose the path with the right sign!"
+      },
+      "voice": "narrator",
+      "game": "counting_forest",
+      "level": 2
+    },
+    "instr_counting_forest_3": {
+      "text": {
+        "vi": "Nghe kỹ câu chuyện, rồi tính xem Bunnine còn bao nhiêu pha lê!",
+        "en": "Listen to the story, then work out how many crystals Bunnine has!"
+      },
+      "voice": "narrator",
+      "game": "counting_forest",
+      "level": 3
+    },
+    "instr_subtraction_hill_1": {
+      "text": {
+        "vi": "Đồ của Cáo lăn đi rồi! Nhặt những món còn lại nhé!",
+        "en": "Fox's things rolled away! Collect the ones that are left!"
+      },
+      "voice": "narrator",
+      "game": "subtraction_hill",
+      "level": 1
+    },
+    "instr_subtraction_hill_2": {
+      "text": {
+        "vi": "Xếp đủ đồ vào giỏ, rồi đếm xem còn lại bao nhiêu!",
+        "en": "Pack the basket, then count how many are left!"
+      },
+      "voice": "narrator",
+      "game": "subtraction_hill",
+      "level": 2
+    },
+    "instr_subtraction_hill_3": {
+      "text": {
+        "vi": "Theo dõi hành trình của Cáo, rồi tính số đồ còn lại!",
+        "en": "Follow Fox's journey, then work out what is left!"
+      },
+      "voice": "narrator",
+      "game": "subtraction_hill",
+      "level": 3
+    },
+    "instr_mirror_city_1": {
+      "text": {
+        "vi": "Tìm một điểm khác nhau giữa hai bức tranh nhé!",
+        "en": "Find one difference between the two pictures!"
+      },
+      "voice": "narrator",
+      "game": "mirror_city",
+      "level": 1
+    },
+    "instr_mirror_city_2": {
+      "text": {
+        "vi": "Tìm ba điểm khác nhau. Nhìn thật kỹ nhé!",
+        "en": "Find three differences. Look carefully!"
+      },
+      "voice": "narrator",
+      "game": "mirror_city",
+      "level": 2
+    },
+    "instr_mirror_city_3": {
+      "text": {
+        "vi": "Có gì đó đã thay đổi. Bạn có tìm ra hết không?",
+        "en": "Something has changed. Can you spot them all?"
+      },
+      "voice": "narrator",
+      "game": "mirror_city",
+      "level": 3
+    },
+    "instr_orientation_forest_1": {
+      "text": {
+        "vi": "Vật ở bên trái hay bên phải Sóc nhỉ?",
+        "en": "Is the object on Squirrel's left or right?"
+      },
+      "voice": "narrator",
+      "game": "orientation_forest",
+      "level": 1
+    },
+    "instr_orientation_forest_2": {
+      "text": {
+        "vi": "Vật ở hướng nào của Sóc? Trái, phải, trước hay sau?",
+        "en": "Which direction is the object? Left, right, front or back?"
+      },
+      "voice": "narrator",
+      "game": "orientation_forest",
+      "level": 2
+    },
+    "instr_orientation_forest_3": {
+      "text": {
+        "vi": "Nhớ các mũi tên, rồi dẫn Sóc đi đúng đường nhé!",
+        "en": "Remember the arrows, then guide Squirrel the right way!"
+      },
+      "voice": "narrator",
+      "game": "orientation_forest",
+      "level": 3
+    }
+  }
+}

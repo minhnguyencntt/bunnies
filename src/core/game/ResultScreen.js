@@ -19,6 +19,10 @@ class ResultScreen extends Phaser.Scene {
         const w = this.cameras.main.width;
         const h = this.cameras.main.height;
 
+        AudioEngine.attachScene(this);
+        const areaAudio = AudioConfig.AREA_AUDIO.result;
+        MusicEngine.playTheme(this, areaAudio.theme.key, areaAudio.theme.url, { volume: areaAudio.theme.volume });
+
         this.add.graphics().fillStyle(0x1a0f2e, 0.72).fillRect(0, 0, w, h);
 
         const pw = Math.min(560, w * 0.82);
@@ -52,9 +56,14 @@ class ResultScreen extends Phaser.Scene {
         }).setOrigin(0.5).setAlpha(0);
         steps.push(() => {
             scoreText.setAlpha(1);
+            let lastTick = 0;
             this.tweens.addCounter({
                 from: 0, to: r.score, duration: 900,
-                onUpdate: (tw) => scoreText.setText(`Điểm: ${Math.round(tw.getValue())}`),
+                onUpdate: (tw) => {
+                    scoreText.setText(`Điểm: ${Math.round(tw.getValue())}`);
+                    const now = Date.now();
+                    if (now - lastTick > 90) { lastTick = now; AudioEngine.emit('ScoreTick'); }
+                },
             });
         });
         y += 40;
@@ -81,7 +90,11 @@ class ResultScreen extends Phaser.Scene {
             starObjs.forEach((s, i) => {
                 this.time.delayedCall(i * 280, () => {
                     this.tweens.add({ targets: s, scale: 1, duration: 350, ease: 'Back.easeOut' });
-                    if (i < r.stars) this.spawnStarBurst(center + (i - 1) * 64, y + 8);
+                    if (i < r.stars) {
+                        this.spawnStarBurst(center + (i - 1) * 64, y + 8);
+                        AudioEngine.emit('StarEarned', { index: i }); // synced with each star pop
+                        if (i === 2) this.time.delayedCall(300, () => AudioEngine.emit('ThreeStars'));
+                    }
                 });
             });
         });
@@ -99,6 +112,7 @@ class ResultScreen extends Phaser.Scene {
         const barFill = this.add.graphics();
         steps.push(() => {
             xpLabel.setAlpha(1);
+            AudioEngine.emit('XPGranted');
             const ratio = Phaser.Math.Clamp(kl.intoLevel / kl.needed, 0, 1);
             this.tweens.addCounter({
                 from: 0, to: ratio, duration: 800,
@@ -115,7 +129,10 @@ class ResultScreen extends Phaser.Scene {
             const lu = this.add.text(center, y, `🆙 Lên cấp ${kl.level}!`, {
                 fontSize: '20px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold', color: '#6a1b9a',
             }).setOrigin(0.5).setAlpha(0);
-            steps.push(() => this.tweens.add({ targets: lu, alpha: 1, scale: 1.1, duration: 300, yoyo: true }));
+            steps.push(() => {
+                this.tweens.add({ targets: lu, alpha: 1, scale: 1.1, duration: 300, yoyo: true });
+                AudioEngine.emit('LevelUp');
+            });
             y += 30;
         }
 
@@ -131,7 +148,10 @@ class ResultScreen extends Phaser.Scene {
             const awardText = this.add.text(center, y, `🏆 Huy hiệu mới: ${a.icon} ${a.name}`, {
                 fontSize: '19px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold', color: '#8e24aa',
             }).setOrigin(0.5).setScale(0);
-            steps.push(() => this.tweens.add({ targets: awardText, scale: 1, duration: 350, ease: 'Back.easeOut' }));
+            steps.push(() => {
+                this.tweens.add({ targets: awardText, scale: 1, duration: 350, ease: 'Back.easeOut' });
+                AudioEngine.emit('AwardUnlocked');
+            });
             y += 32;
             if (r.awards.length > 1) {
                 const more = this.add.text(center, y, `+${r.awards.length - 1} huy hiệu nữa!`, {
@@ -154,8 +174,10 @@ class ResultScreen extends Phaser.Scene {
                     fontSize: '38px',
                 }).setOrigin(0.5).setScale(0);
                 row.add(t);
-                steps.push(() => this.time.delayedCall(120 * i, () =>
-                    this.tweens.add({ targets: t, scale: 1, duration: 350, ease: 'Back.easeOut' })));
+                steps.push(() => this.time.delayedCall(120 * i, () => {
+                    this.tweens.add({ targets: t, scale: 1, duration: 350, ease: 'Back.easeOut' });
+                    AudioEngine.emit('StickerUnlocked', { rarity: s.rarity });
+                }));
             });
             y += 62;
         }
@@ -213,6 +235,8 @@ class ResultScreen extends Phaser.Scene {
     go(action) {
         const gameDef = GameConfig.get(this.gameId);
         const sceneKey = gameDef.sceneKey;
+        AudioEngine.emit('Transition');
+        MusicEngine.stopTheme(250);
         this.sound.stopAll();
         this.scene.stop();
         this.scene.stop(sceneKey);

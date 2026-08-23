@@ -19,6 +19,12 @@ class LevelSelectScreen extends Phaser.Scene {
         const profile = SaveEngine.load();
         const gp = SaveEngine.gameProfile(profile, this.gameId);
 
+        AudioEngine.attachScene(this);
+        AudioEngine.loadSettings();
+        AudioEvents.register();
+        const menuAudio = AudioConfig.AREA_AUDIO.menu;
+        MusicEngine.playTheme(this, menuAudio.theme.key, menuAudio.theme.url, { volume: menuAudio.theme.volume });
+
         // Background
         if (this.textures.exists('menu_bg')) {
             this.add.image(w / 2, h / 2, 'menu_bg').setDisplaySize(w, h).setAlpha(0.35);
@@ -59,7 +65,7 @@ class LevelSelectScreen extends Phaser.Scene {
         back.add(bg);
         back.add(this.add.text(0, 0, '🗺', { fontSize: '22px' }).setOrigin(0.5));
         setCenteredInput(back, 56, 56);
-        back.on('pointerdown', () => { this.sound.stopAll(); this.scene.start('MenuScreen'); });
+        back.on('pointerdown', () => { AudioEngine.emit('Transition'); this.scene.start('MenuScreen'); });
         back.on('pointerover', () => back.setScale(1.12));
         back.on('pointerout', () => back.setScale(1));
     }
@@ -126,11 +132,15 @@ class LevelSelectScreen extends Phaser.Scene {
             c.on('pointerover', () => c.setScale(1.04));
             c.on('pointerout', () => c.setScale(1));
             c.on('pointerdown', () => {
-                this.sound.stopAll();
+                AudioEngine.emit('Transition');
                 this.scene.start(gameDef.sceneKey, { gameId: this.gameId, level });
             });
             c.setScale(0);
             this.tweens.add({ targets: c, scale: 1, duration: 300, delay: level * 120, ease: 'Back.easeOut' });
+        } else {
+            c.setSize(cw, ch);
+            c.setInteractive({ useHandCursor: true });
+            c.on('pointerdown', () => AudioEngine.emit('Locked'));
         }
     }
 }

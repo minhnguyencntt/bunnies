@@ -56,26 +56,16 @@ class GameShell extends Phaser.Scene {
         if (this.onPreload) this.onPreload();
     }
 
-    /** Standard voice set with per-game keys (avoids cache collisions). */
+    /** Preload the level's instruction voice line (generated library). */
     preloadCommonAudio(folder) {
-        const g = this.gameId;
-        this.load.audio(`${g}_intro`, `screens/${folder}/assets/audio/voice/intro_2.mp3`);
-        this.load.audio(`${g}_correct`, `screens/${folder}/assets/audio/voice/correct_answer.mp3`);
-        this.load.audio(`${g}_wrong`, `screens/${folder}/assets/audio/voice/wrong_answer.mp3`);
-        this.load.audio(`${g}_complete`, `screens/${folder}/assets/audio/voice/level_complete.mp3`);
+        this.load.audio(`voice_instr_${this.gameId}_${this.level}`,
+            `screens/${folder}/assets/audio/voice/level_${this.level}.mp3`);
     }
 
     startLevelBGM(key, url) {
-        const play = () => {
-            if (this.cache.audio.exists(key) && window.gameData?.musicEnabled !== false && !this.levelBGM) {
-                this.levelBGM = this.sound.add(key, { volume: 0.35, loop: true });
-                this.levelBGM.play();
-            }
-        };
-        if (this.cache.audio.exists(key)) { play(); return; }
-        this.load.audio(key, url);
-        this.load.once('complete', play);
-        this.load.start();
+        if (typeof MusicEngine !== 'undefined') {
+            MusicEngine.playTheme(this, key, url, { volume: 0.35 });
+        }
     }
 
     create() {
@@ -85,12 +75,24 @@ class GameShell extends Phaser.Scene {
         this.adaptive = new AdaptiveDifficultyEngine(this.levelCfg.difficulty);
 
         this.sound.stopAll();
+        // Audio system: attach scene, load settings, register event wiring
+        AudioEngine.attachScene(this);
+        AudioEngine.loadSettings();
+        AudioEvents.register();
+
         const w = this.cameras.main.width;
         const h = this.cameras.main.height;
         this.buildWorld(w, h);
         this.createCompanion(w, h);
         this.createHUD(w, h);
         if (this.onSessionStart) this.onSessionStart(w, h);
+
+        // Area theme + environmental ambience from the game's AudioConfig
+        const audioCfg = AudioConfig.gameAudio(this.gameId);
+        if (audioCfg) {
+            MusicEngine.playTheme(this, audioCfg.theme.key, audioCfg.theme.url, { volume: audioCfg.theme.volume });
+            if (audioCfg.ambience) AmbienceEngine.start(audioCfg.ambience);
+        }
 
         this.time.delayedCall(400, () => this.playIntro());
     }
@@ -102,11 +104,11 @@ class GameShell extends Phaser.Scene {
 
     playIntro() {
         const begin = () => this.startRound(0);
+        AudioEngine.emit('GameStarted', { gameId: this.gameId, level: this.level });
         if (typeof IntroHelper !== 'undefined') {
             IntroHelper.play(this, {
                 text: this.introText(),
-                voiceKey: this.cache.audio.exists(this.introVoiceKey()) ? this.introVoiceKey() : null,
-                voiceRate: 1.6,
+                voiceKey: null, // voice handled by VoiceEngine (GameStarted event)
                 showText: (t, ms) => this.companionSay(t, ms),
                 onComplete: begin,
                 minMs: 2500,
@@ -126,6 +128,9 @@ class GameShell extends Phaser.Scene {
         const diff = this.adaptive.current();
         this.updateRoundLabel();
         this.acceptingInput = true;
+        this._timeWarned = false;
+        AudioEngine.emit('RoundStarted');
+        if (index === this.levelCfg.rounds - 1) AudioEngine.emit('NearCompletion');
         const t = diff.timeLimit > 0 ? diff.timeLimit : 0;
         this.startRoundTimer(t);
         this.presentRound(index, diff);
@@ -139,7 +144,7 @@ class GameShell extends Phaser.Scene {
         this.adaptive.update(this.analytics);
         if (typeof RewardFX !== 'undefined') RewardFX.correctAnswer(this, x ?? this.scale.width / 2, y ?? this.scale.height / 2, { addStar: false });
         this.companionReact('happy');
-        this.playVoice(`${this.gameId}_correct`);
+        AudioEngine.emit('CorrectAnswer');
         this.refreshLiveScore();
         this.time.delayedCall(opts.delayMs ?? 1600, () => this.advanceRound());
     }
@@ -149,7 +154,7 @@ class GameShell extends Phaser.Scene {
         this.analytics.recordAnswer(false);
         this.adaptive.update(this.analytics);
         this.companionReact('sad');
-        this.playVoice(`${this.gameId}_wrong`);
+        AudioEngine.emit('IncorrectAnswer');
         const encourage = Phaser.Utils.Array.GetRandom([
             'Gần đúng rồi! Thử lại nhé!', 'Không sao, thử lại nào!', 'Bunnine tin bạn làm được!',
         ]);
@@ -162,6 +167,7 @@ class GameShell extends Phaser.Scene {
 
     recordFumble() { // mis-tap / dropped object — counts as mistake, not an answer
         this.analytics.recordMistake();
+        AudioEngine.emit('ObjectMisTap');
         this.refreshLiveScore();
     }
 
@@ -199,7 +205,9 @@ class GameShell extends Phaser.Scene {
         const rewards = RewardEngine.finishSession(this.gameId, this.level, this.analytics, par);
 
         this.companionReact('celebrate');
-        this.playVoice(`${this.gameId}_complete`);
+        AmbienceEngine.stop();
+        AudioEngine.emit('GameCompleted');
+        AudioEngine.emit('BunnyReaction');
         const w = this.cameras.main.width;
         const h = this.cameras.main.height;
         for (let i = 0; i < 12; i++) {
@@ -232,6 +240,10 @@ class GameShell extends Phaser.Scene {
                 if (this.isPaused || this.sessionOver) return;
                 this.roundTimeLeft -= 0.1;
                 this.updateTimerBar(Math.max(0, this.roundTimeLeft / this.roundTimeTotal), true);
+                if (!this._timeWarned && this.roundTimeLeft <= 5 && this.roundTimeLeft > 0) {
+                    this._timeWarned = true;
+                    AudioEngine.emit('TimeWarning');
+                }
                 if (this.roundTimeLeft <= 0) {
                     this.clearRoundTimer();
                     this.onRoundTimeout();
@@ -310,7 +322,11 @@ class GameShell extends Phaser.Scene {
         c.add(bg);
         c.add(this.add.text(0, 0, icon, { fontSize: '18px' }).setOrigin(0.5));
         setCenteredInput(c, 46, 46);
-        c.on('pointerdown', () => { this.tweens.add({ targets: c, scale: 0.88, duration: 80, yoyo: true }); onTap(); });
+        c.on('pointerdown', () => {
+            AudioEngine.emit('UITap');
+            this.tweens.add({ targets: c, scale: 0.88, duration: 80, yoyo: true });
+            onTap();
+        });
         c.on('pointerover', () => c.setScale(1.1));
         c.on('pointerout', () => c.setScale(1));
         return c;
@@ -343,6 +359,10 @@ class GameShell extends Phaser.Scene {
         if (this.comboText) {
             const streak = this.analytics.currentStreak;
             this.comboText.setText(streak >= 3 ? `🔥 Combo x${streak}!` : '');
+            if (streak >= 3 && streak !== this._lastComboStreak) {
+                AudioEngine.emit('ComboStarted', { streak });
+            }
+            this._lastComboStreak = streak;
         }
     }
 
@@ -352,6 +372,8 @@ class GameShell extends Phaser.Scene {
         if (this.sessionOver || this.isPaused || !this.acceptingInput) return;
         const hint = HintEngine.getHint(this.levelCfg, this.analytics.hintsUsed);
         this.analytics.recordHint();
+        AudioEngine.emit('HintRequested');
+        AudioEngine.track('hintUsed');
         this.companionSay(`💡 ${hint.text}`, 3500);
         this.refreshLiveScore();
         if (this.showHintVisual) this.showHintVisual(hint);
@@ -362,6 +384,7 @@ class GameShell extends Phaser.Scene {
     showPause() {
         if (this.isPaused || this.sessionOver) return;
         this.isPaused = true;
+        AudioEngine.emit('Paused');
         const w = this.cameras.main.width;
         const h = this.cameras.main.height;
         const o = this.add.container(0, 0).setDepth(800);
@@ -577,6 +600,9 @@ class GameShell extends Phaser.Scene {
 
     shutdown() {
         this.clearRoundTimer();
+        VoiceEngine.stopCurrent();
+        AmbienceEngine.stop();
+        MusicEngine.stopTheme(300);
         this.sound.stopAll();
         if (this.levelBGM) { this.levelBGM.stop(); this.levelBGM = null; }
     }

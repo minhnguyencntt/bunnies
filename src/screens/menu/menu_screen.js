@@ -158,6 +158,10 @@ class MenuScreen extends Phaser.Scene {
             minWidth: 84, height: 42, fontSize: 16,
         }).setDepth(401);
 
+        UISystem.iconButton(this, width - 286, y, 'reset',
+            () => this.confirmStartOver(), { radius: 24, color: 0x8d6e63 })
+            .setDepth(401);
+
         UISystem.iconButton(this, width - 228, y, 'settings',
             () => this.scene.launch('AudioSettingsScreen'), { radius: 24, color: 0x6d7b8a })
             .setDepth(401);
@@ -172,6 +176,44 @@ class MenuScreen extends Phaser.Scene {
         UISystem.chip(this, width / 2, height - 28, `${goal.icon}  ${goal.text}`, {
             minWidth: 220, height: 36, fontSize: 14,
         }).setDepth(401);
+
+        UISystem.secondaryButton(this, 132, height - 28, 'Chơi lại từ đầu', () => this.confirmStartOver(), {
+            width: 200, height: 40, fontSize: 15,
+        }).setDepth(401);
+    }
+
+    confirmStartOver() {
+        if (this._resetOverlay) return;
+        const w = this.cameras.main.width;
+        const h = this.cameras.main.height;
+        const o = this.add.container(0, 0).setDepth(900);
+        const dim = this.add.graphics();
+        dim.fillStyle(0x1a0f2e, 0.72);
+        dim.fillRect(0, 0, w, h);
+        o.add(dim);
+        const pw = Math.min(460, w * 0.78);
+        const ph = 280;
+        o.add(UISystem.panel(this, w / 2, h / 2, pw, ph));
+        o.add(this.add.text(w / 2, h / 2 - 88, 'Chơi lại từ đầu?', {
+            fontSize: '28px', fontFamily: DesignTokens.typography.fontFamily, fontStyle: 'bold',
+            color: DesignTokens.css.ink,
+        }).setOrigin(0.5));
+        o.add(this.add.text(w / 2, h / 2 - 28, 'Xóa sao, sticker, điểm và phần thưởng đã lưu.\nBắt đầu như lần đầu chơi.', {
+            fontSize: '17px', fontFamily: DesignTokens.typography.fontFamily,
+            color: DesignTokens.css.inkSoft, align: 'center',
+        }).setOrigin(0.5));
+        const cancel = UISystem.secondaryButton(this, w / 2 - 100, h / 2 + 72, 'Hủy', () => {
+            o.destroy(true);
+            this._resetOverlay = null;
+        }, { width: 160, height: 50 });
+        const wipe = UISystem.primaryButton(this, w / 2 + 100, h / 2 + 72, 'Xóa hết', () => {
+            SaveEngine.reset({ keepAudio: true });
+            o.destroy(true);
+            this._resetOverlay = null;
+            NavSystem.home(this);
+        }, { width: 170, height: 50, color: DesignTokens.colors.warning });
+        o.add([cancel, wipe]);
+        this._resetOverlay = o;
     }
 
 

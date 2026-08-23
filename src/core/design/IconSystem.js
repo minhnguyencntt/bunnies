@@ -58,6 +58,14 @@ const IconSystem = {
                 g.fillTriangle(-s * 0.02, s * 0.34, -s * 0.22, -s * 0.08, s * 0.18, -s * 0.08);
                 g.fillCircle(0, -s * 0.14, s * 0.2);
                 break;
+            case 'reset':
+                g.lineStyle(Math.max(3, s * 0.14), color, 1);
+                g.beginPath();
+                g.arc(0, 0, s * 0.28, Phaser.Math.DegToRad(40), Phaser.Math.DegToRad(300));
+                g.strokePath();
+                g.fillStyle(color, 1);
+                g.fillTriangle(s * 0.22, -s * 0.22, s * 0.38, -s * 0.04, s * 0.08, -s * 0.02);
+                break;
             case 'sound':
                 g.fillTriangle(-s * 0.22, 0, -s * 0.02, -s * 0.2, -s * 0.02, s * 0.2);
                 g.fillRect(-s * 0.22, -s * 0.1, s * 0.16, s * 0.2);

@@ -107,6 +107,7 @@ const DesignTokens = {
         pause: 'pause',
         play: 'play',
         close: 'close',
+        reset: 'reset',
         sound: 'sound',
         music: 'sound',
         star: 'star',

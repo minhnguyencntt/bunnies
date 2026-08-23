@@ -75,6 +75,16 @@ const VOICE_LIBRARY = {
     instr_orientation_forest_1: { vi: 'Vật ở bên trái hay bên phải Sóc nhỉ?', en: 'Is the object on Squirrel\'s left or right?', voice: 'narrator', game: 'orientation_forest', level: 1 },
     instr_orientation_forest_2: { vi: 'Vật ở hướng nào của Sóc? Trái, phải, trước hay sau?', en: 'Which direction is the object? Left, right, front or back?', voice: 'narrator', game: 'orientation_forest', level: 2 },
     instr_orientation_forest_3: { vi: 'Nhớ các mũi tên, rồi dẫn Sóc đi đúng đường nhé!', en: 'Remember the arrows, then guide Squirrel the right way!', voice: 'narrator', game: 'orientation_forest', level: 3 },
+
+    // ── Vườn Kẹo Ngọt (Candy Garden — addition) ──
+    instr_candy_garden_1: { vi: 'Đếm kẹo hai bên, rồi chọn đáp án đúng nhé!', en: 'Count the candies on both sides, then pick the right answer!', voice: 'narrator', game: 'candy_garden', level: 1 },
+    instr_candy_garden_2: { vi: 'Gộp hai nhóm kẹo lại và chọn tổng đúng nào!', en: 'Combine the two candy groups and pick the right total!', voice: 'narrator', game: 'candy_garden', level: 2 },
+    instr_candy_garden_3: { vi: 'Những phép cộng khó hơn đang chờ bạn. Sẵn sàng chưa?', en: 'Harder additions await. Ready?', voice: 'narrator', game: 'candy_garden', level: 3 },
+
+    // ── Rừng Diệu Kỳ (Forest Adventure — subtraction) ──
+    instr_forest_adventure_1: { vi: 'Nấm bay đi mất rồi! Đếm xem còn lại bao nhiêu nhé!', en: 'Some mushrooms flew away! Count how many are left!', voice: 'narrator', game: 'forest_adventure', level: 1 },
+    instr_forest_adventure_2: { vi: 'Bớt đi rồi đếm phần còn lại nào!', en: 'Take some away, then count what is left!', voice: 'narrator', game: 'forest_adventure', level: 2 },
+    instr_forest_adventure_3: { vi: 'Đêm trong rừng thật bí ẩn. Tính xem còn lại bao nhiêu!', en: 'The forest night is mysterious. Work out how many remain!', voice: 'narrator', game: 'forest_adventure', level: 3 },
 };
 
 const VOICE_CATEGORIES = {
@@ -95,6 +105,8 @@ const GAME_AUDIO = {
     subtraction_hill: { theme: { key: 'bgm_subtraction_hill', url: 'screens/subtraction_hill/assets/audio/bgm/bgm.mp3', volume: 0.35 }, ambience: 'forest' },
     mirror_city: { theme: { key: 'bgm_mirror_city', url: 'screens/mirror_city/assets/audio/bgm/bgm.mp3', volume: 0.35 }, ambience: 'mystery' },
     orientation_forest: { theme: { key: 'bgm_orientation_forest', url: 'screens/orientation_forest/assets/audio/bgm/bgm.mp3', volume: 0.35 }, ambience: 'forest' },
+    candy_garden: { theme: { key: 'bgm_candy_garden', url: 'screens/candy_garden/assets/audio/bgm/bgm.mp3', volume: 0.35 }, ambience: 'candy' },
+    forest_adventure: { theme: { key: 'bgm_forest_adventure', url: 'screens/forest_adventure/assets/audio/bgm/bgm.mp3', volume: 0.35 }, ambience: 'forest' },
 };
 
 const AREA_AUDIO = {

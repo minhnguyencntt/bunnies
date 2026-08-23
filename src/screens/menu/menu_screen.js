@@ -1315,19 +1315,36 @@ class MenuScreen extends Phaser.Scene {
         if (city.screenKey && typeof GameConfig !== 'undefined' && typeof ProgressionEngine !== 'undefined') {
             const gameDef = GameConfig.getByScene(city.screenKey);
             if (gameDef) {
-                const state = ProgressionEngine.cityState(SaveEngine.load(), gameDef.gameId);
-                const tierIcon = { none: '', bronze: '🥉', silver: '🥈', gold: '🥇' }[state.tier];
-                const badge = this.add.container(0, markerSize + 16 * scale);
-                const bbg = this.add.graphics();
-                bbg.fillStyle(0x2c1810, 0.8);
-                bbg.fillRoundedRect(-44, -13, 88, 26, 13);
-                bbg.lineStyle(2, state.tier === 'gold' ? 0xffd700 : 0xffffff, 0.7);
-                bbg.strokeRoundedRect(-44, -13, 88, 26, 13);
-                badge.add(bbg);
-                badge.add(this.add.text(0, 0, `${tierIcon}⭐${state.stars}/9`, {
-                    fontSize: '14px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold', color: '#ffd700',
-                }).setOrigin(0.5));
-                markerContainer.add(badge);
+                const profile = SaveEngine.load();
+                const locked = !ProgressionEngine.isGameUnlocked(profile, gameDef.gameId);
+                if (locked) {
+                    // World chưa mở: marker mờ + ổ khóa
+                    markerContainer.setAlpha(0.55);
+                    const lockBadge = this.add.container(0, markerSize + 16 * scale);
+                    const lbg = this.add.graphics();
+                    lbg.fillStyle(0x37474f, 0.9);
+                    lbg.fillRoundedRect(-30, -14, 60, 28, 14);
+                    lbg.lineStyle(2, 0x90a4ae, 0.8);
+                    lbg.strokeRoundedRect(-30, -14, 60, 28, 14);
+                    lockBadge.add(lbg);
+                    lockBadge.add(this.add.text(0, 0, '🔒', { fontSize: '16px' }).setOrigin(0.5));
+                    markerContainer.add(lockBadge);
+                    markerContainer.setData('locked', true);
+                } else {
+                    const state = ProgressionEngine.cityState(profile, gameDef.gameId);
+                    const tierIcon = { none: '', bronze: '🥉', silver: '🥈', gold: '🥇' }[state.tier];
+                    const badge = this.add.container(0, markerSize + 16 * scale);
+                    const bbg = this.add.graphics();
+                    bbg.fillStyle(0x2c1810, 0.8);
+                    bbg.fillRoundedRect(-44, -13, 88, 26, 13);
+                    bbg.lineStyle(2, state.tier === 'gold' ? 0xffd700 : 0xffffff, 0.7);
+                    bbg.strokeRoundedRect(-44, -13, 88, 26, 13);
+                    badge.add(bbg);
+                    badge.add(this.add.text(0, 0, `${tierIcon}⭐${state.stars}/9`, {
+                        fontSize: '14px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold', color: '#ffd700',
+                    }).setOrigin(0.5));
+                    markerContainer.add(badge);
+                }
             }
         }
 
@@ -1749,6 +1766,18 @@ class MenuScreen extends Phaser.Scene {
 
             const gameDef = typeof GameConfig !== 'undefined' ? GameConfig.getByScene(city.screenKey) : null;
             if (gameDef) {
+                // Locked world → explain how to unlock instead of navigating
+                if (markerContainer.getData('locked')) {
+                    if (typeof AudioEngine !== 'undefined') AudioEngine.emit('Locked');
+                    const hint = ProgressionEngine.unlockHint(gameDef.gameId);
+                    const t = this.add.text(this.cameras.main.width / 2, this.cameras.main.height - 70, `🔒 ${hint}`, {
+                        fontSize: '20px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold',
+                        color: '#fff', stroke: '#000', strokeThickness: 3,
+                        backgroundColor: '#37474fdd', padding: { x: 18, y: 10 },
+                    }).setOrigin(0.5).setDepth(500);
+                    this.tweens.add({ targets: t, alpha: 0, y: t.y - 20, duration: 400, delay: 2200, onComplete: () => t.destroy() });
+                    return;
+                }
                 this.scene.start('LevelSelectScreen', { gameId: gameDef.gameId });
             } else {
                 this.scene.start(city.screenKey);

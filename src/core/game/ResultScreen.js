@@ -50,6 +50,13 @@ class ResultScreen extends Phaser.Scene {
         steps.push(() => this.tweens.add({ targets: title, scale: 1, duration: 400, ease: 'Back.easeOut' }));
         y += 52;
 
+        // Solved count (child-friendly "how many did I get")
+        const solved = this.add.text(center, y, `✅ Đúng ${r.metrics.correctAnswers}/${r.levelCfg.rounds} câu`, {
+            fontSize: '18px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold', color: '#33691e',
+        }).setOrigin(0.5).setAlpha(0);
+        steps.push(() => this.tweens.add({ targets: solved, alpha: 1, duration: 250 }));
+        y += 30;
+
         // 2. Score count-up
         const scoreText = this.add.text(center, y, 'Điểm: 0', {
             fontSize: '30px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold', color: '#5c3a1e',

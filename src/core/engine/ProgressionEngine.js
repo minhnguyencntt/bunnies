@@ -18,10 +18,27 @@ const ProgressionEngine = {
     },
 
     isLevelUnlocked(profile, gameId, level) {
+        if (!this.isGameUnlocked(profile, gameId)) return false;
         if (level <= 1) return true;
         const gp = profile.games[gameId];
         if (!gp) return false;
         return (gp.levels[level - 1]?.stars || 0) > 0;
+    },
+
+    /** Cross-game unlocks: a game may require progress in another game first. */
+    isGameUnlocked(profile, gameId) {
+        const def = GameConfig.get(gameId);
+        if (!def?.unlockRequires) return true;
+        const req = def.unlockRequires;
+        const gp = profile.games[req.gameId];
+        return !!gp && (gp.levels[req.level]?.stars || 0) > 0;
+    },
+
+    unlockHint(gameId) {
+        const def = GameConfig.get(gameId);
+        if (!def?.unlockRequires) return '';
+        const req = GameConfig.get(def.unlockRequires.gameId);
+        return `Hoàn thành Màn 1 ở ${req?.name || 'game trước'} để mở!`;
     },
 
     worldProgress(profile) {
@@ -42,6 +59,7 @@ const ProgressionEngine = {
     /** Child-friendly suggestion for what to do next (shown on the map). */
     nextGoal(profile) {
         for (const g of GameConfig.allGames()) {
+            if (!this.isGameUnlocked(profile, g.gameId)) continue;
             const gp = profile.games[g.gameId];
             if (!gp || gp.plays === 0) {
                 return { icon: g.icon, text: `Khám phá ${g.name}!` };

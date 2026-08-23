@@ -67,6 +67,7 @@ const CORE_ASSETS = [
 
     // Game framework
     './core/game/GameShell.js',
+    './core/game/VisualMathScreen.js',
     './core/game/ResultScreen.js',
     './core/game/LevelSelectScreen.js',
     './core/game/StickerAlbumScreen.js',
@@ -84,6 +85,10 @@ const CORE_ASSETS = [
     './screens/subtraction_hill/screen.js',
     './screens/orientation_forest/puzzle.js',
     './screens/orientation_forest/screen.js',
+    './screens/candy_garden/puzzle.js',
+    './screens/candy_garden/screen.js',
+    './screens/forest_adventure/puzzle.js',
+    './screens/forest_adventure/screen.js',
     './screens/ScreenLevelBackground.js',
     './screens/UIScreen.js',
 

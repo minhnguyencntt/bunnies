@@ -43,8 +43,21 @@ const RewardPresentationEngine = {
             if (!levelProf) return false;
             if ((levelProf.bestScore || 0) < (raw.score || 0)) return false;
             if ((levelProf.stars || 0) < (raw.stars || 0)) return false;
+            const gameName = (raw.gameDef || GameConfig.get(raw.gameId) || {}).name || '';
             for (const s of raw.stickers || []) {
-                if (!gp.stickers.includes(s.id)) return false;
+                const award = Award.hydrate(s, {
+                    type: Award.TYPE.STICKER, persistOk: true, owned: true,
+                    gameId: s.gameId || raw.gameId, gameName: s.gameName || gameName,
+                });
+                if (!Award.verifyOwned(award, profile)) return false;
+            }
+            for (const a of raw.awards || []) {
+                const award = Award.hydrate(a, {
+                    type: Award.TYPE.BADGE, persistOk: true, owned: true,
+                    gameId: a.gameId !== undefined ? a.gameId : raw.gameId,
+                    gameName: a.gameName || gameName,
+                });
+                if (!Award.verifyOwned(award, profile)) return false;
             }
             return true;
         } catch (e) {
@@ -124,53 +137,47 @@ const RewardPresentationEngine = {
     },
 
     buildItems(raw, persistOk) {
+        const gameName = (raw.gameDef || (typeof GameConfig !== 'undefined' && GameConfig.get(raw.gameId)) || {}).name || '';
         const items = [];
         (raw.stickers || []).forEach((s) => {
-            items.push({
-                type: RewardType.STICKER,
-                id: s.id,
-                name: s.name,
-                icon: s.icon,
-                artwork: s.icon,
-                rarity: s.rarity,
-                isNew: persistOk,
+            items.push(Award.hydrate(s, {
+                type: Award.TYPE.STICKER,
+                isNew: true,
                 owned: persistOk,
-            });
+                persistOk,
+                gameId: s.gameId || raw.gameId,
+                gameName: s.gameName || gameName,
+            }));
         });
         (raw.awards || []).forEach((a) => {
-            items.push({
-                type: RewardType.BADGE,
-                id: a.id,
-                name: a.name,
-                icon: a.icon,
-                artwork: a.icon,
-                rarity: a.rarity,
-                isNew: persistOk,
+            items.push(Award.hydrate(a, {
+                type: Award.TYPE.BADGE,
+                isNew: true,
                 owned: persistOk,
-            });
+                persistOk,
+                gameId: a.gameId !== undefined ? a.gameId : raw.gameId,
+                gameName: a.gameName || gameName,
+            }));
         });
         if (!items.length) {
             const nxt = StickerEngine.nextHint(SaveEngine.load(), raw.gameId);
             if (nxt) {
-                items.push({
-                    type: RewardType.STICKER,
-                    id: nxt.id,
-                    name: nxt.name,
-                    icon: nxt.icon,
-                    artwork: nxt.icon,
-                    rarity: nxt.rarity,
-                    isNew: false,
-                    owned: false,
+                items.push(Award.hydrate(nxt, {
+                    type: Award.TYPE.STICKER,
                     teaser: true,
-                });
+                    owned: false,
+                    persistOk,
+                    gameId: raw.gameId,
+                    gameName,
+                }));
             }
         }
         return items;
     },
 
     typeLabel(type) {
-        if (type === RewardType.STICKER) return 'STICKER';
-        if (type === RewardType.BADGE) return 'HUY HIỆU';
+        if (type === Award.TYPE.STICKER || type === RewardType.STICKER) return Award.typeLabel(Award.TYPE.STICKER);
+        if (type === Award.TYPE.BADGE || type === RewardType.BADGE) return Award.typeLabel(Award.TYPE.BADGE);
         if (type === RewardType.XP) return 'XP';
         if (type === RewardType.STARS) return 'SAO';
         if (type === RewardType.COINS) return 'ĐÁ TRI THỨC';

@@ -1,7 +1,6 @@
 /**
  * StickerAlbumScreen.js — "Album Sticker Của Tớ".
- * Every game's collection: owned stickers in full color, locked stickers
- * show how to earn them. Part of long-term world progression.
+ * Renders the same Award objects that ResultScreen presents after a level.
  */
 class StickerAlbumScreen extends Phaser.Scene {
     constructor() {
@@ -9,6 +8,7 @@ class StickerAlbumScreen extends Phaser.Scene {
     }
 
     create() {
+        NavSystem.ready(this);
         const w = this.cameras.main.width;
         const h = this.cameras.main.height;
         const profile = SaveEngine.load();
@@ -29,11 +29,11 @@ class StickerAlbumScreen extends Phaser.Scene {
         this.add.graphics().fillStyle(0x1a0f2e, 0.6).fillRect(0, 0, w, h);
 
         this.add.text(w / 2, 46, '🎟 Album Sticker Của Tớ', {
-            fontSize: '34px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold',
+            fontSize: '34px', fontFamily: DesignTokens.typography.fontFamily, fontStyle: 'bold',
             color: '#FFD700', stroke: '#000', strokeThickness: 3,
         }).setOrigin(0.5);
         this.add.text(w / 2, 84, `Đã sưu tầm: ${totals.owned}/${totals.total} sticker`, {
-            fontSize: '18px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold', color: '#fff',
+            fontSize: '18px', fontFamily: DesignTokens.typography.fontFamily, fontStyle: 'bold', color: '#fff',
             stroke: '#000', strokeThickness: 2,
         }).setOrigin(0.5);
 
@@ -48,68 +48,48 @@ class StickerAlbumScreen extends Phaser.Scene {
             depth: 20,
         });
 
-        // Hint bubble (created on demand)
         this.hintBubble = null;
     }
 
     createAlbumRow(w, y, rowH, album) {
         const leftX = 30;
         this.add.text(leftX, y - 14, `${album.icon} ${album.gameName}`, {
-            fontSize: '19px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold',
+            fontSize: '19px', fontFamily: DesignTokens.typography.fontFamily, fontStyle: 'bold',
             color: '#FFD700', stroke: '#000', strokeThickness: 2,
         }).setOrigin(0, 0.5);
         this.add.text(leftX, y + 12, album.world.name, {
-            fontSize: '13px', fontFamily: 'Comic Sans MS, Arial', color: '#ce93d8',
+            fontSize: '13px', fontFamily: DesignTokens.typography.fontFamily, color: '#ce93d8',
         }).setOrigin(0, 0.5);
 
         const slotSize = Math.min(64, rowH * 0.52);
         const gap = 14;
         const gridX = leftX + 230;
-        album.stickers.forEach((s, i) => {
+        album.stickers.forEach((award, i) => {
             const x = gridX + i * (slotSize + gap) + slotSize / 2;
-            this.createStickerSlot(x, y, slotSize, s);
+            UISystem.awardCard(this, x, y, award, {
+                size: 'album',
+                slot: slotSize,
+                reveal: false,
+                onTap: () => {
+                    AudioEngine.emit(award.owned ? 'UIPop' : 'Locked');
+                    this.showAwardInfo(x, y, award);
+                },
+            });
         });
     }
 
-    createStickerSlot(x, y, size, sticker) {
-        const c = this.add.container(x, y);
-        const rs = sticker.rarityStyle;
-        const bg = this.add.graphics();
-        bg.fillStyle(sticker.owned ? 0xfff8dc : 0x37474f, sticker.owned ? 1 : 0.9);
-        bg.fillRoundedRect(-size / 2, -size / 2, size, size, 12);
-        bg.lineStyle(3, sticker.owned ? rs.glow : 0x546e7a, 1);
-        bg.strokeRoundedRect(-size / 2, -size / 2, size, size, 12);
-        c.add(bg);
-
-        c.add(this.add.text(0, -6, sticker.owned ? sticker.icon : '🔒', {
-            fontSize: `${Math.round(size * 0.42)}px`,
-        }).setOrigin(0.5));
-        c.add(this.add.text(0, size / 2 - 10, sticker.owned ? sticker.name : '???', {
-            fontSize: '10px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold',
-            color: sticker.owned ? rs.color : '#90a4ae',
-        }).setOrigin(0.5));
-
-        setCenteredInput(c, size, size);
-        c.on('pointerdown', () => {
-            AudioEngine.emit(sticker.owned ? 'UIPop' : 'Locked');
-            this.showStickerInfo(x, y, sticker);
-        });
-        if (sticker.owned) {
-            this.tweens.add({ targets: c, scale: 1.06, duration: 1200, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
-        }
-    }
-
-    showStickerInfo(x, y, sticker) {
+    showAwardInfo(x, y, award) {
         if (this.hintBubble) { this.hintBubble.destroy(true); this.hintBubble = null; }
         const w = this.cameras.main.width;
-        const text = sticker.owned
-            ? `${sticker.icon} ${sticker.name} — ${sticker.rarityStyle.label}\nĐã sưu tầm!`
-            : `🔒 ${sticker.name}\nCách mở: ${sticker.hint}`;
+        const glyph = (award.artwork && award.artwork.glyph) || award.icon;
+        const text = award.owned
+            ? `${glyph} ${award.name} — ${award.rarityStyle.label}\nĐã sưu tầm!`
+            : `🔒 ${award.name}\nCách mở: ${award.hint}`;
         const bx = Phaser.Math.Clamp(x, 180, w - 180);
         const by = y - 84;
         const c = this.add.container(bx, by).setDepth(900);
         const t = this.add.text(0, 0, text, {
-            fontSize: '16px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold',
+            fontSize: '16px', fontFamily: DesignTokens.typography.fontFamily, fontStyle: 'bold',
             color: '#4a3728', align: 'center', wordWrap: { width: 280 },
             backgroundColor: '#fff8e7', padding: { x: 14, y: 10 },
         }).setOrigin(0.5);

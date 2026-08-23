@@ -45,8 +45,21 @@ fs.mkdirSync(path.dirname(OUT), { recursive: true });
     });
     console.log('granted', info);
     console.log('ui', ui);
+    const hero = await page.evaluate(() => {
+        const s = window.game.scene.getScene('ResultScreen');
+        const r = s.completion;
+        const item = Award.pickHero(r.rewards);
+        return item && {
+            id: item.id, name: item.name, type: item.type,
+            glyph: item.artwork && item.artwork.glyph,
+            state: item.presentation && item.presentation.state,
+            persisted: item.persisted,
+        };
+    });
+    if (!hero || !hero.id || !hero.glyph || !hero.persisted) throw new Error('hero Award missing identity/artwork/persist');
+    if (!ui.includes(hero.name)) throw new Error('award screen missing hero name ' + hero.name);
     if (!/Sticker mới/.test(ui)) throw new Error('award screen missing Sticker mới');
-    if (!/Huy hiệu mới|Phần thưởng/.test(ui)) throw new Error('award screen missing huy hiệu');
+    if (!/Huy hiệu mới|Phần thưởng|STICKER|HUY HIỆU/.test(ui)) throw new Error('award screen missing huy hiệu');
     if (!/TIẾP TỤC|CHƠI LẠI|CHỌN MÀN|VỀ NHÀ/.test(ui)) throw new Error('award screen missing next action');
     if (!/Bạn muốn làm gì tiếp/.test(ui)) throw new Error('award screen dead-end');
     if (!info.stickers.length) throw new Error('engine granted no stickers');

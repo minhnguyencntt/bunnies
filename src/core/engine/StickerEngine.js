@@ -59,10 +59,12 @@ const StickerEngine = {
                 gameName: g.name,
                 icon: g.icon,
                 world: GameConfig.KNOWLEDGE_WORLDS[g.world],
-                stickers: g.stickers.map(s => ({
-                    ...s,
+                stickers: g.stickers.map(s => Award.hydrate(s, {
+                    type: Award.TYPE.STICKER,
                     owned: owned.includes(s.id),
-                    rarityStyle: GameConfig.RARITY_STYLE[s.rarity],
+                    persistOk: true,
+                    gameId: g.gameId,
+                    gameName: g.name,
                 })),
             };
         });

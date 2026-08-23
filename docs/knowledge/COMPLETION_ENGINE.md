@@ -12,8 +12,10 @@ feel cut off.
 | System | Role |
 |---|---|
 | `CompletionEngine` | State machine + `completeGame()` + next-action router |
-| `RewardPresentationEngine` | Persist → verify → visual reward items |
-| `ResultScreen` | Shared completion UI (achievement / result / reward / next) |
+| `Award` | First-class collectible (identity, artwork, presentation, persist) |
+| `RewardPresentationEngine` | Persist → verify → hydrate Award objects |
+| `ResultScreen` | Shared completion UI — hero Award + next actions |
+| `UISystem.awardCard` | One card for ResultScreen and the album |
 | `GameShell.answerCorrect` | Last round completes immediately |
 | `UISystem.bindTap` | Immediate press, one action, async bounce |
 | `NavSystem.begin` | One navigation transaction, no debounce |

@@ -131,11 +131,7 @@ class SubtractionHillScreen extends GameShell {
                 this.time.delayedCall(600 + a * 100 + b * 260, () => {
                     if (!it.active || this.sessionOver) return;
                     // Generous padded hit area around the emoji for small fingers
-                    it.setInteractive({
-                        hitArea: new Phaser.Geom.Rectangle(-14, -14, it.width + 28, it.height + 28),
-                        hitAreaCallback: Phaser.Geom.Rectangle.Contains,
-                        useHandCursor: true,
-                    });
+                    UISystem.setOriginCenteredInput(it, it.width + 28, it.height + 28);
                     it.on('pointerdown', () => this.collectItem(it));
                     this.tweens.add({ targets: it, y: rowY - 8, duration: 900, yoyo: true, repeat: -1 });
                 });
@@ -214,12 +210,7 @@ class SubtractionHillScreen extends GameShell {
             const it = this.track(this.add.text(ix, rowY, item.emoji, { fontSize: '48px' })
                 .setOrigin(0.5).setDepth(120));
             it.setSize(56, 56);
-            it.setInteractive({
-                hitArea: new Phaser.Geom.Rectangle(-12, -12, it.width + 24, it.height + 24),
-                hitAreaCallback: Phaser.Geom.Rectangle.Contains,
-                draggable: true,
-                useHandCursor: true,
-            });
+            UISystem.setOriginCenteredInput(it, it.width + 24, it.height + 24, { draggable: true });
             it.setData('ox', ix);
             it.setData('oy', rowY);
             it.setData('packed', false);

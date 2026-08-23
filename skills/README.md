@@ -11,6 +11,7 @@ Audio / Navigation / Reward / Progression / Content).
 |---|---|
 | `gameplay/SKILL.md` | adding any game/level; round lifecycle, engine wiring |
 | `gameplay/completion.md` | session end, rewards, next actions — never per-game |
+| `gameplay/award.md` | first-class Award object, hero card, album sync |
 | `gameplay/multiple-choice.md` | visual 3-choice math games (addition/subtraction/…) |
 | `ui/SKILL.md` | buttons, cards, panels, bars, bubbles, HUD |
 | `animation/SKILL.md` | motion tokens, character reactions, reward reveals |

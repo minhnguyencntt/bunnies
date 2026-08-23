@@ -2,6 +2,24 @@
 
 Meaningful architectural/design decisions only — not trivial code changes.
 
+## 2026-08-23 (award as first-class object)
+
+### Changed
+- `Award` is the collectible domain object (sticker + badge): identity,
+  metadata, artwork, presentation state, persistence
+- `RewardPresentationEngine` hydrates Awards; `Award.pickHero` chooses the
+  completion-screen hero
+- `UISystem.awardCard` is the only collectible renderer (`hero` / `support` /
+  `album`)
+- ResultScreen is an award-hero screen, not a generic celebration dump
+- Album reads the same Award objects from SaveEngine
+- Origin-centered hit areas (`UISystem.setOriginCenteredInput`) so Text/Image
+  tap targets match the visible glyph
+
+### Reason
+The award screen was orange headline + text. The child must see the thing they
+earned, and that same object must live in the album.
+
 ## 2026-08-23 (completion engine & instant interaction)
 
 ### Changed

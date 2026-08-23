@@ -22,5 +22,6 @@ around it.
 
 - `gameplay-patterns.md` — round flow, guided retry, visual math
 - `reward-system.md` — Score→Stars→XP→Awards→Stickers→Gems→World
+  (`Award` object + `UISystem.awardCard` on ResultScreen and album)
 - `progression.md` — level/world unlocks, map progression
 - `difficulty-system.md` — difficulty dimensions + adaptive tiers

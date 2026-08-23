@@ -15,6 +15,7 @@ Build any UI element with the one Bunnies visual language.
 | `panel` | storybook cards/dialogs (cream, gold border, soft shadow) |
 | `progressBar` | XP / world progress (animated fill) |
 | `speechBubble` | all character speech (consistent tail + cream card) |
+| `awardCard` | first-class Award collectible (`hero` / `support` / `album`) |
 
 All use `DesignTokens` and `UISystem.bindTap`:
 IDLE → PRESSED (immediate scale) → TRIGGERED → ACTION.
@@ -24,7 +25,8 @@ override a pressed button. Navigation duplicates are ignored by `NavSystem.begin
 ## Rules
 
 - Never hand-draw a one-off button/card — extend UISystem.
-- Hit areas: containers need `setCenteredInput` (UISystem does it for you).
+- Hit areas: containers use `setCenteredInput`; Text/Image/Zone use
+  `setOriginCenteredInput` (origin 0.5 otherwise clicks the bottom-right).
 - Touch targets ≥ 46px (icon) / ≥ 96px (answers).
 - Every tap: immediate press + `AudioEngine.emit('UITap')` (built into factories).
 - Never debounce taps with `sleep` / `delayedCall`. Use action transactions.

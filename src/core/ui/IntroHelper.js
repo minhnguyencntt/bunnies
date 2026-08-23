@@ -69,29 +69,16 @@ const IntroHelper = {
             voice.play();
         }
 
-        // Nút "Chơi ngay" — to, rõ ràng, có glow nhấp nháy để trẻ biết có thể vào chơi
-        skipBtn = scene.add.container(w - 120, h - 52).setDepth(900);
-        const btnBg = scene.add.graphics();
-        btnBg.fillStyle(0x66BB6A, 1);
-        btnBg.fillRoundedRect(-95, -30, 190, 60, 30);
-        btnBg.lineStyle(4, 0xFFFFFF, 0.95);
-        btnBg.strokeRoundedRect(-95, -30, 190, 60, 30);
-        skipBtn.add(btnBg);
+        // Nút "Chơi ngay" — to, rõ ràng, glow nhấp nháy (design-system primary button)
+        skipBtn = UISystem.primaryButton(scene, w - 120, h - 52, 'Chơi ngay ▶', finish, {
+            width: 190, height: 60, fontSize: 24, color: DesignTokens.colors.success,
+        });
+        skipBtn.setDepth(900);
         const glow = scene.add.graphics();
         glow.lineStyle(6, 0xFFF59D, 0.8);
         glow.strokeRoundedRect(-99, -34, 198, 68, 34);
         skipBtn.add(glow);
         scene.tweens.add({ targets: glow, alpha: 0.25, duration: 700, yoyo: true, repeat: -1 });
-        skipBtn.add(scene.add.text(0, 0, 'Chơi ngay ▶', {
-            fontSize: '24px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold',
-            color: '#FFFFFF', stroke: '#2E7D32', strokeThickness: 3,
-        }).setOrigin(0.5));
-        skipBtn.setSize(190, 60);
-        skipBtn.setInteractive(new Phaser.Geom.Rectangle(-95, -30, 190, 60), Phaser.Geom.Rectangle.Contains);
-        skipBtn.input.cursor = 'pointer';
-        skipBtn.on('pointerdown', finish);
-        skipBtn.on('pointerover', () => skipBtn.setScale(1.08));
-        skipBtn.on('pointerout', () => skipBtn.setScale(1));
 
         // Nảy vào
         skipBtn.setScale(0);

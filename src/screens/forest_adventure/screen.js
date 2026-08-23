@@ -12,6 +12,7 @@ class ForestAdventureScreen extends VisualMathScreen {
     }
 
     onPreload() {
+        this.load.image('forest_adventure_bg', 'screens/forest_adventure/assets/backgrounds/bg.png');
         this.preloadCommonAudio('forest_adventure');
     }
 

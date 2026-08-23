@@ -56,18 +56,10 @@ class LevelSelectScreen extends Phaser.Scene {
         }
 
         // Back button
-        const back = this.add.container(60, 50).setDepth(10);
-        const bg = this.add.graphics();
-        bg.fillStyle(0x4a90e2, 1);
-        bg.fillCircle(0, 0, 26);
-        bg.lineStyle(3, 0xffffff, 0.8);
-        bg.strokeCircle(0, 0, 26);
-        back.add(bg);
-        back.add(this.add.text(0, 0, '🗺', { fontSize: '22px' }).setOrigin(0.5));
-        setCenteredInput(back, 56, 56);
-        back.on('pointerdown', () => { AudioEngine.emit('Transition'); this.scene.start('MenuScreen'); });
-        back.on('pointerover', () => back.setScale(1.12));
-        back.on('pointerout', () => back.setScale(1));
+        UISystem.iconButton(this, 60, 50, '🗺', () => {
+            AudioEngine.emit('Transition');
+            this.scene.start('MenuScreen');
+        }, { radius: 26, fontSize: 22 }).setDepth(10);
     }
 
     createLevelCard(x, y, cw, ch, gameDef, gp, level, profile) {
@@ -110,15 +102,10 @@ class LevelSelectScreen extends Phaser.Scene {
                     fontSize: '15px', fontFamily: 'Comic Sans MS, Arial', color: '#6d4c41',
                 }).setOrigin(0.5));
             }
-            const playBg = this.add.graphics();
-            playBg.fillStyle(0x66bb6a, 1);
-            playBg.fillRoundedRect(-70, ch / 2 - 66, 140, 46, 23);
-            playBg.lineStyle(3, 0xffffff, 0.9);
-            playBg.strokeRoundedRect(-70, ch / 2 - 66, 140, 46, 23);
-            c.add(playBg);
-            c.add(this.add.text(0, ch / 2 - 43, '▶ Chơi', {
-                fontSize: '20px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold', color: '#fff',
-            }).setOrigin(0.5));
+            const playBtn = UISystem.primaryButton(this, 0, ch / 2 - 43, '▶ Chơi', () => {}, { width: 140, height: 46 });
+            // card itself handles the tap; the button is visual affordance
+            playBtn.disableInteractive();
+            c.add(playBtn);
         } else {
             c.add(this.add.text(0, 40, '🔒', { fontSize: '36px' }).setOrigin(0.5));
             c.add(this.add.text(0, ch / 2 - 46, `Hoàn thành\nMàn ${level - 1} nhé!`, {

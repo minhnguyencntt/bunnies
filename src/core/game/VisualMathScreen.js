@@ -270,6 +270,19 @@ class VisualMathScreen extends GameShell {
 
     buildThemedWorld(w, h) {
         const p = this.theme.palette;
+        // Painted storybook background when available (generated art);
+        // procedural gradient world as fallback
+        const bgKey = `${this.gameId}_bg`;
+        if (this.textures.exists(bgKey)) {
+            this.add.image(w / 2, h / 2, bgKey).setDisplaySize(w, h).setDepth(0);
+        } else {
+            this.buildProceduralWorld(w, h, p);
+        }
+        this.addWorldLife(w, h);
+        this.createBigBunny(Math.round(w * 0.12), Math.round(h * 0.68), 130);
+    }
+
+    buildProceduralWorld(w, h, p) {
         const g = this.add.graphics().setDepth(0);
         g.fillGradientStyle(p.skyTop, p.skyTop, p.skyBottom, p.skyBottom, 1);
         g.fillRect(0, 0, w, h);
@@ -278,14 +291,16 @@ class VisualMathScreen extends GameShell {
         g.fillEllipse(w * 0.25, h * 1.05, w * 0.7, h * 0.5);
         g.fillStyle(p.hill2, 0.9);
         g.fillEllipse(w * 0.8, h * 1.1, w * 0.75, h * 0.55);
-        // Decorations
+    }
+
+    /** Living background: swaying decor + floating particles (subtle). */
+    addWorldLife(w, h) {
         this.theme.decor.forEach((emoji, i) => {
             const x = (w * (0.12 + i * 0.19)) % (w * 0.95);
             const y = h * (0.62 + (i % 2) * 0.14);
             const d = this.add.text(x, y, emoji, { fontSize: '44px' }).setDepth(5).setAlpha(0.9);
             this.tweens.add({ targets: d, y: y - 6, duration: 1800 + i * 200, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
         });
-        // Floating particles
         for (let i = 0; i < 14; i++) {
             const px = Phaser.Math.Between(30, w - 30);
             const py = Phaser.Math.Between(80, h - 100);
@@ -298,7 +313,6 @@ class VisualMathScreen extends GameShell {
                 duration: Phaser.Math.Between(2000, 4000), yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
             });
         }
-        this.createBigBunny(Math.round(w * 0.12), Math.round(h * 0.68), 130);
     }
 
     showHintVisual(hint) {

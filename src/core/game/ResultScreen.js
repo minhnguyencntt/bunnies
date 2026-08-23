@@ -30,13 +30,9 @@ class ResultScreen extends Phaser.Scene {
         const px = w / 2 - pw / 2;
         const py = h / 2 - ph / 2;
 
-        const panel = this.add.graphics();
-        panel.fillStyle(0xfff8dc, 1);
-        panel.fillRoundedRect(px, py, pw, ph, 26);
-        panel.lineStyle(5, 0xffd700, 1);
-        panel.strokeRoundedRect(px, py, pw, ph, 26);
+        const panel = UISystem.panel(this, w / 2, h / 2, pw, ph, { borderWidth: 5 });
         panel.setScale(0.9).setAlpha(0);
-        this.tweens.add({ targets: panel, scale: 1, alpha: 1, duration: 350, ease: 'Back.easeOut' });
+        this.tweens.add({ targets: panel, scale: 1, alpha: 1, duration: DesignTokens.motion.uiTransition, ease: DesignTokens.motion.easeOut });
 
         let y = py + 46;
         const center = w / 2;
@@ -212,17 +208,7 @@ class ResultScreen extends Phaser.Scene {
         const totalW = buttons.length * bw + (buttons.length - 1) * gap;
         buttons.forEach((b, i) => {
             const bx = w / 2 - totalW / 2 + bw / 2 + i * (bw + gap);
-            const bg = this.add.graphics();
-            bg.fillStyle(b.color, 1);
-            bg.fillRoundedRect(bx - bw / 2, btnY - 26, bw, 52, 26);
-            bg.lineStyle(3, 0xffffff, 0.9);
-            bg.strokeRoundedRect(bx - bw / 2, btnY - 26, bw, 52, 26);
-            this.add.text(bx, btnY, b.label, {
-                fontSize: '19px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold', color: '#fff',
-                stroke: '#00000055', strokeThickness: 2,
-            }).setOrigin(0.5);
-            this.add.zone(bx, btnY, bw, 52).setInteractive({ useHandCursor: true })
-                .on('pointerdown', b.cb);
+            UISystem.primaryButton(this, bx, btnY, b.label, b.cb, { width: bw, height: 52, color: b.color, fontSize: 19 });
         });
 
         // Play the reveal sequence (snappy: ~220ms per beat)

@@ -153,7 +153,7 @@ class GameShell extends Phaser.Scene {
         if (this.sessionOver) return;
         this.analytics.recordAnswer(false);
         this.adaptive.update(this.analytics);
-        this.companionReact('sad');
+        this.companionReact('think'); // curious + encouraging, never sad judgment
         AudioEngine.emit('IncorrectAnswer');
         const encourage = Phaser.Utils.Array.GetRandom([
             'Gần đúng rồi! Thử lại nhé!', 'Không sao, thử lại nào!', 'Bunnine tin bạn làm được!',
@@ -318,22 +318,8 @@ class GameShell extends Phaser.Scene {
     }
 
     hudButton(x, y, icon, onTap) {
-        const c = this.add.container(x, y).setDepth(402);
-        const bg = this.add.graphics();
-        bg.fillStyle(0x4a90e2, 1);
-        bg.fillCircle(0, 0, 21);
-        bg.lineStyle(2, 0xffffff, 0.8);
-        bg.strokeCircle(0, 0, 21);
-        c.add(bg);
-        c.add(this.add.text(0, 0, icon, { fontSize: '18px' }).setOrigin(0.5));
-        setCenteredInput(c, 46, 46);
-        c.on('pointerdown', () => {
-            AudioEngine.emit('UITap');
-            this.tweens.add({ targets: c, scale: 0.88, duration: 80, yoyo: true });
-            onTap();
-        });
-        c.on('pointerover', () => c.setScale(1.1));
-        c.on('pointerout', () => c.setScale(1));
+        const c = UISystem.iconButton(this, x, y, icon, onTap, { radius: 21, fontSize: 18 });
+        c.setDepth(402);
         return c;
     }
 
@@ -366,6 +352,7 @@ class GameShell extends Phaser.Scene {
             this.comboText.setText(streak >= 3 ? `🔥 Combo x${streak}!` : '');
             if (streak >= 3 && streak !== this._lastComboStreak) {
                 AudioEngine.emit('ComboStarted', { streak });
+                this.companionReact('excited');
             }
             this._lastComboStreak = streak;
         }
@@ -379,6 +366,7 @@ class GameShell extends Phaser.Scene {
         this.analytics.recordHint();
         AudioEngine.emit('HintRequested');
         AudioEngine.track('hintUsed');
+        this.companionReact('curious');
         this.companionSay(`💡 ${hint.text}`, 3500);
         this.refreshLiveScore();
         if (this.showHintVisual) this.showHintVisual(hint);
@@ -413,28 +401,16 @@ class GameShell extends Phaser.Scene {
         }).setOrigin(0.5));
 
         const mkBtn = (y, label, color, cb) => {
-            const bw = 240;
-            const bg = this.add.graphics();
-            bg.fillStyle(color, 1);
-            bg.fillRoundedRect(w / 2 - bw / 2, y - 26, bw, 52, 26);
-            bg.lineStyle(3, 0xffffff, 0.9);
-            bg.strokeRoundedRect(w / 2 - bw / 2, y - 26, bw, 52, 26);
-            o.add(bg);
-            o.add(this.add.text(w / 2, y, label, {
-                fontSize: '21px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold', color: '#fff',
-                stroke: '#00000055', strokeThickness: 2,
-            }).setOrigin(0.5));
-            const z = this.add.zone(w / 2, y, bw, 52).setInteractive({ useHandCursor: true });
-            z.on('pointerdown', cb);
-            o.add(z);
+            const b = UISystem.primaryButton(this, w / 2, y, label, cb, { width: 240, height: 52, color });
+            o.add(b);
         };
 
-        mkBtn(h / 2 - 40, '▶ Chơi tiếp', 0x66bb6a, () => this.hidePause());
-        mkBtn(h / 2 + 30, '🔄 Chơi lại', 0x42a5f5, () => {
+        mkBtn(h / 2 - 40, '▶ Chơi tiếp', DesignTokens.colors.success, () => this.hidePause());
+        mkBtn(h / 2 + 30, '🔄 Chơi lại', DesignTokens.colors.secondary, () => {
             this.hidePause();
             this.scene.restart({ gameId: this.gameId, level: this.level });
         });
-        mkBtn(h / 2 + 100, '🗺 Về bản đồ', 0xab47bc, () => this.exitToMenu());
+        mkBtn(h / 2 + 100, '🗺 Về bản đồ', DesignTokens.colors.primary, () => this.exitToMenu());
 
         o.setAlpha(0);
         this.tweens.add({ targets: o, alpha: 1, duration: 200 });
@@ -475,17 +451,34 @@ class GameShell extends Phaser.Scene {
         });
     }
 
+    /**
+     * Character emotion system: gameplay events map to Bunnine's emotional
+     * states. Never negative — wrong answers get curiosity + encouragement.
+     */
     companionReact(kind) {
         if (!this.companion) return;
-        const map = { happy: 'spr_bunny_happy', sad: 'spr_bunny_sad', celebrate: 'spr_bunny_hop', idle: 'spr_bunny_idle' };
-        const tex = map[kind] || map.idle;
-        if (this.textures.exists(tex)) this.companion.setTexture(tex);
+        const EMOTIONS = {
+            happy: { tex: 'spr_bunny_happy', jumps: 2 },       // correct answer
+            excited: { tex: 'spr_bunny_happy', jumps: 4 },     // streak / new reward
+            celebrate: { tex: 'spr_bunny_hop', jumps: 5 },     // level complete
+            sad: { tex: 'spr_bunny_sad', jumps: 0 },           // gentle empathy (brief)
+            think: { tex: 'spr_bunny_idle', tilt: 12 },        // wrong answer → thinking
+            curious: { tex: 'spr_bunny_idle', tilt: -10 },     // hint / discovery
+            idle: { tex: 'spr_bunny_idle' },
+        };
+        const emo = EMOTIONS[kind] || EMOTIONS.idle;
+        if (this.textures.exists(emo.tex)) this.companion.setTexture(emo.tex);
         this.tweens.killTweensOf(this.companion);
-        if (kind === 'happy' || kind === 'celebrate') {
-            const jumps = kind === 'celebrate' ? 5 : 2;
+        if (emo.jumps) {
             this.tweens.add({
                 targets: this.companion, y: this.companionBaseY - 26,
-                duration: 220, yoyo: true, repeat: jumps, ease: 'Power2',
+                duration: 220, yoyo: true, repeat: emo.jumps, ease: 'Power2',
+                onComplete: () => this.companionIdle(),
+            });
+        } else if (emo.tilt) {
+            this.tweens.add({
+                targets: this.companion, angle: emo.tilt, duration: 280,
+                yoyo: true, hold: 500,
                 onComplete: () => this.companionIdle(),
             });
         } else {
@@ -508,15 +501,10 @@ class GameShell extends Phaser.Scene {
         const h = this.cameras.main.height;
         const bx = 190;
         const by = h - 150;
-        const c = this.add.container(bx, by).setDepth(700);
-        const t = this.add.text(0, 0, text, {
-            fontSize: '18px', fontFamily: 'Comic Sans MS, Arial', color: '#4a3728', fontStyle: 'bold',
-            align: 'left', wordWrap: { width: Math.min(360, w * 0.42) },
-            backgroundColor: '#fff8e7', padding: { x: 12, y: 8 },
-        }).setOrigin(0, 0.5);
-        c.add(t);
+        const c = UISystem.speechBubble(this, bx, by, text, { maxWidth: Math.min(360, w * 0.42), align: 'left' });
+        c.setDepth(700);
         c.setAlpha(0);
-        this.tweens.add({ targets: c, alpha: 1, y: by - 6, duration: 250, ease: 'Back.easeOut' });
+        this.tweens.add({ targets: c, alpha: 1, y: by - 6, duration: DesignTokens.motion.uiTransition, ease: DesignTokens.motion.easeOut });
         this.bubble = c;
         this.time.delayedCall(ms, () => {
             if (!c.active) return;
@@ -560,36 +548,16 @@ class GameShell extends Phaser.Scene {
         const gap = opts.gap || 22;
         const totalW = options.length * size + (options.length - 1) * gap;
         const startX = (w - totalW) / 2 + size / 2;
-        const palette = [
-            { fill: 0xf8bbd0, border: 0xf48fb1 },
-            { fill: 0xb9f6ca, border: 0x69d99a },
-            { fill: 0xb3e5fc, border: 0x64b5f6 },
-            { fill: 0xfff9c4, border: 0xffd54f },
-        ];
         const buttons = [];
         options.forEach((opt, i) => {
             const cx = startX + i * (size + gap);
-            const pal = palette[i % palette.length];
-            const c = this.add.container(cx, y).setDepth(300);
-            const bg = this.add.graphics();
-            bg.fillStyle(pal.fill, 1);
-            bg.fillRoundedRect(-size / 2, -size / 2, size, size, 16);
-            bg.lineStyle(4, pal.border, 1);
-            bg.strokeRoundedRect(-size / 2, -size / 2, size, size, 16);
-            c.add(bg);
-            const label = this.add.text(0, 0, String(opt.label), {
-                fontSize: (opts.fontSize || Math.min(size * 0.42, 36)) + 'px',
-                fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold',
-                color: '#fff', stroke: '#000', strokeThickness: 3,
-            }).setOrigin(0.5);
-            c.add(label);
-            setCenteredInput(c, size, size);
-            c.on('pointerdown', () => {
+            const c = UISystem.answerButton(this, cx, y, opt.label, (btn) => {
                 if (!this.acceptingInput || this.isPaused) return;
-                onPick(opt, c);
-            });
+                onPick(opt, btn);
+            }, { size, fontSize: opts.fontSize || DesignTokens.typography.number, index: i });
+            c.setDepth(300);
             c.setScale(0);
-            this.tweens.add({ targets: c, scale: 1, duration: 300, delay: i * 90, ease: 'Back.easeOut' });
+            this.tweens.add({ targets: c, scale: 1, duration: DesignTokens.motion.uiTransition, delay: i * 90, ease: DesignTokens.motion.easeOut });
             buttons.push(c);
         });
         return buttons;

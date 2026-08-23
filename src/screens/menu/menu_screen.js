@@ -56,6 +56,16 @@ class MenuScreen extends Phaser.Scene {
 
     create() {
         console.log('MenuScreen: create() called');
+        this.bunnies = [];
+        this.sparkles = [];
+        this.fireflies = [];
+        this.birds = [];
+        this.magicParticles = [];
+        this.cityMarkers = [];
+        this.currentHoveredMarker = null;
+        this.blurOverlay = null;
+        this.highlightMask = null;
+        this.currentCityAudio = null;
         const width = this.cameras.main.width;
         const height = this.cameras.main.height;
 
@@ -1263,28 +1273,6 @@ class MenuScreen extends Phaser.Scene {
             ease: 'Linear'
         });
 
-        // Huy hiệu sao tích lũy cho các thành phố có trò chơi (Knowledge World progression)
-        // No access locking — badges show earned progress only.
-        if (city.screenKey && typeof GameConfig !== 'undefined' && typeof ProgressionEngine !== 'undefined') {
-            const gameDef = GameConfig.getByScene(city.screenKey);
-            if (gameDef) {
-                const profile = SaveEngine.load();
-                const state = ProgressionEngine.cityState(profile, gameDef.gameId);
-                const tierIcon = { none: '', bronze: '🥉', silver: '🥈', gold: '🥇' }[state.tier];
-                const badge = this.add.container(0, markerSize + 58 * scale);
-                const bbg = this.add.graphics();
-                bbg.fillStyle(0x2c1810, 0.8);
-                bbg.fillRoundedRect(-44, -13, 88, 26, 13);
-                bbg.lineStyle(2, state.tier === 'gold' ? 0xffd700 : 0xffffff, 0.7);
-                bbg.strokeRoundedRect(-44, -13, 88, 26, 13);
-                badge.add(bbg);
-                badge.add(this.add.text(0, 0, `${tierIcon}⭐${state.stars}/9`, {
-                    fontSize: '14px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold', color: '#ffd700',
-                }).setOrigin(0.5));
-                markerContainer.add(badge);
-            }
-        }
-
         const nameLabel = this.createCityNameLabel(city.name, markerSize, scale, screenWidth, x);
         const labelBgHeight = nameLabel.getData('bgHeight') || 30;
         nameLabel.y = -(markerSize + 10 * scale + labelBgHeight / 2);
@@ -1357,17 +1345,17 @@ class MenuScreen extends Phaser.Scene {
      * Create city name label (pill nền tối, chữ trắng) — dùng khi hover
      */
     createCityNameLabel(name, markerSize, scale, screenWidth, markerX) {
-        const fontSize = Math.max(14, Math.round(17 * scale));
-        const padding = 12 * scale;
-        const verticalPadding = 8 * scale;
+        const fontSize = Math.max(13, Math.round(15 * scale));
+        const padding = 10 * scale;
+        const verticalPadding = 5 * scale;
 
         const nameText = this.add.text(0, 0, name, {
             fontSize: `${fontSize}px`,
             fill: '#FFFFFF',
-            fontFamily: 'Poppins, Baloo, Nunito, Comic Sans MS, Arial Rounded MT Bold, Arial',
+            fontFamily: DesignTokens.typography.fontFamily,
             fontStyle: 'bold',
             align: 'center',
-            wordWrap: { width: 180 * scale }
+            wordWrap: { width: 130 * scale }
         }).setOrigin(0.5);
 
         nameText.updateText();
@@ -1694,7 +1682,7 @@ class MenuScreen extends Phaser.Scene {
      * Handle marker click - navigate to city screen
      */
     onMarkerClick(markerContainer, city) {
-        if (!city.screenKey) return;
+        if (!city || !city.screenKey) return;
         UISystem.press(this, markerContainer);
         const gameDef = typeof GameConfig !== 'undefined' ? GameConfig.getByScene(city.screenKey) : null;
         if (gameDef) {

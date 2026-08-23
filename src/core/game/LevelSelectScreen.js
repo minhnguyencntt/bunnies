@@ -100,15 +100,22 @@ class LevelSelectScreen extends Phaser.Scene {
         const startLevel = () => {
             NavSystem.go(this, gameDef.sceneKey, { gameId: this.gameId, level });
         };
-        const playBtn = UISystem.primaryButton(this, 0, ch / 2 - 43, 'Chơi', startLevel, { width: 150, height: 50 });
+        const playBtn = UISystem.playButton(this, 0, ch / 2 - 43, 'Chơi', startLevel, {
+            width: 168, height: 54, fontSize: 22,
+        });
         c.add(playBtn);
 
         setCenteredInput(c, cw, ch);
         c.on('pointerover', () => c.setScale(1.04));
         c.on('pointerout', () => c.setScale(1));
         c.on('pointerdown', startLevel);
-        c.setScale(0);
-        this.tweens.add({ targets: c, scale: 1, duration: 300, delay: level * 120, ease: 'Back.easeOut' });
+        c.setAlpha(0);
+        this.tweens.add({
+            targets: c, alpha: 1, y: y - 8,
+            duration: DesignTokens.motion.uiTransition,
+            delay: (level - 1) * 80,
+            ease: DesignTokens.motion.easeOut,
+        });
     }
 }
 

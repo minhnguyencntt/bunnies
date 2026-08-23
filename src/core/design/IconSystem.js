@@ -27,18 +27,19 @@ const IconSystem = {
                 g.fillTriangle(-s * 0.18, -s * 0.3, -s * 0.18, s * 0.3, s * 0.32, 0);
                 break;
             case 'hint':
-                g.fillCircle(0, -s * 0.06, s * 0.26);
-                g.fillRoundedRect(-s * 0.09, s * 0.14, s * 0.18, s * 0.12, 2);
-                g.fillRoundedRect(-s * 0.12, s * 0.28, s * 0.24, s * 0.06, 2);
+                g.fillCircle(0, -s * 0.04, s * 0.28);
+                g.fillStyle(0x4a3728, 1);
+                g.fillRoundedRect(-s * 0.05, -s * 0.18, s * 0.1, s * 0.2, 2);
+                g.fillCircle(0, s * 0.12, s * 0.055);
                 break;
-            case 'settings': {
-                g.fillCircle(0, 0, s * 0.15);
-                for (let i = 0; i < 6; i++) {
-                    const a = (i / 6) * Math.PI * 2;
-                    g.fillCircle(Math.cos(a) * s * 0.26, Math.sin(a) * s * 0.26, s * 0.09);
-                }
+            case 'settings':
+                g.fillRoundedRect(-s * 0.28, -s * 0.22, s * 0.16, s * 0.44, 3);
+                g.fillRoundedRect(-s * 0.06, -s * 0.22, s * 0.16, s * 0.44, 3);
+                g.fillRoundedRect(s * 0.16, -s * 0.22, s * 0.16, s * 0.44, 3);
+                g.fillCircle(-s * 0.2, -s * 0.08, s * 0.09);
+                g.fillCircle(0.02 * s, s * 0.08, s * 0.09);
+                g.fillCircle(s * 0.24, -s * 0.1, s * 0.09);
                 break;
-            }
             case 'close':
                 g.lineStyle(Math.max(3, s * 0.14), color, 1);
                 g.beginPath();

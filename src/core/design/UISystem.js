@@ -67,6 +67,17 @@ const UISystem = {
         return c;
     },
 
+    /** The one Play / Chơi control — vivid green, never look disabled. */
+    playButton(scene, x, y, label, onTap, opts = {}) {
+        return this.primaryButton(scene, x, y, label || 'Chơi', onTap, {
+            width: opts.width || 168,
+            height: opts.height || 54,
+            fontSize: opts.fontSize || 22,
+            color: 0x2bb673,
+            ...opts,
+        });
+    },
+
     /** Secondary action: Back / Settings / optional. */
     secondaryButton(scene, x, y, label, onTap, opts = {}) {
         const w = opts.width || 180;

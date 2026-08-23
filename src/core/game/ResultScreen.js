@@ -11,11 +11,15 @@ class ResultScreen extends Phaser.Scene {
     init(data) {
         this.gameId = data.gameId;
         this.level = data.level;
-        this.completion = data.completion
-            || CompletionEngine.fromRewards(data.rewards || {}, { persistOk: true });
+        this.completion = data.completion || CompletionEngine.fromRewards({
+            ...(data.rewards || {}),
+            gameId: data.gameId || (data.rewards && data.rewards.gameId),
+            level: data.level || (data.rewards && data.rewards.level) || 1,
+        }, { persistOk: true });
     }
 
     create() {
+        NavSystem.ready(this);
         const r = this.completion;
         const w = this.cameras.main.width;
         const h = this.cameras.main.height;

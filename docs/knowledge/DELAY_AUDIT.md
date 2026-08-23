@@ -13,7 +13,7 @@ for the completion / interaction refactor.
 | `GameShell.handleTimeout` 1200ms | Wait speech before next | Soft | Last round immediate; else 400ms pacing | **Fixed** |
 | `VisualMathScreen` guided 1200ms auto-advance | Wait speech then advance | **Yes** | Highlight correct button; child taps; `answerCorrect` | **Fixed** |
 | `UISystem` press tween vs hover | Tweens fought pointerover/out | **Yes** — missed/delayed clicks | Immediate `setScale` + bindTap state machine | **Fixed** |
-| `NavSystem.go` (none) | Duplicate taps could double-navigate | **Yes** | `_navTx` action transaction, no sleep | **Fixed** |
+| `NavSystem.go` (none) | Duplicate taps could double-navigate | **Yes** | `_navTx` action transaction, no sleep. Phaser reuses scenes so `ready()` clears the lock on the destination | **Fixed** |
 | `VisualMathScreen` 1200 / 2100 askDelay | Show objects then ask | No (gameplay beat) | Keep — not on the tap path | Keep |
 | `VisualMathScreen` 900ms before guided | Let wrong-feedback play | No (HUD still live) | Keep short | Keep |
 | `IntroHelper` duration timer | Auto-start after skip window | No — Skip is instant | Keep timer; `minMs` 0 from shell | Keep |

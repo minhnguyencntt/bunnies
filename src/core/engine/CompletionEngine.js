@@ -92,8 +92,8 @@ const CompletionEngine = {
 
     executeAction(scene, actionId, result) {
         const r = result || this.result || {};
-        const gameId = r.gameId;
-        const level = r.level;
+        const gameId = r.gameId || (scene && scene.gameId);
+        const level = r.level || (scene && scene.level);
         const sceneKey = r.sceneKey || (GameConfig.get(gameId) || {}).sceneKey;
 
         if (actionId === 'retry_persist') {
@@ -109,9 +109,11 @@ const CompletionEngine = {
             return;
         }
 
-        if (sceneKey && scene.scene.isActive(sceneKey)) {
-            scene.scene.stop(sceneKey);
-        }
+        GameConfig.allGames().forEach((g) => {
+            try {
+                if (g.sceneKey && scene.scene.isActive(g.sceneKey)) scene.scene.stop(g.sceneKey);
+            } catch (e) { /* ignore */ }
+        });
 
         if (actionId === 'continue' && sceneKey) {
             NavSystem.go(scene, sceneKey, { gameId, level: level + 1 });

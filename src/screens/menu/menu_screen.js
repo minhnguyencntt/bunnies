@@ -56,6 +56,7 @@ class MenuScreen extends Phaser.Scene {
 
     create() {
         console.log('MenuScreen: create() called');
+        if (typeof NavSystem !== 'undefined') NavSystem.ready(this);
         this.bunnies = [];
         this.sparkles = [];
         this.fireflies = [];

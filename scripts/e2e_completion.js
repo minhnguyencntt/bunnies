@@ -78,6 +78,51 @@ fs.mkdirSync('/tmp/bunnies-shots', { recursive: true });
         throw new Error('nav corruption ' + nav);
     }
 
+    await page.evaluate(() => {
+        SaveEngine.reset({ keepAudio: true });
+        NavSystem.go(window.game.scene.getScenes(true)[0], 'CandyGardenScreen', { gameId: 'candy_garden', level: 1 });
+    });
+    await page.waitForFunction(() => window.game.scene.isActive('CandyGardenScreen'), { timeout: 15000 });
+    await page.evaluate(() => {
+        const g = window.game.scene.getScene('CandyGardenScreen');
+        const skip = g.children.list.find((c) => c.list && c.list.some((x) => x.text && String(x.text).includes('Chơi ngay')));
+        if (skip) skip.emit('pointerdown');
+    });
+    const rounds = await page.evaluate(() => window.game.scene.getScene('CandyGardenScreen').levelCfg.rounds);
+    for (let round = 0; round < rounds; round++) {
+        await page.waitForFunction(() => {
+            const g = window.game.scene.getScene('CandyGardenScreen');
+            return g && g.acceptingInput && g.currentQuestion && g.choiceButtons && g.choiceButtons.length === 3;
+        }, { timeout: 8000 });
+        const last = round === rounds - 1;
+        const t0 = last ? Date.now() : 0;
+        await page.evaluate(() => {
+            const g = window.game.scene.getScene('CandyGardenScreen');
+            const ans = g.currentQuestion.answer;
+            const btn = g.choiceButtons.find((b) => {
+                const t = b.list.find((c) => c.type === 'Text');
+                return t && t.text === String(ans);
+            });
+            btn.emit('pointerdown');
+        });
+        if (last) {
+            await page.waitForFunction(() => window.game.scene.isActive('ResultScreen'), { timeout: 3000 });
+            const dt = Date.now() - t0;
+            if (dt > 800) throw new Error('last answer waited too long for Result: ' + dt + 'ms');
+            console.log('last-answer → Result', dt + 'ms');
+        } else {
+            await new Promise((r) => setTimeout(r, 550));
+        }
+    }
+
+    const rapid = await page.evaluate(() => {
+        const s = window.game.scene.getScene('ResultScreen');
+        for (let i = 0; i < 5; i++) s.go('continue');
+        return window.game.scene.getScenes(true).map((x) => x.sys.settings.key);
+    });
+    if (rapid.filter((k) => k === 'ResultScreen').length > 1) throw new Error('rapid tap duplicated result');
+    console.log('rapid tap', rapid);
+
     if (errors.length) throw new Error(errors.join(' | '));
     console.log('PASS completion e2e', OUT);
     await browser.close();

@@ -70,6 +70,7 @@ class GameShell extends Phaser.Scene {
     }
 
     create() {
+        NavSystem.ready(this);
         this.gameDef = GameConfig.get(this.gameId);
         this.levelCfg = GameConfig.getLevel(this.gameId, this.level);
         this.analytics = new AnalyticsEngine(this.gameId, this.level);

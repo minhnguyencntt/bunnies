@@ -18,6 +18,12 @@ const NavSystem = {
     HOME: 'MenuScreen',
     LEVELS: 'LevelSelectScreen',
 
+    /** New/reused scene is idle — Phaser reuses scene instances. */
+    ready(scene) {
+        if (scene) scene._navTx = false;
+        return scene;
+    },
+
     /**
      * Claim a one-shot navigation on this scene. Duplicate taps are ignored
      * without sleeping — the first action already started.
@@ -49,6 +55,8 @@ const NavSystem = {
             return true;
         }
         scene.scene.start(target, data || {});
+        const dest = scene.game && scene.game.scene && scene.game.scene.getScene(target);
+        if (dest && dest !== scene) this.ready(dest);
         return true;
     },
 
@@ -69,6 +77,7 @@ const NavSystem = {
      * Returns { back, home } buttons.
      */
     mount(scene, opts = {}) {
+        this.ready(scene);
         const L = DesignTokens.layout;
         const y = opts.y ?? L.chromeY;
         const back = UISystem.navButton(scene, opts.backX ?? L.backX, y, 'back', () => {

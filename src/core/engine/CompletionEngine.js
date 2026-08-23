@@ -4,7 +4,8 @@
  *   PLAYING → LAST_ANSWER → COMPLETED → CALCULATING_REWARD
  *     → REWARD_REVEAL → REWARD_PRESENTED → NEXT_ACTION
  *
- * Games call completeGame(). They must not invent their own result UI.
+ * Games call completeGame() with session facts only.
+ * AwardGenerator + NextActionResolver own reward and next steps.
  */
 const CompletionState = {
     PLAYING: 'PLAYING',
@@ -36,7 +37,7 @@ const CompletionEngine = {
     },
 
     /**
-     * Finalize gameplay, persist rewards, open the shared completion UI.
+     * Finalize gameplay, persist rewards, open the shared award UI.
      * Safe to call once: a second tap is ignored.
      */
     completeGame(opts) {
@@ -45,8 +46,7 @@ const CompletionEngine = {
         this.state = CompletionState.COMPLETED;
         this.state = CompletionState.CALCULATING_REWARD;
 
-        RewardPresentationEngine.prepare(opts.gameId);
-        const result = RewardPresentationEngine.present(opts);
+        const result = AwardGenerator.generate(opts);
         result._analytics = opts.analytics;
         result._parTimeMs = opts.parTimeMs;
         this.result = result;
@@ -62,7 +62,7 @@ const CompletionEngine = {
     },
 
     fromRewards(raw, extra) {
-        const result = RewardPresentationEngine.fromRewards(raw, extra);
+        const result = AwardGenerator.fromRaw(raw, extra);
         this.result = result;
         this.state = result.persistOk ? CompletionState.NEXT_ACTION : CompletionState.PERSIST_FAILED;
         return result;
@@ -92,12 +92,11 @@ const CompletionEngine = {
 
     executeAction(scene, actionId, result) {
         const r = result || this.result || {};
-        const gameId = r.gameId || (scene && scene.gameId);
-        const level = r.level || (scene && scene.level);
-        const sceneKey = r.sceneKey || (GameConfig.get(gameId) || {}).sceneKey;
+        const action = NextActionResolver.find(r.availableNextActions, actionId)
+            || { id: actionId, type: actionId };
 
-        if (actionId === 'retry_persist') {
-            const next = RewardPresentationEngine.retry(r);
+        if (action.id === 'retry_persist' || action.type === NextActionResolver.TYPE.RETRY_PERSIST) {
+            const next = AwardGenerator.retry(r);
             this.result = next;
             this.state = next.persistOk ? CompletionState.NEXT_ACTION : CompletionState.PERSIST_FAILED;
             scene.scene.restart({
@@ -115,15 +114,34 @@ const CompletionEngine = {
             } catch (e) { /* ignore */ }
         });
 
-        if (actionId === 'continue' && sceneKey) {
-            NavSystem.go(scene, sceneKey, { gameId, level: level + 1 });
+        const dest = action.destination;
+        if (dest && dest.sceneKey) {
+            NavSystem.go(scene, dest.sceneKey, dest.data || {});
             return;
         }
-        if (actionId === 'replay' && sceneKey) {
+        if (dest && (dest.scene === 'LevelSelectScreen' || dest.scene === NavSystem.LEVELS)) {
+            NavSystem.backToLevels(scene, (dest.data && dest.data.gameId) || r.gameId);
+            return;
+        }
+        if (dest && (dest.scene === 'MenuScreen' || dest.scene === NavSystem.HOME)) {
+            NavSystem.home(scene);
+            return;
+        }
+
+        const gameId = r.gameId || (scene && scene.gameId);
+        const level = r.level || (scene && scene.level);
+        const sceneKey = r.sceneKey || (GameConfig.get(gameId) || {}).sceneKey;
+
+        if ((action.id === 'continue' || action.type === NextActionResolver.TYPE.CONTINUE_LEVEL) && sceneKey) {
+            const nextLevel = GameConfig.nextLevel(gameId, level) || (level + 1);
+            NavSystem.go(scene, sceneKey, { gameId, level: nextLevel });
+            return;
+        }
+        if ((action.id === 'replay' || action.type === NextActionResolver.TYPE.PLAY_AGAIN) && sceneKey) {
             NavSystem.go(scene, sceneKey, { gameId, level });
             return;
         }
-        if (actionId === 'levels') {
+        if (action.id === 'levels' || action.type === NextActionResolver.TYPE.CHOOSE_GAME) {
             NavSystem.backToLevels(scene, gameId);
             return;
         }

@@ -22,9 +22,10 @@ Gameplay metrics (AnalyticsEngine)
 - Awards are first-class objects (`Award.hydrate`): identity, metadata,
   artwork, presentation state, persistence. ResultScreen and the album render
   the same object via `UISystem.awardCard`.
-- `RewardPresentationEngine` persists first, then hydrates Award objects.
+- `AwardGenerator` persists first, then builds `AwardResult`. Next steps come
+  from `NextActionResolver` (`GameConfig.nextLevel`, never a hardcoded `< 3`).
   Never say "added to album" unless `Award.verifyOwned` / `persistOk`.
-- Result screen contract: compact achievement strip · **hero Award** · one
+- Award screen contract: **hero Award** · reward values · short message · one
   primary next action · secondary navigation. Buttons are enabled immediately.
 - Reward audio/animation are fire-and-forget (see audio-system.md).
 - New reward types need: visual identity + animation + sound + celebration +

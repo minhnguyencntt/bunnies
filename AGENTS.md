@@ -59,9 +59,9 @@ skills/            reusable implementation skills (see skills/README.md)
   See `skills/audio/SKILL.md`.
 - **Rewards** = RewardEngine pipeline (Score→Stars→XP→Awards→Stickers→Gems→World).
   Collectibles are `Award` objects. UI uses `UISystem.awardCard` only.
-- **Completion** = `CompletionEngine.completeGame()` + `RewardPresentationEngine`
-  + shared `ResultScreen` (hero Award + next actions). Never invent per-game
-  result/reward UI.
+- **Completion** = `CompletionEngine.completeGame()` → `AwardGenerator` →
+  `AwardResult` → `NextActionResolver` → shared `ResultScreen` (hero Award +
+  next actions). Never invent per-game result/reward UI.
 - **Buttons** = `UISystem.bindTap` (IDLE→PRESSED→ACTION). Pressed scale is
   immediate. Navigation uses `NavSystem` action transaction — no debounce sleep.
 - **Voice lines** = add to `AudioConfig.VOICE_LIBRARY` → run the generator.

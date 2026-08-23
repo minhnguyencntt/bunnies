@@ -20,6 +20,9 @@ const { AwardEngine } = require('../src/core/engine/AwardEngine.js');
 const { StickerEngine } = require('../src/core/engine/StickerEngine.js');
 const { ProgressionEngine } = require('../src/core/engine/ProgressionEngine.js');
 const { RewardEngine } = require('../src/core/engine/RewardEngine.js');
+const { AwardResult } = require('../src/core/engine/AwardResult.js');
+const { NextActionResolver, NextActionType } = require('../src/core/engine/NextActionResolver.js');
+const { AwardGenerator } = require('../src/core/engine/AwardGenerator.js');
 const { RewardPresentationEngine } = require('../src/core/engine/RewardPresentationEngine.js');
 const { CompletionEngine } = require('../src/core/engine/CompletionEngine.js');
 
@@ -33,6 +36,10 @@ global.AwardEngine = AwardEngine;
 global.StickerEngine = StickerEngine;
 global.ProgressionEngine = ProgressionEngine;
 global.RewardEngine = RewardEngine;
+global.AwardResult = AwardResult;
+global.NextActionResolver = NextActionResolver;
+global.NextActionType = NextActionType;
+global.AwardGenerator = AwardGenerator;
 global.RewardPresentationEngine = RewardPresentationEngine;
 global.CompletionEngine = CompletionEngine;
 
@@ -68,21 +75,32 @@ for (const g of GameConfig.allGames()) {
     if (!result.rewards.every((r) => r.name && r.icon && r.id && r.artwork && r.presentation)) {
         throw new Error(`${g.gameId}: reward is not a first-class Award`);
     }
-    const hero = Award.pickHero(result.rewards);
+    const hero = result.hero || Award.pickHero(result.rewards);
     if (!hero || !hero.artwork.glyph) throw new Error(`${g.gameId}: missing hero artwork`);
+    if (!result.awardId || !result.title || !result.artwork) {
+        throw new Error(`${g.gameId}: AwardResult missing structured fields`);
+    }
     if (result.xpEarned <= 0) throw new Error(`${g.gameId}: no XP`);
     if (result.starsEarned <= 0) throw new Error(`${g.gameId}: no stars`);
     if (result.recommendedNextAction !== 'continue') {
         throw new Error(`${g.gameId}: L1 should recommend continue`);
     }
-    const primary = result.availableNextActions.filter((a) => a.primary);
-    if (primary.length !== 1 || primary[0].id !== 'continue') {
-        throw new Error(`${g.gameId}: one primary continue`);
+    const primary = result.availableNextActions.filter((a) => a.isPrimary || a.primary);
+    if (primary.length !== 1 || primary[0].id !== 'continue' || primary[0].type !== NextActionType.CONTINUE_LEVEL) {
+        throw new Error(`${g.gameId}: one primary CONTINUE_LEVEL`);
+    }
+    if (!primary[0].destination || primary[0].destination.data.level !== 2) {
+        throw new Error(`${g.gameId}: continue must open level 2`);
     }
     const ids = result.availableNextActions.map((a) => a.id);
+    const types = result.availableNextActions.map((a) => a.type);
     if (!ids.includes('replay') || !ids.includes('levels') || !ids.includes('home')) {
         throw new Error(`${g.gameId}: missing next actions`);
     }
+    if (!types.includes(NextActionType.PLAY_AGAIN) || !types.includes(NextActionType.CHOOSE_GAME) || !types.includes(NextActionType.HOME)) {
+        throw new Error(`${g.gameId}: missing next-action types`);
+    }
+    if (ids.includes('continue') === false) throw new Error(`${g.gameId}: L1 missing continue`);
     const again = CompletionEngine.completeGame({
         gameId: g.gameId, level: 1, analytics: play(g.gameId, 1), parTimeMs: 15000,
     });
@@ -98,8 +116,14 @@ const l3 = CompletionEngine.completeGame({
     parTimeMs: 15000,
 });
 if (l3.recommendedNextAction !== 'levels') throw new Error('L3 should recommend other games');
-if (!l3.availableNextActions.find((a) => a.primary && a.id === 'levels')) {
-    throw new Error('L3 primary should be CHỌN MÀN');
+if (l3.availableNextActions.find((a) => a.id === 'continue' || a.type === NextActionType.CONTINUE_LEVEL)) {
+    throw new Error('L3 must not show CONTINUE');
+}
+if (!l3.availableNextActions.find((a) => (a.isPrimary || a.primary) && a.id === 'levels' && a.type === NextActionType.CHOOSE_GAME)) {
+    throw new Error('L3 primary should be CHOOSE_GAME');
+}
+if (!GameConfig.hasLevel('candy_garden', 3) || GameConfig.nextLevel('candy_garden', 3) != null) {
+    throw new Error('GameConfig.nextLevel must be null on the last level');
 }
 
 resetStore();

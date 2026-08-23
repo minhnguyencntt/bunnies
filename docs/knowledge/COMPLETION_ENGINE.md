@@ -1,39 +1,36 @@
 # Completion Engine Implementation Report
 
-## Problem
-
-Last-question success (e.g. Mirror City 3/3) showed a hopping bunny and no
-completion UI. Rewards were text-only or delayed. Buttons sometimes missed
-because press tweens fought hover. The 1600ms + 450ms waits made the session
-feel cut off.
-
-## Engine changes (all games inherit)
-
-| System | Role |
-|---|---|
-| `CompletionEngine` | State machine + `completeGame()` + next-action router |
-| `Award` | First-class collectible (identity, artwork, presentation, persist) |
-| `RewardPresentationEngine` | Persist → verify → hydrate Award objects |
-| `ResultScreen` | Shared completion UI — hero Award + next actions |
-| `UISystem.awardCard` | One card for ResultScreen and the album |
-| `GameShell.answerCorrect` | Last round completes immediately |
-| `UISystem.bindTap` | Immediate press, one action, async bounce |
-| `NavSystem.begin` | One navigation transaction, no debounce |
-
 ## Flow
 
 ```
 Last answer → notifyLastAnswer → completeGame
-  → persist rewards (SaveEngine)
+  → AwardGenerator.generate (persist via RewardEngine)
+  → AwardResult (hero Award + XP/stars/coins)
+  → NextActionResolver (CONTINUE / CHOOSE_GAME / HOME)
   → launch ResultScreen immediately
   → next actions already visible
   → celebration / speech / sparkles async
 ```
 
+## Engine split (all games inherit)
+
+| System | Role |
+|---|---|
+| `CompletionEngine` | State machine + `completeGame()` + action router |
+| `AwardGenerator` | Persist + assemble `AwardResult` |
+| `AwardResult` | Structured award the UI and album share |
+| `NextActionResolver` | Next-step model; Continue only if `GameConfig.nextLevel` |
+| `Award` | Collectible (identity, artwork, presentation, persist) |
+| `RewardPresentationEngine` | Celebration only |
+| `ResultScreen` | Shared Award Screen — hero Award + next actions |
+| `UISystem.awardCard` | One card for ResultScreen and the album |
+| `GameShell.answerCorrect` | Last round completes immediately |
+
 ## Next actions
 
-- Level 1–2: primary **TIẾP TỤC**, then Chơi lại / Chọn màn / Về nhà
-- Level 3: primary **CHỌN MÀN**
+- Next level exists: primary **TIẾP TỤC** (`CONTINUE_LEVEL`) opens that level
+- Final level: primary **CHỌN MÀN** (`CHOOSE_GAME`) — no Continue button
+- Secondary: **CHƠI LẠI** · **CHỌN MÀN** · **VỀ NHÀ**
 - Persist failure: primary **THỬ LẠI** — never claims "added to album"
 
 ## Delay audit

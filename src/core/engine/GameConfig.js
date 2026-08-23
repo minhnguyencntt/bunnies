@@ -694,6 +694,14 @@ const GameConfig = {
         const g = this.get(gameId);
         return g ? g.levels[level] || g.levels[1] : null;
     },
+    hasLevel(gameId, level) {
+        const g = this.get(gameId);
+        return !!(g && g.levels && g.levels[level]);
+    },
+    nextLevel(gameId, level) {
+        const next = Number(level) + 1;
+        return this.hasLevel(gameId, next) ? next : null;
+    },
     allGames() { return Object.values(GAME_DEFINITIONS); },
     allStickers() {
         return this.allGames().flatMap(g => g.stickers.map(s => ({ ...s, gameId: g.gameId, gameName: g.name })));

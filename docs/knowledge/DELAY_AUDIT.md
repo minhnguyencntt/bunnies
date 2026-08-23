@@ -17,7 +17,7 @@ for the completion / interaction refactor.
 | `VisualMathScreen` 1200 / 2100 askDelay | Show objects then ask | No (gameplay beat) | Keep — not on the tap path | Keep |
 | `VisualMathScreen` 900ms before guided | Let wrong-feedback play | No (HUD still live) | Keep short | Keep |
 | `IntroHelper` duration timer | Auto-start after skip window | No — Skip is instant | Keep timer; `minMs` 0 from shell | Keep |
-| `ResultScreen` 80ms star SFX stagger | Decorative audio | No | Keep | Keep |
+| `ResultScreen` 80ms star SFX stagger | Decorative audio | No | Emit once in celebrate | **Fixed** |
 | `GameShell` sparkle i*70 | Decorative | No | Now owned by RewardPresentationEngine celebrate | Keep |
 | `GameShell.companionSay` bubble lifetime | Hide bubble | No | Keep | Keep |
 | `GameShell` score tween 400ms | Number roll | No | Keep | Keep |

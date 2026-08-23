@@ -81,6 +81,7 @@ const Award = {
             id: src.id,
             type,
             name: src.name || '',
+            title: src.name || src.title || '',
             description: src.description || src.hint || '',
             hint: src.hint || src.description || '',
             rarity,

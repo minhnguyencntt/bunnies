@@ -18,7 +18,8 @@ screen.js) → `GameFlowConfig.js` → `game.js`. New files must be added to
 - Game data lives in `puzzle.js` (theme) and `GameConfig.js` (rules) —
   never hardcode in the scene.
 - All UI via `UISystem` + `DesignTokens` + `IconSystem`; all navigation via
-  `NavSystem`; all sound via `AudioEngine.emit`; all rewards via RewardEngine.
+  `NavSystem`; all sound via `AudioEngine.emit`; all rewards via AwardGenerator
+  / RewardEngine.
 - Vietnamese UI text; keep strings short and child-friendly.
 - Containers have no origin — always use `setCenteredInput` for hit areas.
 - Kill idle tweens on `dragstart` (idle motion must never fight drags).

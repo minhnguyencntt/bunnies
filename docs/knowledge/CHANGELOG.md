@@ -2,6 +2,23 @@
 
 Meaningful architectural/design decisions only — not trivial code changes.
 
+## 2026-08-23 (unified Award Engine)
+
+### Changed
+- Completion is one pipeline for every game: `AwardGenerator` → `AwardResult`
+  → `NextActionResolver` → shared ResultScreen
+- `AwardResult` is the structured award (id, type, title, artwork, XP, stars,
+  coins, isNew) that persist and display share
+- `NextActionResolver` owns Continue / Play again / Choose game / Home.
+  Continue exists only when `GameConfig.nextLevel` returns a level
+- ResultScreen is award-first: artwork → title → values → next actions.
+  Celebration never gates the primary button
+
+### Reason
+Reward and next-step logic lived across engines with a hardcoded `level < 3`
+continue check. New games must inherit the same award + next-action contract
+without a per-game result screen.
+
 ## 2026-08-23 (award as first-class object)
 
 ### Changed

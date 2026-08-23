@@ -20,6 +20,9 @@ const { StarEngine } = require('../src/core/engine/StarEngine.js');
 const { XPEngine } = require('../src/core/engine/XPEngine.js');
 const { ProgressionEngine } = require('../src/core/engine/ProgressionEngine.js');
 const { RewardEngine } = require('../src/core/engine/RewardEngine.js');
+const { AwardResult } = require('../src/core/engine/AwardResult.js');
+const { NextActionResolver } = require('../src/core/engine/NextActionResolver.js');
+const { AwardGenerator } = require('../src/core/engine/AwardGenerator.js');
 const { RewardPresentationEngine } = require('../src/core/engine/RewardPresentationEngine.js');
 
 global.GameConfig = GameConfig;
@@ -32,6 +35,9 @@ global.StarEngine = StarEngine;
 global.XPEngine = XPEngine;
 global.ProgressionEngine = ProgressionEngine;
 global.RewardEngine = RewardEngine;
+global.AwardResult = AwardResult;
+global.NextActionResolver = NextActionResolver;
+global.AwardGenerator = AwardGenerator;
 
 function reset() {
     Object.keys(store).forEach((k) => delete store[k]);
@@ -48,7 +54,7 @@ function play(gameId, level) {
     return a;
 }
 
-const required = ['id', 'type', 'name', 'description', 'hint', 'rarity', 'rarityStyle', 'icon', 'artwork', 'presentation', 'persisted'];
+const required = ['id', 'type', 'name', 'title', 'description', 'hint', 'rarity', 'rarityStyle', 'icon', 'artwork', 'presentation', 'persisted'];
 for (const s of GameConfig.allStickers()) {
     const award = Award.hydrate(s, { type: AwardType.STICKER, persistOk: true });
     for (const key of required) {
@@ -80,11 +86,15 @@ if (revealed.state !== AwardState.REVEALED) throw new Error('saved new award mus
 if (!revealed.persisted) throw new Error('saved new award must be persisted');
 
 reset();
-const result = RewardPresentationEngine.present({
+const result = AwardGenerator.generate({
     gameId: 'candy_garden', level: 1, analytics: play('candy_garden', 1), parTimeMs: 15000,
 });
 if (!result.persistOk) throw new Error('present persist failed');
-const hero = Award.pickHero(result.rewards);
+if (!result.awardId || !result.title || !result.artwork || !result.artwork.glyph) {
+    throw new Error('AwardResult missing structured hero fields');
+}
+if (result.xp <= 0 || result.stars <= 0) throw new Error('AwardResult missing xp/stars');
+const hero = result.hero || Award.pickHero(result.rewards);
 if (!hero) throw new Error('no hero award');
 if (!hero.id || !hero.artwork.glyph || !hero.presentation) throw new Error('hero is not a first-class Award');
 if (!hero.isNew || hero.state !== AwardState.REVEALED) throw new Error('first clear should reveal a new award');

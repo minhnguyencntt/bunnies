@@ -58,7 +58,7 @@ GameConfig.js entry (data-driven rules)
 
 - [ ] 3 levels playable end-to-end to the Result Screen (E2E, zero errors)
 - [ ] Rewards granted (stars/XP/stickers/awards) and persisted
-- [ ] Level gating works (Màn 2 locked until Màn 1 done)
+- [ ] No access locking (ADR-005); progression shown as rewards/guidance
 - [ ] Hints work per level style; wrong answers are gentle
 - [ ] `node --check` clean; engine Node tests pass
 - [ ] Knowledge updated (world doc, CHANGELOG)

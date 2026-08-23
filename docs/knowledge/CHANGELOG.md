@@ -2,6 +2,20 @@
 
 Meaningful architectural/design decisions only — not trivial code changes.
 
+## 2026-08-23 (master refactor)
+
+### Changed
+- Navigation standardized: top-left = ◀ Back everywhere; Home explicit (ADR-005)
+- All game/level access locks removed — Discover → Tap → Play (ADR-005)
+- Level-card Play button is directly tappable
+- BGM engine upgraded (detuned chorus, harmonics, soft lowpass, gentler
+  attacks) — MIDI-like pure sines removed; all 10 themes regenerated
+- Semantic icon map (`DesignTokens.icons`)
+
+### Reason
+Master-spec compliance: full-game consistency, zero access friction, modern
+warm audio.
+
 ## 2026-08-23
 
 ### Added

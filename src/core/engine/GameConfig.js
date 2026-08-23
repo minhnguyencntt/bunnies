@@ -557,7 +557,6 @@ const GAME_DEFINITIONS = {
         color: 0x43a047,
         educationalGoal: 'Luyện phép trừ — bớt đi và đếm phần còn lại.',
         mechanics: ['visual_removal', 'three_choice'],
-        unlockRequires: { gameId: 'candy_garden', level: 1 },
         levels: {
             1: {
                 label: LEVEL_LABELS[1],

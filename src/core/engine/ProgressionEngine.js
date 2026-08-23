@@ -17,29 +17,19 @@ const ProgressionEngine = {
         return { stars, completedLevels, tier, plays: gp?.plays || 0 };
     },
 
+    /**
+     * Children's game policy (master spec): NO access locking.
+     * Discover → Tap → Play. Progression drives rewards/recommendations only.
+     */
     isLevelUnlocked(profile, gameId, level) {
-        if (!this.isGameUnlocked(profile, gameId)) return false;
-        if (level <= 1) return true;
-        const gp = profile.games[gameId];
-        if (!gp) return false;
-        return (gp.levels[level - 1]?.stars || 0) > 0;
+        return true;
     },
 
-    /** Cross-game unlocks: a game may require progress in another game first. */
     isGameUnlocked(profile, gameId) {
-        const def = GameConfig.get(gameId);
-        if (!def?.unlockRequires) return true;
-        const req = def.unlockRequires;
-        const gp = profile.games[req.gameId];
-        return !!gp && (gp.levels[req.level]?.stars || 0) > 0;
+        return true;
     },
 
-    unlockHint(gameId) {
-        const def = GameConfig.get(gameId);
-        if (!def?.unlockRequires) return '';
-        const req = GameConfig.get(def.unlockRequires.gameId);
-        return `Hoàn thành Màn 1 ở ${req?.name || 'game trước'} để mở!`;
-    },
+    unlockHint(gameId) { return ''; },
 
     worldProgress(profile) {
         const games = GameConfig.allGames();

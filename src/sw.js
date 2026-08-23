@@ -94,7 +94,6 @@ const CORE_ASSETS = [
     './screens/forest_adventure/puzzle.js',
     './screens/forest_adventure/screen.js',
     './screens/ScreenLevelBackground.js',
-    './screens/UIScreen.js',
 
     // Config + main
     './GameFlowConfig.js',

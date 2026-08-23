@@ -1,11 +1,12 @@
 # Progression
 
-## Unlocks
+## Unlocks (ADR-005: no access locking)
 
-- Levels within a game: sequential — finish Màn N (≥1⭐) to open Màn N+1.
-- Worlds: `unlockRequires` in GameConfig (e.g. Rừng Diệu Kỳ needs Vườn Kẹo Ngọt
-  Màn 1). Locked map markers show 🔒 + how-to-unlock hint.
-- `ProgressionEngine.isLevelUnlocked / isGameUnlocked / unlockHint`.
+- **All games and levels are always playable** — Discover → Tap → Play.
+  `ProgressionEngine.isLevelUnlocked/isGameUnlocked` always return true.
+- Progression is expressed as rewards & guidance only: stars per level,
+  best scores, 🥉🥈🥇 map tiers, the next-goal banner, sticker/award unlocks.
+- Recommended order still exists (next-goal suggestion), never as a gate.
 
 ## Visibility
 

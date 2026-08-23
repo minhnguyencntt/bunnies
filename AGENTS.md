@@ -69,8 +69,12 @@ skills/            reusable implementation skills (see skills/README.md)
 4. Never hardcode questions, voice text, or audio paths in gameplay logic —
    use GameConfig / AudioConfig.
 5. Never add random paid/loot-box mechanics; unlocks are deterministic.
-6. Keep touch targets ≥ 46px; numbers in math gameplay extra large.
-7. Keep it offline-capable: register new files in `index.html` and `sw.js`.
+6. **Never lock games/levels behind progression** — Discover → Tap → Play.
+   Progression = rewards/recommendations/celebration only (ADR-005).
+7. Navigation: top-left is always ◀ BACK (previous screen); Home is explicit
+   (🗺 Bản đồ). Use `UISystem.navButton` / `DesignTokens.icons`.
+8. Keep touch targets ≥ 46px; numbers in math gameplay extra large.
+9. Keep it offline-capable: register new files in `index.html` and `sw.js`.
 
 ## Testing conventions
 

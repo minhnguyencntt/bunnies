@@ -1,0 +1,944 @@
+{
+  "version": 2,
+  "presets": {
+    "counting_forest": {
+      "description": "Khu rừng đếm số — vui, I–V–vi–IV lặp",
+      "output": "src/screens/counting_forest/assets/audio/bgm/bgm.wav",
+      "duration_sec": 78,
+      "chords": {
+        "mode": "repeat",
+        "steps": [
+          {
+            "notes": [
+              "C3",
+              "E3",
+              "G3"
+            ],
+            "sec": 6
+          },
+          {
+            "notes": [
+              "G3",
+              "B3",
+              "D4"
+            ],
+            "sec": 6
+          },
+          {
+            "notes": [
+              "A3",
+              "C4",
+              "E4"
+            ],
+            "sec": 6
+          },
+          {
+            "notes": [
+              "F3",
+              "A3",
+              "C4"
+            ],
+            "sec": 6
+          }
+        ]
+      },
+      "melody_patterns": [
+        [
+          "C4",
+          "E4",
+          "G4",
+          "C5",
+          "G4",
+          "E4",
+          "C4",
+          "D4",
+          "F4",
+          "A4",
+          "C5",
+          "A4",
+          "F4",
+          "D4"
+        ],
+        [
+          "E4",
+          "G4",
+          "B4",
+          "D5",
+          "B4",
+          "G4",
+          "E4",
+          "F4",
+          "A4",
+          "C5",
+          "F5",
+          "C5",
+          "A4",
+          "F4"
+        ],
+        [
+          "G4",
+          "C5",
+          "E5",
+          "G5",
+          "E5",
+          "C5",
+          "G4",
+          "A4",
+          "C5",
+          "E5",
+          "A5",
+          "E5",
+          "C5",
+          "A4"
+        ]
+      ],
+      "melody_note_gain": 0.13,
+      "sparkle_interval": 2.8,
+      "sparkle_gain": 0.14
+    },
+    "subtraction_hill": {
+      "description": "Đồi Phép Trừ — gameplay (hợp âm mystical lặp, giai điệu nhẹ)",
+      "output": "src/screens/subtraction_hill/assets/audio/bgm/bgm.wav",
+      "duration_sec": 72,
+      "chords": {
+        "mode": "repeat",
+        "steps": [
+          {
+            "notes": [
+              "C3",
+              "E3",
+              "G3"
+            ],
+            "sec": 8
+          },
+          {
+            "notes": [
+              "D3",
+              "F3",
+              "A3"
+            ],
+            "sec": 8
+          },
+          {
+            "notes": [
+              "E3",
+              "G3",
+              "B3"
+            ],
+            "sec": 8
+          },
+          {
+            "notes": [
+              "C3",
+              "E3",
+              "G3"
+            ],
+            "sec": 8
+          },
+          {
+            "notes": [
+              "F3",
+              "A3",
+              "C4"
+            ],
+            "sec": 8
+          },
+          {
+            "notes": [
+              "G3",
+              "B3",
+              "D4"
+            ],
+            "sec": 8
+          },
+          {
+            "notes": [
+              "C3",
+              "E3",
+              "G3"
+            ],
+            "sec": 8
+          },
+          {
+            "notes": [
+              "A3",
+              "C4",
+              "E4"
+            ],
+            "sec": 8
+          },
+          {
+            "notes": [
+              "C3",
+              "E3",
+              "G3"
+            ],
+            "sec": 8
+          },
+          {
+            "notes": [
+              "D3",
+              "F3",
+              "A3"
+            ],
+            "sec": 8
+          },
+          {
+            "notes": [
+              "G3",
+              "B3",
+              "D4"
+            ],
+            "sec": 4
+          },
+          {
+            "notes": [
+              "C3",
+              "E3",
+              "G3"
+            ],
+            "sec": 2
+          }
+        ]
+      },
+      "melody_patterns": [
+        [
+          "C4",
+          "D4",
+          "E4",
+          "G4",
+          "E4",
+          "D4",
+          "C4",
+          "G3",
+          "A3",
+          "C4",
+          "E4",
+          "C4",
+          "A3",
+          "G3"
+        ],
+        [
+          "E4",
+          "G4",
+          "A4",
+          "C5",
+          "A4",
+          "G4",
+          "E4",
+          "F4",
+          "G4",
+          "A4",
+          "C5",
+          "A4",
+          "G4",
+          "F4"
+        ],
+        [
+          "G4",
+          "A4",
+          "C5",
+          "E5",
+          "C5",
+          "A4",
+          "G4",
+          "E4",
+          "G4",
+          "C5",
+          "G4",
+          "E4",
+          "D4",
+          "C4"
+        ]
+      ],
+      "melody_note_gain": 0.095,
+      "sparkle_interval": 3.4,
+      "sparkle_gain": 0.12,
+      "normalize_peak": 0.82
+    },
+    "mirror_city": {
+      "description": "Thành phố Gương — ambient mystical (layered numpy/scipy)",
+      "output": "src/screens/mirror_city/assets/audio/bgm/bgm.wav",
+      "duration_sec": 90,
+      "chords": {
+        "mode": "once",
+        "steps": [
+          {
+            "notes": [
+              "C3",
+              "E3",
+              "G3"
+            ],
+            "sec": 8
+          },
+          {
+            "notes": [
+              "D3",
+              "F3",
+              "A3"
+            ],
+            "sec": 8
+          },
+          {
+            "notes": [
+              "E3",
+              "G3",
+              "B3"
+            ],
+            "sec": 8
+          },
+          {
+            "notes": [
+              "C3",
+              "E3",
+              "G3"
+            ],
+            "sec": 8
+          },
+          {
+            "notes": [
+              "F3",
+              "A3",
+              "C4"
+            ],
+            "sec": 8
+          },
+          {
+            "notes": [
+              "G3",
+              "B3",
+              "D4"
+            ],
+            "sec": 8
+          },
+          {
+            "notes": [
+              "C3",
+              "E3",
+              "G3"
+            ],
+            "sec": 8
+          },
+          {
+            "notes": [
+              "A3",
+              "C4",
+              "E4"
+            ],
+            "sec": 8
+          },
+          {
+            "notes": [
+              "C3",
+              "E3",
+              "G3"
+            ],
+            "sec": 8
+          },
+          {
+            "notes": [
+              "D3",
+              "F3",
+              "A3"
+            ],
+            "sec": 8
+          },
+          {
+            "notes": [
+              "G3",
+              "B3",
+              "D4"
+            ],
+            "sec": 4
+          },
+          {
+            "notes": [
+              "C3",
+              "E3",
+              "G3"
+            ],
+            "sec": 2
+          }
+        ]
+      },
+      "melody_patterns": [
+        [
+          "C4",
+          "E4",
+          "G4",
+          "C5",
+          "G4",
+          "E4",
+          "C4",
+          "D4",
+          "F4",
+          "A4",
+          "D5",
+          "A4",
+          "F4",
+          "D4"
+        ],
+        [
+          "E4",
+          "G4",
+          "B4",
+          "E5",
+          "B4",
+          "G4",
+          "E4",
+          "F4",
+          "A4",
+          "C5",
+          "F5",
+          "C5",
+          "A4",
+          "F4"
+        ],
+        [
+          "G4",
+          "B4",
+          "D5",
+          "G5",
+          "D5",
+          "B4",
+          "G4",
+          "A4",
+          "C5",
+          "E5",
+          "A5",
+          "E5",
+          "C5",
+          "A4"
+        ]
+      ],
+      "melody_note_gain": 0.12,
+      "sparkle_interval": 3.0,
+      "sparkle_gain": 0.15,
+      "normalize_peak": 0.85
+    },
+    "orientation_forest": {
+      "description": "Khu Rừng Định Hướng — rừng vui, hợp âm xanh lặp",
+      "output": "src/screens/orientation_forest/assets/audio/bgm/bgm.wav",
+      "duration_sec": 75,
+      "chords": {
+        "mode": "repeat",
+        "steps": [
+          {
+            "notes": [
+              "C3",
+              "E3",
+              "G3"
+            ],
+            "sec": 6
+          },
+          {
+            "notes": [
+              "A3",
+              "C4",
+              "E4"
+            ],
+            "sec": 6
+          },
+          {
+            "notes": [
+              "F3",
+              "A3",
+              "C4"
+            ],
+            "sec": 6
+          },
+          {
+            "notes": [
+              "G3",
+              "B3",
+              "D4"
+            ],
+            "sec": 6
+          }
+        ]
+      },
+      "melody_patterns": [
+        [
+          "C4",
+          "E4",
+          "G4",
+          "C5",
+          "G4",
+          "E4",
+          "C4",
+          "D4",
+          "F4",
+          "A4",
+          "C5",
+          "A4",
+          "F4",
+          "D4"
+        ],
+        [
+          "E4",
+          "G4",
+          "A4",
+          "C5",
+          "A4",
+          "G4",
+          "E4",
+          "F4",
+          "G4",
+          "A4",
+          "C5",
+          "A4",
+          "G4",
+          "E4"
+        ],
+        [
+          "G4",
+          "A4",
+          "C5",
+          "E5",
+          "C5",
+          "A4",
+          "G4",
+          "E4",
+          "D4",
+          "E4",
+          "G4",
+          "E4",
+          "D4",
+          "C4"
+        ]
+      ],
+      "melody_note_gain": 0.11,
+      "sparkle_interval": 3.0,
+      "sparkle_gain": 0.13,
+      "normalize_peak": 0.84
+    },
+    "candy_garden": {
+      "description": "Vườn Kẹo Ngọt — cheerful, magical, playful (candy world)",
+      "output": "src/screens/candy_garden/assets/audio/bgm/bgm.wav",
+      "duration_sec": 32,
+      "chords": {
+        "mode": "repeat",
+        "steps": [
+          {
+            "notes": [
+              "C3",
+              "E3",
+              "G3"
+            ],
+            "sec": 4
+          },
+          {
+            "notes": [
+              "F3",
+              "A3",
+              "C4"
+            ],
+            "sec": 4
+          },
+          {
+            "notes": [
+              "D3",
+              "F3",
+              "A3"
+            ],
+            "sec": 4
+          },
+          {
+            "notes": [
+              "G3",
+              "B3",
+              "D4"
+            ],
+            "sec": 4
+          }
+        ]
+      },
+      "melody_patterns": [
+        [
+          "E4",
+          "G4",
+          "A4",
+          "C5",
+          "A4",
+          "G4",
+          "E4",
+          "G4"
+        ],
+        [
+          "F4",
+          "A4",
+          "C5",
+          "D5",
+          "C5",
+          "A4",
+          "F4",
+          "G4"
+        ],
+        [
+          "D4",
+          "F4",
+          "A4",
+          "D5",
+          "A4",
+          "F4",
+          "D4",
+          "E4"
+        ]
+      ],
+      "melody_note_gain": 0.11,
+      "sparkle_interval": 2.5,
+      "sparkle_gain": 0.13,
+      "normalize_peak": 0.8
+    },
+    "forest_adventure": {
+      "description": "Rừng Diệu Kỳ — nature-inspired, calm but energetic (magical forest)",
+      "output": "src/screens/forest_adventure/assets/audio/bgm/bgm.wav",
+      "duration_sec": 36,
+      "chords": {
+        "mode": "repeat",
+        "steps": [
+          {
+            "notes": [
+              "A2",
+              "C3",
+              "E3"
+            ],
+            "sec": 6
+          },
+          {
+            "notes": [
+              "F3",
+              "A3",
+              "C4"
+            ],
+            "sec": 6
+          },
+          {
+            "notes": [
+              "C3",
+              "E3",
+              "G3"
+            ],
+            "sec": 6
+          },
+          {
+            "notes": [
+              "G3",
+              "B3",
+              "D4"
+            ],
+            "sec": 6
+          }
+        ]
+      },
+      "melody_patterns": [
+        [
+          "A3",
+          "C4",
+          "E4",
+          "A4",
+          "E4",
+          "C4",
+          "A3",
+          "B3"
+        ],
+        [
+          "F3",
+          "A3",
+          "C4",
+          "F4",
+          "C4",
+          "A3",
+          "F3",
+          "G3"
+        ],
+        [
+          "E4",
+          "G4",
+          "B4",
+          "E5",
+          "B4",
+          "G4",
+          "E4",
+          "D4"
+        ]
+      ],
+      "melody_note_gain": 0.1,
+      "sparkle_interval": 3.5,
+      "sparkle_gain": 0.1,
+      "normalize_peak": 0.78
+    },
+    "reward_theme": {
+      "description": "Result/Reward screen — bright, celebratory, calm loop",
+      "output": "src/core/audio/assets/bgm/reward_theme.wav",
+      "duration_sec": 24,
+      "chords": {
+        "mode": "repeat",
+        "steps": [
+          {
+            "notes": [
+              "C3",
+              "E3",
+              "G3"
+            ],
+            "sec": 3
+          },
+          {
+            "notes": [
+              "F3",
+              "A3",
+              "C4"
+            ],
+            "sec": 3
+          },
+          {
+            "notes": [
+              "G3",
+              "B3",
+              "D4"
+            ],
+            "sec": 3
+          },
+          {
+            "notes": [
+              "C3",
+              "E3",
+              "G3"
+            ],
+            "sec": 3
+          }
+        ]
+      },
+      "melody_patterns": [
+        [
+          "E4",
+          "G4",
+          "C5",
+          "E5",
+          "C5",
+          "G4",
+          "E4",
+          "D4"
+        ],
+        [
+          "F4",
+          "A4",
+          "C5",
+          "F5",
+          "C5",
+          "A4",
+          "F4",
+          "E4"
+        ],
+        [
+          "G4",
+          "B4",
+          "D5",
+          "G5",
+          "D5",
+          "B4",
+          "G4",
+          "E4"
+        ]
+      ],
+      "melody_note_gain": 0.1,
+      "sparkle_interval": 2.0,
+      "sparkle_gain": 0.12,
+      "normalize_peak": 0.8
+    },
+    "album_theme": {
+      "description": "Sticker Album — soft, cozy, gentle loop",
+      "output": "src/core/audio/assets/bgm/album_theme.wav",
+      "duration_sec": 30,
+      "chords": {
+        "mode": "repeat",
+        "steps": [
+          {
+            "notes": [
+              "C3",
+              "E3",
+              "G3"
+            ],
+            "sec": 5
+          },
+          {
+            "notes": [
+              "A3",
+              "C4",
+              "E4"
+            ],
+            "sec": 5
+          },
+          {
+            "notes": [
+              "F3",
+              "A3",
+              "C4"
+            ],
+            "sec": 5
+          },
+          {
+            "notes": [
+              "G3",
+              "B3",
+              "D4"
+            ],
+            "sec": 5
+          }
+        ]
+      },
+      "melody_patterns": [
+        [
+          "C4",
+          "E4",
+          "G4",
+          "E4",
+          "C4",
+          "D4",
+          "E4",
+          "G4"
+        ],
+        [
+          "A4",
+          "C5",
+          "A4",
+          "E4",
+          "F4",
+          "A4",
+          "C5",
+          "A4"
+        ]
+      ],
+      "melody_note_gain": 0.08,
+      "sparkle_interval": 4.0,
+      "sparkle_gain": 0.08,
+      "normalize_peak": 0.75
+    },
+    "menu_theme": {
+      "description": "World map — warm magical adventure",
+      "duration_sec": 40,
+      "chords": {
+        "mode": "repeat",
+        "steps": [
+          {
+            "notes": [
+              "C3",
+              "G3",
+              "E4"
+            ],
+            "sec": 5
+          },
+          {
+            "notes": [
+              "A2",
+              "E3",
+              "C4"
+            ],
+            "sec": 5
+          },
+          {
+            "notes": [
+              "F3",
+              "C4",
+              "A4"
+            ],
+            "sec": 5
+          },
+          {
+            "notes": [
+              "G3",
+              "D4",
+              "B4"
+            ],
+            "sec": 5
+          }
+        ]
+      },
+      "melody_patterns": [
+        [
+          "E4",
+          "G4",
+          "C5",
+          "B4",
+          "A4",
+          "G4",
+          "E4",
+          "D4"
+        ],
+        [
+          "A4",
+          "C5",
+          "E5",
+          "D5",
+          "C5",
+          "A4",
+          "G4",
+          "E4"
+        ],
+        [
+          "F4",
+          "A4",
+          "C5",
+          "F5",
+          "E5",
+          "C5",
+          "A4",
+          "G4"
+        ]
+      ],
+      "melody_note_gain": 0.1,
+      "sparkle_interval": 4.0,
+      "sparkle_gain": 0.1,
+      "normalize_peak": 0.8,
+      "output": "src/screens/menu/assets/audio/bgm/menu_bgm.wav"
+    },
+    "boot_theme": {
+      "description": "Boot/loading — gentle welcome",
+      "duration_sec": 20,
+      "chords": {
+        "mode": "repeat",
+        "steps": [
+          {
+            "notes": [
+              "C3",
+              "E3",
+              "G3"
+            ],
+            "sec": 5
+          },
+          {
+            "notes": [
+              "F3",
+              "A3",
+              "C4"
+            ],
+            "sec": 5
+          }
+        ]
+      },
+      "melody_patterns": [
+        [
+          "C4",
+          "E4",
+          "G4",
+          "C5",
+          "G4",
+          "E4"
+        ],
+        [
+          "F4",
+          "A4",
+          "C5",
+          "A4",
+          "G4",
+          "E4"
+        ]
+      ],
+      "melody_note_gain": 0.09,
+      "sparkle_interval": 3.0,
+      "sparkle_gain": 0.09,
+      "normalize_peak": 0.75,
+      "output": "src/screens/boot/assets/audio/bgm/boot_bgm.wav"
+    }
+  }
+}

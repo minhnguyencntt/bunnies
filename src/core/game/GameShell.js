@@ -283,7 +283,9 @@ class GameShell extends Phaser.Scene {
         g.lineStyle(2, 0xffd700, 0.5);
         g.lineBetween(0, hudH, w, hudH);
 
-        this.hudButton(40, hudH / 2, '🏠', () => this.confirmExit());
+        // Top-left = BACK (previous screen: level select of this game)
+        const backBtn = UISystem.navButton(this, 44, hudH / 2, DesignTokens.icons.back, () => this.goBack());
+        backBtn.setDepth(402);
 
         this.hudTitle = this.add.text(80, hudH / 2, '', {
             fontSize: '19px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold',
@@ -318,7 +320,7 @@ class GameShell extends Phaser.Scene {
     }
 
     hudButton(x, y, icon, onTap) {
-        const c = UISystem.iconButton(this, x, y, icon, onTap, { radius: 21, fontSize: 18 });
+        const c = UISystem.iconButton(this, x, y, icon, onTap, { radius: 23, fontSize: 19 });
         c.setDepth(402);
         return c;
     }
@@ -422,13 +424,19 @@ class GameShell extends Phaser.Scene {
         if (this.pauseOverlay) { this.pauseOverlay.destroy(true); this.pauseOverlay = null; }
     }
 
-    confirmExit() { // home button — reuse pause overlay style
+    /** Back = previous screen in the flow (level select of this game). */
+    goBack() {
         if (this.sessionOver) { this.exitToMenu(); return; }
-        this.showPause();
+        this.hidePause();
+        AudioEngine.emit('Transition');
+        this.sound.stopAll();
+        this.scene.stop();
+        this.scene.start('LevelSelectScreen', { gameId: this.gameId });
     }
 
     exitToMenu() {
         this.hidePause();
+        AudioEngine.emit('Transition');
         this.sound.stopAll();
         this.scene.stop();
         this.scene.start('MenuScreen');

@@ -18,7 +18,59 @@ function setCenteredInput(obj, width, height, opts = {}) {
 const UISystem = {
     T: () => DesignTokens,
 
-    /** Tactile press: 1.0 → 0.94 → 1.03 → 1.0 */
+    /**
+     * Button interaction: IDLE → PRESSED → TRIGGERED → ACTION.
+     * Pressed scale is applied immediately (no tween). Action fires on
+     * pointerdown. Bounce is async and never gates the callback.
+     */
+    bindTap(scene, obj, onTap, opts = {}) {
+        obj._btnState = 'IDLE';
+        const down = DesignTokens.press.down;
+        const over = DesignTokens.press.overshoot;
+        const ms = DesignTokens.press.ms;
+
+        obj.on('pointerdown', () => {
+            if (obj._btnState === 'TRIGGERED' || obj._btnState === 'ACTION') return;
+            obj._btnState = 'PRESSED';
+            scene.tweens.killTweensOf(obj);
+            obj.setScale(down);
+            if (opts.sfx !== false) {
+                try { if (typeof AudioEngine !== 'undefined') AudioEngine.emit('UITap'); } catch (e) { /* ignore */ }
+            }
+            obj._btnState = 'TRIGGERED';
+            obj._btnState = 'ACTION';
+            try { onTap(obj); } catch (e) { console.error('UISystem tap', e); }
+            if (obj.active) {
+                scene.tweens.killTweensOf(obj);
+                scene.tweens.chain({
+                    targets: obj,
+                    tweens: [
+                        { scale: over, duration: ms },
+                        { scale: 1, duration: ms },
+                    ],
+                });
+            }
+        });
+        obj.on('pointerup', () => {
+            if (obj._btnState === 'ACTION' || obj._btnState === 'TRIGGERED') obj._btnState = 'IDLE';
+        });
+        obj.on('pointerout', () => {
+            if (obj._btnState === 'PRESSED' || obj._btnState === 'HOVER') {
+                obj._btnState = 'IDLE';
+                scene.tweens.killTweensOf(obj);
+                obj.setScale(1);
+            }
+        });
+        obj.on('pointerover', () => {
+            if (obj._btnState === 'IDLE') {
+                obj._btnState = 'HOVER';
+                obj.setScale(1.04);
+            }
+        });
+        return obj;
+    },
+
+    /** Decorative bounce only — never call this before dispatching an action. */
     press(scene, obj) {
         const p = DesignTokens.press;
         scene.tweens.killTweensOf(obj);
@@ -61,9 +113,7 @@ const UISystem = {
             color: DesignTokens.css.white, stroke: '#00000044', strokeThickness: 2,
         }).setOrigin(0.5));
         setCenteredInput(c, w, h);
-        c.on('pointerdown', () => { this.press(scene, c); AudioEngine.emit('UITap'); onTap(); });
-        c.on('pointerover', () => c.setScale(1.04));
-        c.on('pointerout', () => c.setScale(1));
+        this.bindTap(scene, c, () => onTap(c));
         return c;
     },
 
@@ -89,9 +139,7 @@ const UISystem = {
             color: DesignTokens.css.white, stroke: '#00000044', strokeThickness: 2,
         }).setOrigin(0.5));
         setCenteredInput(c, w, h);
-        c.on('pointerdown', () => { this.press(scene, c); AudioEngine.emit('UITap'); onTap(); });
-        c.on('pointerover', () => c.setScale(1.04));
-        c.on('pointerout', () => c.setScale(1));
+        this.bindTap(scene, c, () => onTap(c));
         return c;
     },
 
@@ -151,9 +199,7 @@ const UISystem = {
             c.add(scene.add.text(0, 0, icon, { fontSize: (opts.fontSize || 20) + 'px' }).setOrigin(0.5));
         }
         setCenteredInput(c, Math.max(r * 2, DesignTokens.touch.minTarget), Math.max(r * 2, DesignTokens.touch.minTarget));
-        c.on('pointerdown', () => { this.press(scene, c); AudioEngine.emit('UITap'); onTap(); });
-        c.on('pointerover', () => c.setScale(1.08));
-        c.on('pointerout', () => c.setScale(1));
+        this.bindTap(scene, c, () => onTap(c));
         return c;
     },
 
@@ -199,7 +245,7 @@ const UISystem = {
             color: DesignTokens.css.white, stroke: '#00000066', strokeThickness: 4,
         }).setOrigin(0.5));
         setCenteredInput(c, size + 8, size + 8);
-        c.on('pointerdown', () => { this.press(scene, c); onTap(c); });
+        this.bindTap(scene, c, () => onTap(c), { sfx: false });
         return c;
     },
 

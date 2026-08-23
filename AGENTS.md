@@ -58,12 +58,17 @@ skills/            reusable implementation skills (see skills/README.md)
 - **Audio** = `AudioEngine.emit('<Event>')` — never call sound directly.
   See `skills/audio/SKILL.md`.
 - **Rewards** = RewardEngine pipeline (Score→Stars→XP→Awards→Stickers→Gems→World).
+- **Completion** = `CompletionEngine.completeGame()` + `RewardPresentationEngine`
+  + shared `ResultScreen`. Never invent per-game result/reward UI.
+- **Buttons** = `UISystem.bindTap` (IDLE→PRESSED→ACTION). Pressed scale is
+  immediate. Navigation uses `NavSystem` action transaction — no debounce sleep.
 - **Voice lines** = add to `AudioConfig.VOICE_LIBRARY` → run the generator.
 
 ## Hard rules (MUST NOT)
 
 1. Never block gameplay/navigation on speech, audio, or animation.
    Priority: **interaction > gameplay > navigation > animation > speech**.
+   Last-answer → completion UI immediately. Next actions are never gated.
 2. Never punish the child: no red flashes, buzzers, shame text, or fail screens.
 3. Never create duplicate concepts (new button/audio/reward systems).
 4. Never hardcode questions, voice text, or audio paths in gameplay logic —

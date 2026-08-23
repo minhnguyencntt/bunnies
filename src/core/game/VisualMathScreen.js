@@ -167,7 +167,7 @@ class VisualMathScreen extends GameShell {
     // ─── Answers ──────────────────────────────────────────────
 
     onAnswerPick(opt, btn) {
-        if (this.guided) return; // guided mode: only the highlighted button responds
+        if (this.guided && opt.value !== this.currentQuestion.answer) return;
         if (opt.value === this.currentQuestion.answer) {
             this.celebrateCorrect(btn);
         } else {
@@ -215,15 +215,6 @@ class VisualMathScreen extends GameShell {
             });
             if (correctBtn) {
                 this.tweens.add({ targets: correctBtn, scale: 1.15, duration: 400, yoyo: true, repeat: 3 });
-                correctBtn.removeAllListeners();
-                correctBtn.on('pointerdown', () => {
-                    this.spawnSparkles(correctBtn.x, correctBtn.y, 10);
-                    this.companionSay('Đúng rồi! Giỏi lắm! 🌟', 2000);
-                    AudioEngine.emit('CorrectAnswer');
-                    this.time.delayedCall(1200, () => this.advanceRound());
-                });
-            } else {
-                this.time.delayedCall(1200, () => this.advanceRound());
             }
         });
     }

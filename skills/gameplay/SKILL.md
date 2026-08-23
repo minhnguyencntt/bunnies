@@ -22,8 +22,11 @@ GameConfig.js entry (data-driven rules)
 + screens/<game>/puzzle.js (theme data)
 + screens/<game>/screen.js (scene class)
 → GameShell provides: HUD, timer, combo, hints, pause, Bunnine companion,
-  intro+skip, scoring, stars, rewards, result screen, audio events
+  intro+skip, scoring, stars, rewards, CompletionEngine → ResultScreen, audio events
 ```
+
+See `skills/gameplay/completion.md` for the mandatory completion / reward /
+next-action contract.
 
 ## Implementation pattern
 

@@ -153,7 +153,7 @@ async function tapCanvas(page, gx, gy) {
         NavSystem.go(s, def.sceneKey, { gameId: s.gameId, level: 1 });
         return s.gameId;
     });
-    const playKey = await page.evaluate(() => GameConfig.get(window.game.scene.getScenes(true).find((s) => s.gameId).gameId).sceneKey);
+    const playKey = await page.evaluate((gid) => GameConfig.get(gid).sceneKey, gameId);
     await waitForScene(page, playKey, 10000);
     await page.evaluate((gid) => {
         const g = window.game.scene.getScenes(true).find((s) => s.gameId);

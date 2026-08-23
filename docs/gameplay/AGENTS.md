@@ -4,7 +4,7 @@ Gameplay architecture rules. Engine code: `src/core/engine/` + `src/core/game/`.
 
 ## The loop
 
-Explore → Interact → Solve → Feedback → Score → Reward → Progress.
+Explore → Interact → Solve → Feedback → Score → CompletionEngine → Reward → Next Action.
 Never Question → Multiple Choice → Answer → Next Question without a game world
 around it.
 

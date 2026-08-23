@@ -4,14 +4,15 @@
  * Wires the Game Engine into a Phaser scene:
  *   Level Engine (config) · Difficulty + Adaptive Difficulty · Analytics ·
  *   Scoring + Stars (live HUD) · Hint Engine · Pause · Bunnine companion ·
- *   Reward pipeline → Result Screen.
+ *   Reward pipeline → CompletionEngine → Result Screen.
  *
  * Subclass contract:
  *   constructor: super('SceneKey'); this.gameId = '...';
  *   onPreload()            — load assets (call this.preloadCommonAudio(folder))
  *   buildWorld()           — background, characters, decorations
  *   presentRound(i, diff)  — build round UI; end with this.answerCorrect(x,y)
- *                            / this.answerWrong(x,y); shell advances rounds
+ *                            / this.answerWrong(x,y); shell + CompletionEngine
+ *                            own last-answer → reward → next action
  * Optional overrides: introText(), introVoiceKey(), parTimeMs,
  *   handleTimeout(), showHintVisual(hint), onSessionStart()
  */
@@ -69,6 +70,7 @@ class GameShell extends Phaser.Scene {
     }
 
     create() {
+        NavSystem.ready(this);
         this.gameDef = GameConfig.get(this.gameId);
         this.levelCfg = GameConfig.getLevel(this.gameId, this.level);
         this.analytics = new AnalyticsEngine(this.gameId, this.level);
@@ -94,7 +96,9 @@ class GameShell extends Phaser.Scene {
             if (audioCfg.ambience) AmbienceEngine.start(audioCfg.ambience);
         }
 
-        this.time.delayedCall(400, () => this.playIntro());
+        CompletionEngine.reset();
+        RewardPresentationEngine.prepare(this.gameId);
+        this.playIntro();
     }
 
     // ─── Intro ────────────────────────────────────────────────
@@ -111,8 +115,8 @@ class GameShell extends Phaser.Scene {
                 voiceKey: null, // voice handled by VoiceEngine (GameStarted event)
                 showText: (t, ms) => this.companionSay(t, ms),
                 onComplete: begin,
-                minMs: 2000,
-                maxMs: 4500,
+                minMs: 0,
+                maxMs: 2500,
             });
         } else {
             begin();
@@ -146,7 +150,14 @@ class GameShell extends Phaser.Scene {
         this.companionReact('happy');
         AudioEngine.emit('CorrectAnswer');
         this.refreshLiveScore();
-        this.time.delayedCall(opts.delayMs ?? 1600, () => this.advanceRound());
+        const last = this.roundIndex >= this.levelCfg.rounds - 1;
+        if (last) {
+            CompletionEngine.notifyLastAnswer();
+            this.analytics.finishRound();
+            this.finishSession();
+            return;
+        }
+        this.time.delayedCall(opts.delayMs ?? 480, () => this.advanceRound());
     }
 
     answerWrong(x, y, opts = {}) {
@@ -160,8 +171,10 @@ class GameShell extends Phaser.Scene {
         ]);
         this.companionSay(opts.message || encourage, 2500);
         this.refreshLiveScore();
-        if (opts.fatal) { // round cannot be retried (e.g. timeout-style rounds)
-            this.time.delayedCall(1400, () => this.advanceRound());
+        if (opts.fatal) {
+            const last = this.roundIndex >= this.levelCfg.rounds - 1;
+            if (last) this.advanceRound();
+            else this.time.delayedCall(400, () => this.advanceRound());
         }
     }
 
@@ -182,9 +195,11 @@ class GameShell extends Phaser.Scene {
         }
     }
 
-    handleTimeout() { // subclass may override for custom timeout behaviour
+    handleTimeout() {
         this.companionSay('Hết giờ rồi, không sao! Mình sang câu tiếp theo nhé!', 2500);
-        this.time.delayedCall(1200, () => this.advanceRound());
+        const last = this.roundIndex >= this.levelCfg.rounds - 1;
+        if (last) this.advanceRound();
+        else this.time.delayedCall(400, () => this.advanceRound());
     }
 
     onRoundTimeout() {
@@ -200,43 +215,12 @@ class GameShell extends Phaser.Scene {
         this.sessionOver = true;
         this.acceptingInput = false;
         this.clearRoundTimer();
-
-        const par = this.getParTimeMs();
-        let rewards;
-        try {
-            rewards = RewardEngine.finishSession(this.gameId, this.level, this.analytics, par);
-        } catch (e) {
-            console.error('RewardEngine failed', e);
-            rewards = {
-                gameId: this.gameId, level: this.level,
-                gameDef: this.gameDef, levelCfg: this.levelCfg,
-                score: 0, stars: 1, isNewBest: false,
-                xp: 0, gems: 0, awards: [], stickers: [],
-                knowledgeLevel: { level: 1, intoLevel: 0, needed: 100 },
-                leveledUp: false,
-                worldProgress: { percent: 0, stars: 0, maxStars: 54 },
-                metrics: this.analytics ? this.analytics.getMetrics() : { correctAnswers: 0 },
-            };
-        }
-
-        this.companionReact('celebrate');
-        AmbienceEngine.stop();
-        AudioEngine.emit('GameCompleted');
-        AudioEngine.emit('BunnyReaction');
-        const w = this.cameras.main.width;
-        const h = this.cameras.main.height;
-        for (let i = 0; i < 12; i++) {
-            this.time.delayedCall(i * 70, () => this.spawnSparkles(
-                Phaser.Math.Between(80, w - 80), Phaser.Math.Between(90, h - 80), 7));
-        }
-        this.time.delayedCall(450, () => {
-            try {
-                this.scene.pause();
-                this.scene.launch('ResultScreen', { rewards, gameId: this.gameId, level: this.level });
-            } catch (e) {
-                console.error('ResultScreen launch failed — returning to menu', e);
-                this.exitToMenu();
-            }
+        CompletionEngine.completeGame({
+            scene: this,
+            gameId: this.gameId,
+            level: this.level,
+            analytics: this.analytics,
+            parTimeMs: this.getParTimeMs(),
         });
     }
 
@@ -428,6 +412,7 @@ class GameShell extends Phaser.Scene {
 
         mkBtn(h / 2 - 70, 'Chơi tiếp', DesignTokens.colors.success, () => this.hidePause());
         mkBtn(h / 2, 'Chơi lại', DesignTokens.colors.secondary, () => {
+            if (!NavSystem.begin(this)) return;
             this.hidePause();
             this.scene.restart({ gameId: this.gameId, level: this.level });
         });

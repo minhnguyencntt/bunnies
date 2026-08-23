@@ -18,8 +18,25 @@ const NavSystem = {
     HOME: 'MenuScreen',
     LEVELS: 'LevelSelectScreen',
 
+    /** New/reused scene is idle — Phaser reuses scene instances. */
+    ready(scene) {
+        if (scene) scene._navTx = false;
+        return scene;
+    },
+
+    /**
+     * Claim a one-shot navigation on this scene. Duplicate taps are ignored
+     * without sleeping — the first action already started.
+     */
+    begin(scene) {
+        if (!scene || scene._navTx) return false;
+        scene._navTx = true;
+        return true;
+    },
+
     /** Instant scene change. Never awaits audio or tweens. */
     go(scene, target, data) {
+        if (!this.begin(scene)) return false;
         try { if (typeof AudioEngine !== 'undefined') AudioEngine.emit('Transition'); } catch (e) { /* ignore */ }
         try { if (typeof VoiceEngine !== 'undefined') VoiceEngine.stopCurrent(); } catch (e) { /* ignore */ }
         try { if (typeof AmbienceEngine !== 'undefined') AmbienceEngine.stop(); } catch (e) { /* ignore */ }
@@ -35,9 +52,12 @@ const NavSystem = {
 
         if (target === '__close__') {
             scene.scene.stop();
-            return;
+            return true;
         }
         scene.scene.start(target, data || {});
+        const dest = scene.game && scene.game.scene && scene.game.scene.getScene(target);
+        if (dest && dest !== scene) this.ready(dest);
+        return true;
     },
 
     backToLevels(scene, gameId) {
@@ -57,6 +77,7 @@ const NavSystem = {
      * Returns { back, home } buttons.
      */
     mount(scene, opts = {}) {
+        this.ready(scene);
         const L = DesignTokens.layout;
         const y = opts.y ?? L.chromeY;
         const back = UISystem.navButton(scene, opts.backX ?? L.backX, y, 'back', () => {

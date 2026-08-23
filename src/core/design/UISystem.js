@@ -5,6 +5,10 @@
  *
  * Never hand-style a one-off button/card — extend these factories instead.
  */
+/**
+ * Centered hit area for a container (containers have no origin). The visual
+ * is drawn around (0,0), so the touch target must also be centered on (0,0).
+ */
 function setCenteredInput(obj, width, height, opts = {}) {
     obj.setSize(width, height);
     obj.setInteractive(Object.assign({
@@ -15,7 +19,25 @@ function setCenteredInput(obj, width, height, opts = {}) {
     return obj;
 }
 
+/**
+ * Centered hit area for an origin-based object (Text/Image/Sprite/Zone).
+ * Phaser's default hit area starts at the origin; for origin 0.5 that leaves
+ * the clickable zone offset to the bottom-right of the visible glyph.
+ */
+function setOriginCenteredInput(obj, width, height, opts = {}) {
+    const w = width || obj.width || 48;
+    const h = height || obj.height || 48;
+    obj.setInteractive(Object.assign({
+        hitArea: new Phaser.Geom.Rectangle(-w / 2, -h / 2, w, h),
+        hitAreaCallback: Phaser.Geom.Rectangle.Contains,
+        useHandCursor: true,
+    }, opts));
+    return obj;
+}
+
 const UISystem = {
+    setCenteredInput,
+    setOriginCenteredInput,
     T: () => DesignTokens,
 
     /**
@@ -290,6 +312,112 @@ const UISystem = {
                 return start;
             },
         };
+    },
+
+    /**
+     * Shared collectible card. ResultScreen (hero/support) and the album
+     * render the same Award object — never a one-off emoji/text card.
+     */
+    awardCard(scene, x, y, award, opts = {}) {
+        const size = opts.size || 'support';
+        const spec = size === 'hero'
+            ? { w: 248, h: 286, glyph: 88, name: 22, meta: 14, radius: 28, medal: 66 }
+            : size === 'album'
+            ? { w: opts.slot || 68, h: opts.slot || 68, glyph: 26, name: 10, meta: 0, radius: 12, medal: 22 }
+            : { w: 120, h: 132, glyph: 40, name: 13, meta: 11, radius: 18, medal: 32 };
+        const w = opts.width || spec.w;
+        const h = opts.height || spec.h;
+        const glow = (award.rarityStyle && award.rarityStyle.glow) || DesignTokens.colors.accent;
+        const state = (award.presentation && award.presentation.state) || award.state;
+        const locked = state === 'LOCKED';
+        const pending = state === 'PENDING';
+        const isNew = !!award.isNew;
+        const art = award.artwork || { glyph: award.icon, kind: 'glyph' };
+        const medalY = size === 'hero' ? -28 : (size === 'album' ? -8 : -10);
+
+        const c = scene.add.container(x, y);
+        const g = scene.add.graphics();
+        g.fillStyle(DesignTokens.shadow.color, 0.22);
+        g.fillRoundedRect(-w / 2, -h / 2 + 6, w, h, spec.radius);
+        g.fillStyle(glow, locked ? 0.28 : 1);
+        g.fillRoundedRect(-w / 2 - 5, -h / 2 - 5, w + 10, h + 10, spec.radius + 5);
+        g.fillStyle(locked ? 0xe8e0d0 : DesignTokens.colors.surface, 1);
+        g.fillRoundedRect(-w / 2, -h / 2, w, h, spec.radius);
+        g.fillStyle(locked ? 0xcfd8dc : DesignTokens.colors.surfaceSoft, 1);
+        g.fillCircle(0, medalY, spec.medal);
+        g.lineStyle(4, glow, locked ? 0.35 : 1);
+        g.strokeCircle(0, medalY, spec.medal);
+        c.add(g);
+
+        const spriteKey = art.spriteKey && scene.textures.exists(art.spriteKey) ? art.spriteKey : null;
+        if (spriteKey && !locked) {
+            const img = scene.add.image(0, medalY, spriteKey);
+            const src = scene.textures.get(spriteKey).getSourceImage();
+            img.setDisplaySize(spec.glyph, spec.glyph * (src.height / src.width));
+            c.add(img);
+        } else {
+            const glyph = locked && size !== 'hero' ? '🔒' : (art.glyph || award.icon || '🎁');
+            c.add(scene.add.text(0, medalY, glyph, {
+                fontSize: spec.glyph + 'px',
+            }).setOrigin(0.5).setAlpha(locked ? 0.4 : 1));
+        }
+
+        if (size === 'hero') {
+            const tag = pending
+                ? 'Chưa lưu'
+                : (award.teaser ? 'Chơi tiếp để mở' : (isNew ? Award.newLabel(award.type) : Award.typeLabel(award.type)));
+            c.add(scene.add.text(0, -h / 2 + 22, tag, {
+                fontSize: '15px', fontFamily: DesignTokens.typography.fontFamily, fontStyle: 'bold',
+                color: pending ? DesignTokens.css.error : (isNew ? '#e65100' : DesignTokens.css.primary),
+            }).setOrigin(0.5));
+            c.add(scene.add.text(0, h / 2 - 72, award.name, {
+                fontSize: spec.name + 'px', fontFamily: DesignTokens.typography.fontFamily, fontStyle: 'bold',
+                color: DesignTokens.css.ink, align: 'center', wordWrap: { width: w - 24 },
+            }).setOrigin(0.5));
+            const rarity = award.rarityStyle ? award.rarityStyle.label : '';
+            c.add(scene.add.text(0, h / 2 - 44, `${Award.typeLabel(award.type)} · ${rarity}`, {
+                fontSize: spec.meta + 'px', fontFamily: DesignTokens.typography.fontFamily, fontStyle: 'bold',
+                color: award.rarityStyle ? award.rarityStyle.color : DesignTokens.css.inkSoft,
+            }).setOrigin(0.5));
+            const blurb = award.teaser ? (award.hint || award.description) : (award.description || award.hint);
+            if (blurb) {
+                c.add(scene.add.text(0, h / 2 - 22, blurb, {
+                    fontSize: '13px', fontFamily: DesignTokens.typography.fontFamily, fontStyle: 'bold',
+                    color: DesignTokens.css.inkSoft, align: 'center', wordWrap: { width: w - 20 },
+                }).setOrigin(0.5));
+            }
+        } else if (size === 'album') {
+            c.add(scene.add.text(0, h / 2 - 10, locked ? '???' : award.name, {
+                fontSize: spec.name + 'px', fontFamily: DesignTokens.typography.fontFamily, fontStyle: 'bold',
+                color: locked ? '#90a4ae' : (award.rarityStyle && award.rarityStyle.color) || DesignTokens.css.ink,
+            }).setOrigin(0.5));
+        } else {
+            const tag = award.teaser
+                ? 'Chơi tiếp để mở'
+                : (isNew ? Award.newLabel(award.type) : Award.typeLabel(award.type));
+            c.add(scene.add.text(0, -h / 2 + 14, tag, {
+                fontSize: '11px', fontFamily: DesignTokens.typography.fontFamily, fontStyle: 'bold',
+                color: isNew ? '#e65100' : DesignTokens.css.primary,
+            }).setOrigin(0.5));
+            c.add(scene.add.text(0, h / 2 - 28, award.name, {
+                fontSize: spec.name + 'px', fontFamily: DesignTokens.typography.fontFamily, fontStyle: 'bold',
+                color: DesignTokens.css.ink, align: 'center', wordWrap: { width: w - 12 },
+            }).setOrigin(0.5));
+            c.add(scene.add.text(0, h / 2 - 12, Award.typeLabel(award.type), {
+                fontSize: spec.meta + 'px', fontFamily: DesignTokens.typography.fontFamily, fontStyle: 'bold',
+                color: DesignTokens.css.inkSoft,
+            }).setOrigin(0.5));
+        }
+
+        if (opts.onTap) {
+            setCenteredInput(c, Math.max(w, DesignTokens.touch.minTarget), Math.max(h, DesignTokens.touch.minTarget));
+            this.bindTap(scene, c, () => opts.onTap(award, c));
+        }
+        if (opts.reveal !== false && (size === 'hero' || isNew)) {
+            c.setScale(0.86);
+            scene.tweens.add({ targets: c, scale: 1, duration: 300, ease: 'Back.easeOut' });
+        }
+        return c;
     },
 
     /** Speech bubble — consistent across all characters. */

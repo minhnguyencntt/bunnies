@@ -214,7 +214,7 @@ class MirrorCityScreen extends GameShell {
                 if (props.flip) t.setFlipX(true);
                 if (props.angle) t.setAngle(props.angle);
                 t.setData('diffKey', diffKey);
-                t.setInteractive({ useHandCursor: true });
+                UISystem.setOriginCenteredInput(t, t.width + 24, t.height + 24);
                 t.on('pointerdown', () => this.tapElement(t, ex, ey));
             });
         });
@@ -224,7 +224,7 @@ class MirrorCityScreen extends GameShell {
         const ex = px - panelW / 2 + el.rx * panelW;
         const ey = panelY - panelH / 2 + el.ry * panelH;
         const z = this.track(this.add.zone(ex, ey, baseSize * 1.5, baseSize * 1.5).setDepth(49));
-        z.setInteractive({ useHandCursor: true });
+        UISystem.setOriginCenteredInput(z, baseSize * 1.5, baseSize * 1.5);
         z.setData('diffKey', diffKey);
         z.on('pointerdown', () => this.tapElement(z, ex, ey));
     }

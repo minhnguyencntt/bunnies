@@ -15,6 +15,7 @@ const { AnalyticsEngine } = require('../src/core/engine/AnalyticsEngine.js');
 const { ScoringEngine } = require('../src/core/engine/ScoringEngine.js');
 const { StarEngine } = require('../src/core/engine/StarEngine.js');
 const { XPEngine } = require('../src/core/engine/XPEngine.js');
+const { Award } = require('../src/core/engine/Award.js');
 const { AwardEngine } = require('../src/core/engine/AwardEngine.js');
 const { StickerEngine } = require('../src/core/engine/StickerEngine.js');
 const { ProgressionEngine } = require('../src/core/engine/ProgressionEngine.js');
@@ -27,6 +28,7 @@ global.SaveEngine = SaveEngine;
 global.ScoringEngine = ScoringEngine;
 global.StarEngine = StarEngine;
 global.XPEngine = XPEngine;
+global.Award = Award;
 global.AwardEngine = AwardEngine;
 global.StickerEngine = StickerEngine;
 global.ProgressionEngine = ProgressionEngine;
@@ -63,9 +65,11 @@ for (const g of GameConfig.allGames()) {
     if (!result.rewards.some((r) => r.type === 'sticker' && r.isNew)) {
         throw new Error(`${g.gameId}: no new sticker artwork`);
     }
-    if (!result.rewards.every((r) => r.name && r.icon)) {
-        throw new Error(`${g.gameId}: reward missing name/icon`);
+    if (!result.rewards.every((r) => r.name && r.icon && r.id && r.artwork && r.presentation)) {
+        throw new Error(`${g.gameId}: reward is not a first-class Award`);
     }
+    const hero = Award.pickHero(result.rewards);
+    if (!hero || !hero.artwork.glyph) throw new Error(`${g.gameId}: missing hero artwork`);
     if (result.xpEarned <= 0) throw new Error(`${g.gameId}: no XP`);
     if (result.starsEarned <= 0) throw new Error(`${g.gameId}: no stars`);
     if (result.recommendedNextAction !== 'continue') {

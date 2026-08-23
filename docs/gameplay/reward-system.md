@@ -19,10 +19,13 @@ Gameplay metrics (AnalyticsEngine)
 - No random loot: every sticker/award shows exactly how to earn it.
 - Completion is owned by `CompletionEngine.completeGame()` — games must not
   build their own result/reward screens.
-- `RewardPresentationEngine` persists first, then presents real sticker/award
-  artwork. Never say "added to album" unless persistence verified.
-- Result screen contract: achievement · result · visual reward · one primary
-  next action · secondary navigation. Buttons are enabled immediately.
+- Awards are first-class objects (`Award.hydrate`): identity, metadata,
+  artwork, presentation state, persistence. ResultScreen and the album render
+  the same object via `UISystem.awardCard`.
+- `RewardPresentationEngine` persists first, then hydrates Award objects.
+  Never say "added to album" unless `Award.verifyOwned` / `persistOk`.
+- Result screen contract: compact achievement strip · **hero Award** · one
+  primary next action · secondary navigation. Buttons are enabled immediately.
 - Reward audio/animation are fire-and-forget (see audio-system.md).
 - New reward types need: visual identity + animation + sound + celebration +
   progress feedback — and a condition in AwardEngine/StickerEngine.

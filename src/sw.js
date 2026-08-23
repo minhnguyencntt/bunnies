@@ -5,7 +5,7 @@
  *   sau lần tải đầu → chơi xong 1 lần là offline hoàn toàn.
  */
 
-const CACHE_VERSION = 'bunnies-pwa-v7';
+const CACHE_VERSION = 'bunnies-pwa-v8';
 const PRECACHE = `${CACHE_VERSION}-core`;
 const RUNTIME = `${CACHE_VERSION}-runtime`;
 
@@ -65,6 +65,7 @@ const CORE_ASSETS = [
     './core/engine/StarEngine.js',
     './core/engine/AdaptiveDifficultyEngine.js',
     './core/engine/XPEngine.js',
+    './core/engine/Award.js',
     './core/engine/AwardEngine.js',
     './core/engine/StickerEngine.js',
     './core/engine/ProgressionEngine.js',

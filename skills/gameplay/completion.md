@@ -30,7 +30,7 @@ copy. Do not wait for speech, SFX, or tweens before showing next actions.
 
 1. Achievement — game name + level
 2. Result — score, correct/total, stars
-3. Reward — real sticker/award artwork + name + type + NEW vs teaser
+3. Reward — the earned `Award` object is the hero (artwork + name + type + rarity + NEW/teaser). Stats stay a compact strip.
 4. One primary next action (`TIẾP TỤC` if another level, else `CHỌN MÀN`)
 5. Secondary: `CHƠI LẠI` · `CHỌN MÀN` · `VỀ NHÀ`
 

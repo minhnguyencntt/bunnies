@@ -1,7 +1,7 @@
 /**
  * ResultScreen — shared GameCompletionScreen.
- * Renders CompletionEngine result: achievement, score, visual rewards, next actions.
- * Buttons are available immediately. Speech / sparkles never gate input.
+ * The earned Award object is the hero. Session stats are a compact strip.
+ * Next actions are always visible. Speech / sparkles never gate input.
  */
 class ResultScreen extends Phaser.Scene {
     constructor() {
@@ -38,84 +38,83 @@ class ResultScreen extends Phaser.Scene {
             depth: 950,
         });
 
-        const pw = Math.min(700, w * 0.92);
-        const ph = Math.min(660, h * 0.94);
+        const pw = Math.min(720, w * 0.92);
+        const ph = Math.min(680, h * 0.94);
         UISystem.panel(this, w / 2, h / 2, pw, ph, { borderWidth: 5 });
 
         const cx = w / 2;
-        let y = h / 2 - ph / 2 + 36;
+        const top = h / 2 - ph / 2;
+        const bottom = h / 2 + ph / 2;
+        const items = r.rewards || [];
+        const hero = Award.pickHero(items);
+        const extras = items.filter((a) => a !== hero).slice(0, 2);
 
         const headline = r.starsEarned >= 3 ? 'TUYỆT VỜI!' : 'GIỎI LẮM!';
-        this.add.text(cx, y, headline, {
-            fontSize: '34px', fontFamily: DesignTokens.typography.fontFamily, fontStyle: 'bold',
+        this.add.text(cx, top + 26, headline, {
+            fontSize: '22px', fontFamily: DesignTokens.typography.fontFamily, fontStyle: 'bold',
             color: '#e65100',
         }).setOrigin(0.5);
-        y += 36;
 
-        this.add.text(cx, y, `Bạn đã hoàn thành ${r.gameName} · Màn ${r.level}`, {
-            fontSize: '18px', fontFamily: DesignTokens.typography.fontFamily, fontStyle: 'bold',
+        this.add.text(cx, top + 50, `Bạn đã hoàn thành ${r.gameName} · Màn ${r.level}`, {
+            fontSize: '15px', fontFamily: DesignTokens.typography.fontFamily, fontStyle: 'bold',
             color: DesignTokens.css.ink,
         }).setOrigin(0.5);
-        y += 28;
 
-        this.add.text(cx, y, `Đúng ${r.correctAnswers}/${r.totalQuestions}   ·   Điểm ${r.score}`, {
-            fontSize: '17px', fontFamily: DesignTokens.typography.fontFamily, fontStyle: 'bold',
+        const starGlyphs = [0, 1, 2].map((i) => (i < r.starsEarned ? '⭐' : '☆')).join('');
+        this.add.text(cx, top + 74, `${starGlyphs}    Đúng ${r.correctAnswers}/${r.totalQuestions}   ·   Điểm ${r.score}   ·   +${r.xpEarned} XP   ·   💎 +${r.coinsEarned}`, {
+            fontSize: '14px', fontFamily: DesignTokens.typography.fontFamily, fontStyle: 'bold',
             color: DesignTokens.css.inkSoft,
         }).setOrigin(0.5);
-        y += 32;
-
-        const starRow = this.add.container(cx, y);
-        for (let i = 0; i < 3; i++) {
-            const s = this.add.text((i - 1) * 58, 0, i < r.starsEarned ? '⭐' : '☆', { fontSize: '46px' }).setOrigin(0.5);
-            starRow.add(s);
-            if (i < r.starsEarned) this.time.delayedCall(80 * i, () => AudioEngine.emit('StarEarned', { index: i }));
+        for (let i = 0; i < r.starsEarned; i++) {
+            this.time.delayedCall(80 * i, () => AudioEngine.emit('StarEarned', { index: i }));
         }
-        y += 44;
-
-        this.add.text(cx, y, `+${r.xpEarned} XP    ·    💎 +${r.coinsEarned} Đá Tri Thức`, {
-            fontSize: '18px', fontFamily: DesignTokens.typography.fontFamily, fontStyle: 'bold',
-            color: DesignTokens.css.ink,
-        }).setOrigin(0.5);
-        y += 30;
 
         if (!r.persistOk) {
-            this.add.text(cx, y, 'Chưa lưu được phần thưởng.', {
-                fontSize: '18px', fontFamily: DesignTokens.typography.fontFamily, fontStyle: 'bold',
+            this.add.text(cx, top + 96, 'Chưa lưu được phần thưởng.', {
+                fontSize: '15px', fontFamily: DesignTokens.typography.fontFamily, fontStyle: 'bold',
                 color: DesignTokens.css.error,
             }).setOrigin(0.5);
-            y += 28;
+        }
+
+        const headerBottom = top + (r.persistOk ? 96 : 114);
+        const actionY = bottom - 28;
+        const stageBottom = actionY - 110;
+        const stageMid = (headerBottom + stageBottom) / 2;
+        const sideBySide = extras.length > 0 && pw >= 620;
+        const heroY = sideBySide ? stageMid : (extras.length ? headerBottom + (stageBottom - headerBottom) * 0.38 : stageMid);
+
+        if (hero) {
+            UISystem.awardCard(this, cx, heroY, hero, { size: 'hero' });
         } else {
-            this.add.text(cx, y, r.isNewReward ? 'Phần thưởng mới của bạn' : 'Phần thưởng của bạn', {
-                fontSize: '18px', fontFamily: DesignTokens.typography.fontFamily, fontStyle: 'bold',
-                color: DesignTokens.css.primary,
+            this.add.text(cx, heroY, r.persistOk ? 'Phần thưởng của bạn' : 'Chưa lưu được phần thưởng.', {
+                fontSize: '20px', fontFamily: DesignTokens.typography.fontFamily, fontStyle: 'bold',
+                color: r.persistOk ? DesignTokens.css.primary : DesignTokens.css.error,
             }).setOrigin(0.5);
-            y += 24;
         }
 
-        const cards = (r.rewards || []).slice(0, 4);
-        if (cards.length && r.persistOk) {
-            const cardW = Math.min(150, (pw - 48) / cards.length - 10);
-            const cardH = 150;
-            const gap = 14;
-            const total = cards.length * cardW + (cards.length - 1) * gap;
-            cards.forEach((item, i) => {
-                const x = cx - total / 2 + cardW / 2 + i * (cardW + gap);
-                this.rewardCard(x, y + cardH / 2, cardW, cardH, item);
-            });
-            y += 150 + 20;
-        } else if (!r.persistOk) {
-            y += 8;
-        } else {
-            y += 8;
+        if (extras.length) {
+            if (sideBySide) {
+                const xs = extras.length === 1 ? [cx + 210] : [cx - 210, cx + 210];
+                extras.forEach((item, i) => {
+                    UISystem.awardCard(this, xs[i], heroY, item, { size: 'support' });
+                });
+            } else {
+                const cardW = 120;
+                const gap = 14;
+                const total = extras.length * cardW + (extras.length - 1) * gap;
+                const extraY = headerBottom + (stageBottom - headerBottom) * 0.78;
+                extras.forEach((item, i) => {
+                    const x = cx - total / 2 + cardW / 2 + i * (cardW + gap);
+                    UISystem.awardCard(this, x, extraY, item, { size: 'support' });
+                });
+            }
         }
 
-        this.add.text(cx, y, 'Bạn muốn làm gì tiếp?', {
-            fontSize: '18px', fontFamily: DesignTokens.typography.fontFamily, fontStyle: 'bold',
+        this.add.text(cx, actionY - 96, 'Bạn muốn làm gì tiếp?', {
+            fontSize: '17px', fontFamily: DesignTokens.typography.fontFamily, fontStyle: 'bold',
             color: DesignTokens.css.ink,
         }).setOrigin(0.5);
-        y += 36;
-
-        this.drawActions(cx, y, r);
+        this.drawActions(cx, actionY - 62, r);
 
         this.spawnBunny(w, h);
         this.announce(r);
@@ -128,67 +127,20 @@ class ResultScreen extends Phaser.Scene {
         const secondary = actions.filter((a) => a !== primary);
         if (primary) {
             UISystem.primaryButton(this, cx, y, primary.label, () => this.go(primary.id), {
-                width: 280, height: 56, fontSize: 22, color: DesignTokens.colors.success,
+                width: 280, height: 52, fontSize: 20, color: DesignTokens.colors.success,
             });
-            y += 62;
         }
         if (secondary.length) {
-            const bw = 148;
-            const gap = 12;
+            const bw = 142;
+            const gap = 10;
             const tw = secondary.length * bw + (secondary.length - 1) * gap;
             secondary.forEach((a, i) => {
                 const x = cx - tw / 2 + bw / 2 + i * (bw + gap);
-                UISystem.secondaryButton(this, x, y, a.label, () => this.go(a.id), {
-                    width: bw, height: 46, fontSize: 16,
+                UISystem.secondaryButton(this, x, y + 56, a.label, () => this.go(a.id), {
+                    width: bw, height: 42, fontSize: 15,
                 });
             });
         }
-    }
-
-    rewardCard(x, y, cw, ch, item) {
-        const c = this.add.container(x, y);
-        const g = this.add.graphics();
-        g.fillStyle(DesignTokens.shadow.color, 0.18);
-        g.fillRoundedRect(-cw / 2, -ch / 2 + 5, cw, ch, 18);
-        g.fillStyle(DesignTokens.colors.surface, 1);
-        g.fillRoundedRect(-cw / 2, -ch / 2, cw, ch, 18);
-        g.lineStyle(4, item.isNew ? 0xe65100 : DesignTokens.colors.accent, 1);
-        g.strokeRoundedRect(-cw / 2, -ch / 2, cw, ch, 18);
-        c.add(g);
-
-        const tag = item.teaser
-            ? 'Chơi tiếp để mở'
-            : (item.isNew
-                ? (item.type === 'sticker' ? 'Sticker mới' : 'Huy hiệu mới')
-                : RewardPresentationEngine.typeLabel(item.type));
-        c.add(this.add.text(0, -ch / 2 + 18, tag, {
-            fontSize: '13px', fontFamily: DesignTokens.typography.fontFamily, fontStyle: 'bold',
-            color: item.isNew ? '#e65100' : DesignTokens.css.primary,
-        }).setOrigin(0.5));
-
-        const bunnyKey = this.textures.exists('spr_bunny_happy') ? 'spr_bunny_happy' : null;
-        const isBunny = bunnyKey && (item.id && String(item.id).includes('bunny') || item.icon === '🐰');
-        if (isBunny) {
-            const img = this.add.image(0, 8, bunnyKey);
-            const src = this.textures.get(bunnyKey).getSourceImage();
-            img.setDisplaySize(64, 64 * (src.height / src.width));
-            c.add(img);
-        } else {
-            c.add(this.add.text(0, 6, item.artwork || item.icon || '🎁', { fontSize: '46px' }).setOrigin(0.5));
-        }
-
-        c.add(this.add.text(0, ch / 2 - 34, item.name, {
-            fontSize: '14px', fontFamily: DesignTokens.typography.fontFamily, fontStyle: 'bold',
-            color: DesignTokens.css.ink, align: 'center', wordWrap: { width: cw - 12 },
-        }).setOrigin(0.5));
-        c.add(this.add.text(0, ch / 2 - 16, RewardPresentationEngine.typeLabel(item.type), {
-            fontSize: '11px', fontFamily: DesignTokens.typography.fontFamily, fontStyle: 'bold',
-            color: DesignTokens.css.inkSoft,
-        }).setOrigin(0.5));
-
-        c.setScale(0.88);
-        this.tweens.add({ targets: c, scale: 1, duration: 280, ease: 'Back.easeOut' });
-        return c;
     }
 
     spawnBunny(w, h) {
@@ -207,8 +159,8 @@ class ResultScreen extends Phaser.Scene {
     announce(r) {
         const bits = [];
         const fresh = (r.rewards || []).filter((x) => x.isNew && !x.teaser);
-        const stickers = fresh.filter((x) => x.type === 'sticker');
-        const badges = fresh.filter((x) => x.type === 'badge');
+        const stickers = fresh.filter((x) => x.type === Award.TYPE.STICKER);
+        const badges = fresh.filter((x) => x.type === Award.TYPE.BADGE);
         if (stickers.length) bits.push(`Sticker mới: ${stickers.map((s) => s.name).join(', ')}`);
         if (badges.length) bits.push(`Huy hiệu mới: ${badges.map((a) => a.name).join(', ')}`);
         if (!r.persistOk) bits.push('Chưa lưu được phần thưởng');

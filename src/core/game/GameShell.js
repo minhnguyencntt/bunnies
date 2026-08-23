@@ -202,7 +202,22 @@ class GameShell extends Phaser.Scene {
         this.clearRoundTimer();
 
         const par = this.getParTimeMs();
-        const rewards = RewardEngine.finishSession(this.gameId, this.level, this.analytics, par);
+        let rewards;
+        try {
+            rewards = RewardEngine.finishSession(this.gameId, this.level, this.analytics, par);
+        } catch (e) {
+            console.error('RewardEngine failed', e);
+            rewards = {
+                gameId: this.gameId, level: this.level,
+                gameDef: this.gameDef, levelCfg: this.levelCfg,
+                score: 0, stars: 1, isNewBest: false,
+                xp: 0, gems: 0, awards: [], stickers: [],
+                knowledgeLevel: { level: 1, intoLevel: 0, needed: 100 },
+                leveledUp: false,
+                worldProgress: { percent: 0, stars: 0, maxStars: 54 },
+                metrics: this.analytics ? this.analytics.getMetrics() : { correctAnswers: 0 },
+            };
+        }
 
         this.companionReact('celebrate');
         AmbienceEngine.stop();
@@ -214,7 +229,7 @@ class GameShell extends Phaser.Scene {
             this.time.delayedCall(i * 70, () => this.spawnSparkles(
                 Phaser.Math.Between(80, w - 80), Phaser.Math.Between(90, h - 80), 7));
         }
-        this.time.delayedCall(1400, () => {
+        this.time.delayedCall(450, () => {
             try {
                 this.scene.pause();
                 this.scene.launch('ResultScreen', { rewards, gameId: this.gameId, level: this.level });

@@ -68,6 +68,14 @@ const StickerEngine = {
         });
     },
 
+    /** Next unearned sticker for this game — used on the award screen. */
+    nextHint(profile, gameId) {
+        const def = GameConfig.get(gameId);
+        if (!def) return null;
+        const gp = SaveEngine.gameProfile(profile, gameId);
+        return def.stickers.find((s) => !gp.stickers.includes(s.id)) || null;
+    },
+
     totals(profile) {
         const all = GameConfig.allStickers();
         const ownedCount = all.filter(s => (profile.games[s.gameId]?.stickers || []).includes(s.id)).length;

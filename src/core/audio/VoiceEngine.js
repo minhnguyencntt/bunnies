@@ -108,6 +108,12 @@ const VoiceEngine = {
         }
     },
 
+    /** Speak arbitrary Vietnamese text (award / sticker announcements). */
+    speakRaw(text, { voice = 'bunnine' } = {}) {
+        if (!text) return false;
+        return this._speak({ vi: text, en: text, voice });
+    },
+
     stopCurrent() {
         if (this._current) {
             try { this._current.stop(); } catch (e) { /* ignore */ }

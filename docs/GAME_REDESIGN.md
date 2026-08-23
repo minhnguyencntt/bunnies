@@ -152,3 +152,15 @@ mistakes and hint usage.
 | 🌟 Nhà Sưu Tầm Sao | 12 total stars | +100 XP, +15 💎 |
 | 🗺️ Nhà Thám Hiểm Vĩ Đại | Play every game | +150 XP, +20 💎 |
 | 🏆 Bậc Thầy Tri Thức | 3⭐ Màn 3 in every game | +300 XP, +50 💎 |
+
+---
+
+## 5. Vườn Kẹo Ngọt (Candy Garden) — Addition *(new world)*
+
+Visual multiple-choice addition in a pastel candy world. Objects (🍬🍭🍓🧁) appear in two groups, animate together, then the equation `a + b = ?` appears with exactly 3 large choices (plausible ±1/±2 distractors, randomized position). Màn 1: tổng ≤ 5, no timer · Màn 2: ≤ 8, 30s · Màn 3: ≤ 10, 25s + combo. Wrong twice → guided explanation: objects counted aloud with voice, correct answer highlighted. Awards: 🍬 Viên Kẹo Đầu Tiên, 🍭 Chuỗi Ngọt Ngào (5 streak), 🧁 Bậc Thầy Kẹo Ngọt (3⭐ Màn 3). 6 candy stickers (🍭🧁🍓🐰⭐👑).
+
+## 6. Rừng Diệu Kỳ (Forest Adventure) — Subtraction *(new world)*
+
+Same visual multiple-choice loop in a magical forest (🍄🌰🦋✨, fireflies): `a` objects appear, `b` fly away with a soft whoosh, child picks the remainder from 3 choices. Results always ≥ 1 for concrete counting. Màn 1: ≤ 5, no timer · Màn 2: ≤ 8, 30s · Màn 3: ≤ 10, 25s. **Unlocks after Candy Garden Màn 1** (cross-world progression). Awards: 🌲 Bước Vào Rừng, ✨ Đom Đóm Dẫn Đường (5 streak), 🏹 Chúa Tể Rừng Xanh (3⭐ Màn 3). 6 forest stickers (🍄🦋✨🐰⭐🏆).
+
+Both worlds share `VisualMathScreen` (in `core/game/`) — a reusable base for visual 3-choice math games: dynamic question generation, combine/removal animations, guided retry, bunny celebrations, palette-driven theming.

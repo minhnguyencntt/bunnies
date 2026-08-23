@@ -222,6 +222,10 @@ Mỗi game giữ nguyên tên và mục tiêu giáo dục gốc, với 3 màn ch
 | ⛰️ Đồi Phép Trừ | Phép trừ | Táo Lăn Đồi — nhặt phần còn lại sau khi vật lăn đi | Giỏ Quà Của Cáo — xếp đúng số vào giỏ rồi đếm phần dư | Hành Trình Của Cáo — bài toán nhiều bước a − b ± c |
 | 🪞 Thành Phố Gương | Quan sát | 1 điểm khác rõ, không giờ | 3 điểm khác, giờ nhẹ, combo | 5 điểm khác tinh vi (màu/hướng/vị trí/họa tiết), thử thách giờ |
 | 🌳 Khu Rừng Định Hướng | Trái/phải/trước/sau | 2 mũi tên lớn, không giờ | 4 hướng, giờ nhẹ | Dẫn Đường Cho Sóc — ghi nhớ & lặp lại trình tự hướng |
+| 🍭 Vườn Kẹo Ngọt | Phép cộng | Kẹo Ngọt Đầu Tiên — gộp 2 nhóm kẹo, 3 lựa chọn (tổng ≤ 5) | Tiệc Kẹo Ngọt — tổng ≤ 8, giờ nhẹ | Đại Tiệc Kẹo — tổng ≤ 10, giờ + combo |
+| 🌳 Rừng Diệu Kỳ *(mở khi xong Vườn Kẹo Màn 1)* | Phép trừ | Nấm Trong Rừng — vật bay đi, đếm phần còn (≤ 5) | Đom Đóm Bay — ≤ 8, giờ nhẹ | Đêm Trong Rừng — ≤ 10, giờ + combo |
+
+**Hai world mới** dùng gameplay trắc nghiệm trực quan: vật thể hiện ra → gộp/bớt bằng hoạt ảnh → phép tính hiện → 3 nút đáp án lớn. Sai 2 lần → hệ thống **hướng dẫn từng bước** (đếm bằng giọng nói + tô sáng đáp án đúng) — học mà không bao giờ thấy thất bại.
 
 **Vòng đời phần thưởng**: Chơi → Điểm (0–100) → ⭐/⭐⭐/⭐⭐⭐ → XP (lên Cấp Tri Thức) → Huy hiệu → Sticker (Album) → 💎 Đá Tri Thức → Tiến trình trên bản đồ thế giới (🥉🥈🥇 theo sao mỗi thành phố).
 

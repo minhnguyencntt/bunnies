@@ -1,0 +1,499 @@
+/**
+ * GameConfig.js — Data-driven definitions for every game in Knowledge World.
+ * A new educational game is added by extending GAME_DEFINITIONS + a scene class.
+ *
+ * Per game: identity, educational goal, world region, 3 levels
+ * (difficulty / scoring / rewards / hints), awards, sticker collection.
+ *
+ * Level labels are child-friendly ranks; age targets (3–5 / 6–10 / 10–15)
+ * are design constraints expressed through the difficulty dimensions.
+ */
+
+const LEVEL_LABELS = {
+    1: { rank: 'Nhà Thám Hiểm', icon: '🌱' }, // Explorer — designed for 3–5
+    2: { rank: 'Nhà Phiêu Lưu', icon: '⚔️' }, // Adventurer — designed for 6–10
+    3: { rank: 'Bậc Thầy', icon: '👑' },      // Master — designed for 10–15
+};
+
+const KNOWLEDGE_WORLDS = {
+    math_forest: { id: 'math_forest', name: 'Rừng Toán Học', icon: '🌲', color: 0x2e8b57 },
+    mystery_village: { id: 'mystery_village', name: 'Làng Bí Ẩn', icon: '🔍', color: 0x9370db },
+};
+
+const DEFAULT_STAR_THRESHOLDS = [40, 75]; // score 0–39 → 1⭐, 40–74 → 2⭐, 75+ → 3⭐
+
+const GAME_DEFINITIONS = {
+    counting_forest: {
+        gameId: 'counting_forest',
+        sceneKey: 'CountingForestScreen',
+        name: 'Khu Rừng Đếm Số',
+        world: 'math_forest',
+        icon: '🌲',
+        color: 0x228b22,
+        educationalGoal: 'Luyện phép cộng — hiểu phép cộng là gộp hai nhóm vật.',
+        mechanics: ['drag_collect', 'choose_path', 'story_problem'],
+        levels: {
+            1: {
+                label: LEVEL_LABELS[1],
+                title: 'Thu Hoạch Táo',
+                rounds: 5,
+                difficulty: {
+                    complexity: 1, objectCount: 5, choiceCount: 0, timeLimit: 0,
+                    memoryLoad: 1, distractionLevel: 0, hintLevel: 3,
+                    interactionSteps: 1, questionComplexity: 1, visualComplexity: 1,
+                    sequenceLength: 0, mathRange: 5, errorTolerance: 3,
+                },
+                scoring: {
+                    accuracyWeight: 55, speedWeight: 10, comboWeight: 0,
+                    explorationWeight: 15, perfectBonus: 10, difficultyBonus: 0,
+                    hintPenalty: 2, starThresholds: DEFAULT_STAR_THRESHOLDS,
+                },
+                rewards: { baseXP: 50, gems: 5, threeStarXP: 25, perfectXP: 15, noHintXP: 10 },
+                hints: [
+                    'Hãy kéo tất cả táo vào giỏ của Bunnine nhé!',
+                    'Đếm từng quả: một, hai, ba…',
+                    'Gộp hai nhóm táo lại với nhau nào!',
+                ],
+            },
+            2: {
+                label: LEVEL_LABELS[2],
+                title: 'Đường Pha Lê',
+                rounds: 6,
+                difficulty: {
+                    complexity: 2, objectCount: 8, choiceCount: 3, timeLimit: 25,
+                    memoryLoad: 2, distractionLevel: 1, hintLevel: 2,
+                    interactionSteps: 2, questionComplexity: 2, visualComplexity: 2,
+                    sequenceLength: 0, mathRange: 10, errorTolerance: 2,
+                },
+                scoring: {
+                    accuracyWeight: 55, speedWeight: 15, comboWeight: 10,
+                    explorationWeight: 5, perfectBonus: 10, difficultyBonus: 5,
+                    hintPenalty: 3, starThresholds: DEFAULT_STAR_THRESHOLDS,
+                },
+                rewards: { baseXP: 100, gems: 8, threeStarXP: 50, perfectXP: 25, noHintXP: 20 },
+                hints: [
+                    'Nhìn kỹ hai số rồi cộng lại nhé!',
+                    'Đếm tiếp từ số thứ nhất lên nào.',
+                    'Con đường đúng mang biển số bằng tổng hai số.',
+                ],
+            },
+            3: {
+                label: LEVEL_LABELS[3],
+                title: 'Nhiệm Vụ Pha Lê',
+                rounds: 6,
+                difficulty: {
+                    complexity: 3, objectCount: 12, choiceCount: 4, timeLimit: 30,
+                    memoryLoad: 3, distractionLevel: 2, hintLevel: 1,
+                    interactionSteps: 3, questionComplexity: 3, visualComplexity: 3,
+                    sequenceLength: 2, mathRange: 20, errorTolerance: 1,
+                },
+                scoring: {
+                    accuracyWeight: 55, speedWeight: 15, comboWeight: 10,
+                    explorationWeight: 5, perfectBonus: 10, difficultyBonus: 10,
+                    hintPenalty: 4, starThresholds: [45, 78],
+                },
+                rewards: { baseXP: 200, gems: 12, threeStarXP: 100, perfectXP: 50, noHintXP: 40 },
+                hints: [
+                    'Nghĩ xem điều gì xảy ra trước, điều gì xảy ra sau.',
+                    'Tính từng bước một: trước tiên… rồi tiếp theo…',
+                    'Bắt đầu từ số pha lê Bunnine có lúc đầu.',
+                ],
+            },
+        },
+        awards: [
+            { id: 'cf_first_harvest', name: 'Vụ Mùa Đầu Tiên', icon: '🧺', rarity: 'common',
+              description: 'Hoàn thành màn chơi đầu tiên ở Khu Rừng Đếm Số.',
+              reward: { xp: 30 }, condition: { type: 'complete_any_level' } },
+            { id: 'cf_super_solver', name: 'Siêu Giải Toán', icon: '🧠', rarity: 'rare',
+              description: 'Trả lời đúng 5 câu liên tiếp.',
+              reward: { xp: 100 }, condition: { type: 'streak', count: 5 } },
+            { id: 'cf_math_wizard', name: 'Phù Thủy Toán Học', icon: '🪄', rarity: 'epic',
+              description: 'Đạt 3 sao ở Màn 3.',
+              reward: { xp: 150, gems: 10 }, condition: { type: 'three_stars', level: 3 } },
+        ],
+        stickers: [
+            { id: 'cf_apple', name: 'Táo Rừng', icon: '🍎', rarity: 'common',
+              hint: 'Hoàn thành Màn 1', condition: { type: 'complete_level', level: 1 } },
+            { id: 'cf_crystal', name: 'Pha Lê Xanh', icon: '💎', rarity: 'common',
+              hint: 'Hoàn thành Màn 2', condition: { type: 'complete_level', level: 2 } },
+            { id: 'cf_bunny_math', name: 'Bunnine Toán Học', icon: '🐰', rarity: 'rare',
+              hint: 'Đạt 3 sao ở bất kỳ màn nào', condition: { type: 'three_stars_any' } },
+            { id: 'cf_tree', name: 'Cây Thần Kỳ', icon: '🌳', rarity: 'rare',
+              hint: 'Chơi 3 lượt ở Khu Rừng Đếm Số', condition: { type: 'plays', count: 3 } },
+            { id: 'cf_star', name: 'Ngôi Sao Số Học', icon: '⭐', rarity: 'epic',
+              hint: 'Hoàn thành một màn mà không dùng gợi ý', condition: { type: 'no_hint' } },
+            { id: 'cf_crown', name: 'Vương Miện Pha Lê', icon: '👑', rarity: 'legendary',
+              hint: 'Đạt 3 sao ở Màn 3', condition: { type: 'three_stars', level: 3 } },
+        ],
+    },
+
+    subtraction_hill: {
+        gameId: 'subtraction_hill',
+        sceneKey: 'SubtractionHillScreen',
+        name: 'Đồi Phép Trừ',
+        world: 'math_forest',
+        icon: '⛰️',
+        color: 0x7cfc00,
+        educationalGoal: 'Luyện phép trừ — hiểu phép trừ là bớt đi / còn lại.',
+        mechanics: ['collect_remaining', 'drag_pack', 'story_problem'],
+        levels: {
+            1: {
+                label: LEVEL_LABELS[1],
+                title: 'Táo Lăn Đồi',
+                rounds: 5,
+                difficulty: {
+                    complexity: 1, objectCount: 5, choiceCount: 0, timeLimit: 0,
+                    memoryLoad: 1, distractionLevel: 0, hintLevel: 3,
+                    interactionSteps: 1, questionComplexity: 1, visualComplexity: 1,
+                    sequenceLength: 0, mathRange: 5, errorTolerance: 3,
+                },
+                scoring: {
+                    accuracyWeight: 55, speedWeight: 10, comboWeight: 0,
+                    explorationWeight: 15, perfectBonus: 10, difficultyBonus: 0,
+                    hintPenalty: 2, starThresholds: DEFAULT_STAR_THRESHOLDS,
+                },
+                rewards: { baseXP: 50, gems: 5, threeStarXP: 25, perfectXP: 15, noHintXP: 10 },
+                hints: [
+                    'Nhặt những quả còn lại bỏ vào giỏ nhé!',
+                    'Đếm xem còn lại bao nhiêu quả.',
+                    'Mấy quả lăn đi rồi, còn lại mấy quả nào?',
+                ],
+            },
+            2: {
+                label: LEVEL_LABELS[2],
+                title: 'Giỏ Quà Của Cáo',
+                rounds: 6,
+                difficulty: {
+                    complexity: 2, objectCount: 9, choiceCount: 3, timeLimit: 25,
+                    memoryLoad: 2, distractionLevel: 1, hintLevel: 2,
+                    interactionSteps: 2, questionComplexity: 2, visualComplexity: 2,
+                    sequenceLength: 0, mathRange: 10, errorTolerance: 2,
+                },
+                scoring: {
+                    accuracyWeight: 55, speedWeight: 15, comboWeight: 10,
+                    explorationWeight: 5, perfectBonus: 10, difficultyBonus: 5,
+                    hintPenalty: 3, starThresholds: DEFAULT_STAR_THRESHOLDS,
+                },
+                rewards: { baseXP: 100, gems: 8, threeStarXP: 50, perfectXP: 25, noHintXP: 20 },
+                hints: [
+                    'Xếp đủ đồ vào giỏ trước, rồi đếm phần còn lại.',
+                    'Số còn lại = số lúc đầu bớt đi số đã cho vào giỏ.',
+                    'Đếm những món KHÔNG nằm trong giỏ.',
+                ],
+            },
+            3: {
+                label: LEVEL_LABELS[3],
+                title: 'Hành Trình Của Cáo',
+                rounds: 6,
+                difficulty: {
+                    complexity: 3, objectCount: 12, choiceCount: 4, timeLimit: 30,
+                    memoryLoad: 3, distractionLevel: 2, hintLevel: 1,
+                    interactionSteps: 3, questionComplexity: 3, visualComplexity: 3,
+                    sequenceLength: 2, mathRange: 20, errorTolerance: 1,
+                },
+                scoring: {
+                    accuracyWeight: 55, speedWeight: 15, comboWeight: 10,
+                    explorationWeight: 5, perfectBonus: 10, difficultyBonus: 10,
+                    hintPenalty: 4, starThresholds: [45, 78],
+                },
+                rewards: { baseXP: 200, gems: 12, threeStarXP: 100, perfectXP: 50, noHintXP: 40 },
+                hints: [
+                    'Theo dõi từng việc xảy ra với đồ vật của Cáo.',
+                    'Cho đi thì bớt, được thêm thì tăng.',
+                    'Tính lần lượt từ trái sang phải.',
+                ],
+            },
+        },
+        awards: [
+            { id: 'sh_kind_heart', name: 'Trái Tim Tử Tế', icon: '💝', rarity: 'common',
+              description: 'Giúp Cáo Con xong màn chơi đầu tiên.',
+              reward: { xp: 30 }, condition: { type: 'complete_any_level' } },
+            { id: 'sh_super_solver', name: 'Chuỗi Thắng Lợi', icon: '🔥', rarity: 'rare',
+              description: 'Trả lời đúng 5 câu liên tiếp.',
+              reward: { xp: 100 }, condition: { type: 'streak', count: 5 } },
+            { id: 'sh_math_wizard', name: 'Pháp Sư Phép Trừ', icon: '🪄', rarity: 'epic',
+              description: 'Đạt 3 sao ở Màn 3.',
+              reward: { xp: 150, gems: 10 }, condition: { type: 'three_stars', level: 3 } },
+        ],
+        stickers: [
+            { id: 'sh_fox', name: 'Cáo Con', icon: '🦊', rarity: 'common',
+              hint: 'Hoàn thành Màn 1', condition: { type: 'complete_level', level: 1 } },
+            { id: 'sh_basket', name: 'Giỏ Quà', icon: '🧺', rarity: 'common',
+              hint: 'Hoàn thành Màn 2', condition: { type: 'complete_level', level: 2 } },
+            { id: 'sh_candy', name: 'Kẹo Số', icon: '🍬', rarity: 'rare',
+              hint: 'Đạt 3 sao ở bất kỳ màn nào', condition: { type: 'three_stars_any' } },
+            { id: 'sh_lantern', name: 'Đèn Lồng Đồi', icon: '🏮', rarity: 'rare',
+              hint: 'Chơi 3 lượt ở Đồi Phép Trừ', condition: { type: 'plays', count: 3 } },
+            { id: 'sh_star', name: 'Sao Phép Trừ', icon: '⭐', rarity: 'epic',
+              hint: 'Hoàn thành một màn mà không dùng gợi ý', condition: { type: 'no_hint' } },
+            { id: 'sh_mom', name: 'Sum Họp', icon: '💞', rarity: 'legendary',
+              hint: 'Đạt 3 sao ở Màn 3', condition: { type: 'three_stars', level: 3 } },
+        ],
+    },
+
+    mirror_city: {
+        gameId: 'mirror_city',
+        sceneKey: 'MirrorCityScreen',
+        name: 'Thành Phố Gương',
+        world: 'mystery_village',
+        icon: '🪞',
+        color: 0x9370db,
+        educationalGoal: 'Phát triển quan sát và khả năng phân biệt hình ảnh.',
+        mechanics: ['spot_difference'],
+        levels: {
+            1: {
+                label: LEVEL_LABELS[1],
+                title: 'Tấm Gương Nhỏ',
+                rounds: 3,
+                difficulty: {
+                    complexity: 1, objectCount: 5, choiceCount: 0, timeLimit: 0,
+                    memoryLoad: 1, distractionLevel: 0, hintLevel: 3,
+                    interactionSteps: 1, questionComplexity: 1, visualComplexity: 1,
+                    sequenceLength: 0, mathRange: 0, errorTolerance: 3,
+                    differencesPerRound: 1, subtlety: 1,
+                },
+                scoring: {
+                    accuracyWeight: 55, speedWeight: 10, comboWeight: 0,
+                    explorationWeight: 15, perfectBonus: 10, difficultyBonus: 0,
+                    hintPenalty: 2, starThresholds: DEFAULT_STAR_THRESHOLDS,
+                },
+                rewards: { baseXP: 50, gems: 5, threeStarXP: 25, perfectXP: 15, noHintXP: 10 },
+                hints: [
+                    'Nhìn kỹ từng vật trong hai bức tranh nhé!',
+                    'Có một vật không giống nhau đâu này.',
+                    'So sánh từ trên xuống dưới nhé.',
+                ],
+            },
+            2: {
+                label: LEVEL_LABELS[2],
+                title: 'Phòng Gương Lớn',
+                rounds: 3,
+                difficulty: {
+                    complexity: 2, objectCount: 8, choiceCount: 0, timeLimit: 75,
+                    memoryLoad: 2, distractionLevel: 1, hintLevel: 2,
+                    interactionSteps: 2, questionComplexity: 2, visualComplexity: 2,
+                    sequenceLength: 0, mathRange: 0, errorTolerance: 2,
+                    differencesPerRound: 3, subtlety: 2,
+                },
+                scoring: {
+                    accuracyWeight: 55, speedWeight: 15, comboWeight: 10,
+                    explorationWeight: 5, perfectBonus: 10, difficultyBonus: 5,
+                    hintPenalty: 3, starThresholds: DEFAULT_STAR_THRESHOLDS,
+                },
+                rewards: { baseXP: 100, gems: 8, threeStarXP: 50, perfectXP: 25, noHintXP: 20 },
+                hints: [
+                    'Có vài vật khác nhau — đếm số vật mỗi bên thử xem.',
+                    'Chú ý màu sắc và vị trí của từng vật.',
+                    'Quét từ trái sang phải thật chậm.',
+                ],
+            },
+            3: {
+                label: LEVEL_LABELS[3],
+                title: 'Đại Sảnh Gương',
+                rounds: 3,
+                difficulty: {
+                    complexity: 3, objectCount: 10, choiceCount: 0, timeLimit: 90,
+                    memoryLoad: 3, distractionLevel: 3, hintLevel: 1,
+                    interactionSteps: 3, questionComplexity: 3, visualComplexity: 3,
+                    sequenceLength: 0, mathRange: 0, errorTolerance: 1,
+                    differencesPerRound: 5, subtlety: 3,
+                },
+                scoring: {
+                    accuracyWeight: 55, speedWeight: 15, comboWeight: 10,
+                    explorationWeight: 5, perfectBonus: 10, difficultyBonus: 10,
+                    hintPenalty: 4, starThresholds: [45, 78],
+                },
+                rewards: { baseXP: 200, gems: 12, threeStarXP: 100, perfectXP: 50, noHintXP: 40 },
+                hints: [
+                    'Điểm khác có thể rất nhỏ: hướng quay, màu sắc, vị trí…',
+                    'Hãy nghĩ xem vật nào "cảm giác" không đúng.',
+                    'Chia bức tranh thành 4 phần và kiểm tra từng phần.',
+                ],
+            },
+        },
+        awards: [
+            { id: 'mc_detective', name: 'Thám Tử Nhí', icon: '🔍', rarity: 'common',
+              description: 'Hoàn thành màn chơi đầu tiên ở Thành Phố Gương.',
+              reward: { xp: 30 }, condition: { type: 'complete_any_level' } },
+            { id: 'mc_eagle_eye', name: 'Mắt Diều Hâu', icon: '🦅', rarity: 'rare',
+              description: 'Tìm hết điểm khác của một vòng mà không chạm sai lần nào.',
+              reward: { xp: 100 }, condition: { type: 'perfect_round' } },
+            { id: 'mc_observation_hero', name: 'Anh Hùng Quan Sát', icon: '👀', rarity: 'epic',
+              description: 'Hoàn thành một màn mà không dùng gợi ý.',
+              reward: { xp: 120 }, condition: { type: 'no_hint' } },
+        ],
+        stickers: [
+            { id: 'mc_mirror', name: 'Gương Thần', icon: '🪞', rarity: 'common',
+              hint: 'Hoàn thành Màn 1', condition: { type: 'complete_level', level: 1 } },
+            { id: 'mc_badge', name: 'Huy Hiệu Bí Ẩn', icon: '🕵️', rarity: 'common',
+              hint: 'Hoàn thành Màn 2', condition: { type: 'complete_level', level: 2 } },
+            { id: 'mc_house', name: 'Nhà Bí Ẩn', icon: '🏠', rarity: 'rare',
+              hint: 'Chơi 3 lượt ở Thành Phố Gương', condition: { type: 'plays', count: 3 } },
+            { id: 'mc_eye', name: 'Mắt Ưng', icon: '👁️', rarity: 'rare',
+              hint: 'Đạt 3 sao ở bất kỳ màn nào', condition: { type: 'three_stars_any' } },
+            { id: 'mc_star', name: 'Sao Quan Sát', icon: '⭐', rarity: 'epic',
+              hint: 'Hoàn thành một màn mà không dùng gợi ý', condition: { type: 'no_hint' } },
+            { id: 'mc_legend', name: 'Huyền Thoại Gương', icon: '🌟', rarity: 'legendary',
+              hint: 'Đạt 3 sao ở Màn 3', condition: { type: 'three_stars', level: 3 } },
+        ],
+    },
+
+    orientation_forest: {
+        gameId: 'orientation_forest',
+        sceneKey: 'OrientationForestScreen',
+        name: 'Khu Rừng Định Hướng',
+        world: 'mystery_village',
+        icon: '🌳',
+        color: 0x228b22,
+        educationalGoal: 'Nhận biết phương hướng: trái – phải – trước – sau; ghi nhớ trình tự.',
+        mechanics: ['choose_direction', 'sequence_memory'],
+        levels: {
+            1: {
+                label: LEVEL_LABELS[1],
+                title: 'Trái Hay Phải',
+                rounds: 5,
+                difficulty: {
+                    complexity: 1, objectCount: 3, choiceCount: 2, timeLimit: 0,
+                    memoryLoad: 1, distractionLevel: 0, hintLevel: 3,
+                    interactionSteps: 1, questionComplexity: 1, visualComplexity: 1,
+                    sequenceLength: 0, mathRange: 0, errorTolerance: 3,
+                },
+                scoring: {
+                    accuracyWeight: 55, speedWeight: 10, comboWeight: 0,
+                    explorationWeight: 15, perfectBonus: 10, difficultyBonus: 0,
+                    hintPenalty: 2, starThresholds: DEFAULT_STAR_THRESHOLDS,
+                },
+                rewards: { baseXP: 50, gems: 5, threeStarXP: 25, perfectXP: 15, noHintXP: 10 },
+                hints: [
+                    'Vật ở bên nào của Sóc nhỉ?',
+                    'Nhìn xem vật nằm bên trái hay bên phải Sóc.',
+                    'Chạm vào mũi tên chỉ về phía vật nhé!',
+                ],
+            },
+            2: {
+                label: LEVEL_LABELS[2],
+                title: 'Bốn Hướng',
+                rounds: 6,
+                difficulty: {
+                    complexity: 2, objectCount: 5, choiceCount: 4, timeLimit: 20,
+                    memoryLoad: 2, distractionLevel: 1, hintLevel: 2,
+                    interactionSteps: 1, questionComplexity: 2, visualComplexity: 2,
+                    sequenceLength: 0, mathRange: 0, errorTolerance: 2,
+                },
+                scoring: {
+                    accuracyWeight: 55, speedWeight: 15, comboWeight: 10,
+                    explorationWeight: 5, perfectBonus: 10, difficultyBonus: 5,
+                    hintPenalty: 3, starThresholds: DEFAULT_STAR_THRESHOLDS,
+                },
+                rewards: { baseXP: 100, gems: 8, threeStarXP: 50, perfectXP: 25, noHintXP: 20 },
+                hints: [
+                    'Có bốn hướng: trái, phải, trước, sau.',
+                    'Phía trước là hướng Sóc đang nhìn.',
+                    'Tưởng tượng bạn là Sóc — vật ở hướng nào?',
+                ],
+            },
+            3: {
+                label: LEVEL_LABELS[3],
+                title: 'Dẫn Đường Cho Sóc',
+                rounds: 4,
+                difficulty: {
+                    complexity: 3, objectCount: 6, choiceCount: 4, timeLimit: 40,
+                    memoryLoad: 4, distractionLevel: 2, hintLevel: 1,
+                    interactionSteps: 4, questionComplexity: 3, visualComplexity: 3,
+                    sequenceLength: 4, mathRange: 0, errorTolerance: 1,
+                },
+                scoring: {
+                    accuracyWeight: 55, speedWeight: 15, comboWeight: 10,
+                    explorationWeight: 5, perfectBonus: 10, difficultyBonus: 10,
+                    hintPenalty: 4, starThresholds: [45, 78],
+                },
+                rewards: { baseXP: 200, gems: 12, threeStarXP: 100, perfectXP: 50, noHintXP: 40 },
+                hints: [
+                    'Hãy nhớ thứ tự các mũi tên vừa xuất hiện.',
+                    'Đọc thầm lại trình tự trong đầu trước khi bấm.',
+                    'Chia trình tự dài thành từng cụm nhỏ.',
+                ],
+            },
+        },
+        awards: [
+            { id: 'of_pathfinder', name: 'Người Tìm Đường', icon: '🧭', rarity: 'common',
+              description: 'Hoàn thành màn chơi đầu tiên ở Khu Rừng Định Hướng.',
+              reward: { xp: 30 }, condition: { type: 'complete_any_level' } },
+            { id: 'of_memory_master', name: 'Bậc Thầy Trí Nhớ', icon: '🧠', rarity: 'rare',
+              description: 'Hoàn thành một vòng trình tự mà không sai bước nào.',
+              reward: { xp: 100 }, condition: { type: 'perfect_round' } },
+            { id: 'of_golden_arrow', name: 'Mũi Tên Vàng', icon: '🏹', rarity: 'epic',
+              description: 'Đạt 3 sao ở Màn 3.',
+              reward: { xp: 150, gems: 10 }, condition: { type: 'three_stars', level: 3 } },
+        ],
+        stickers: [
+            { id: 'of_squirrel', name: 'Sóc Nâu', icon: '🐿️', rarity: 'common',
+              hint: 'Hoàn thành Màn 1', condition: { type: 'complete_level', level: 1 } },
+            { id: 'of_compass', name: 'La Bàn', icon: '🧭', rarity: 'common',
+              hint: 'Hoàn thành Màn 2', condition: { type: 'complete_level', level: 2 } },
+            { id: 'of_acorn', name: 'Hạt Dẻ Vàng', icon: '🌰', rarity: 'rare',
+              hint: 'Đạt 3 sao ở bất kỳ màn nào', condition: { type: 'three_stars_any' } },
+            { id: 'of_sign', name: 'Biển Chỉ Đường', icon: '🪧', rarity: 'rare',
+              hint: 'Chơi 3 lượt ở Khu Rừng Định Hướng', condition: { type: 'plays', count: 3 } },
+            { id: 'of_star', name: 'Sao Định Hướng', icon: '⭐', rarity: 'epic',
+              hint: 'Hoàn thành một màn mà không dùng gợi ý', condition: { type: 'no_hint' } },
+            { id: 'of_map', name: 'Bản Đồ Kho Báu', icon: '🗺️', rarity: 'legendary',
+              hint: 'Đạt 3 sao ở Màn 3', condition: { type: 'three_stars', level: 3 } },
+        ],
+    },
+};
+
+const GLOBAL_AWARDS = [
+    { id: 'g_first_adventure', name: 'Cuộc Phiêu Lưu Đầu Tiên', icon: '🎒', rarity: 'common',
+      description: 'Hoàn thành trò chơi đầu tiên trong Thế Giới Tri Thức.',
+      reward: { xp: 50 }, condition: { type: 'total_plays', count: 1 } },
+    { id: 'g_star_collector', name: 'Nhà Sưu Tầm Sao', icon: '🌟', rarity: 'rare',
+      description: 'Sưu tầm tổng cộng 12 ngôi sao.',
+      reward: { xp: 100, gems: 15 }, condition: { type: 'total_stars', count: 12 } },
+    { id: 'g_perfect_round', name: 'Vòng Chơi Hoàn Hảo', icon: '💯', rarity: 'rare',
+      description: 'Hoàn thành một màn mà không mắc lỗi nào.',
+      reward: { xp: 80 }, condition: { type: 'perfect_session' } },
+    { id: 'g_speed_star', name: 'Sao Tốc Độ', icon: '⚡', rarity: 'rare',
+      description: 'Hoàn thành màn chơi nhanh hơn thời gian mục tiêu.',
+      reward: { xp: 80 }, condition: { type: 'fast_finish' } },
+    { id: 'g_explorer', name: 'Nhà Thám Hiểm Vĩ Đại', icon: '🗺️', rarity: 'epic',
+      description: 'Chơi tất cả các trò chơi trong Thế Giới Tri Thức.',
+      reward: { xp: 150, gems: 20 }, condition: { type: 'all_games' } },
+    { id: 'g_knowledge_master', name: 'Bậc Thầy Tri Thức', icon: '🏆', rarity: 'legendary',
+      description: 'Đạt 3 sao Màn 3 ở mọi trò chơi.',
+      reward: { xp: 300, gems: 50 }, condition: { type: 'all_masters' } },
+];
+
+const RARITY_STYLE = {
+    common: { label: 'Thường', color: '#8bc34a', glow: 0x8bc34a },
+    rare: { label: 'Hiếm', color: '#42a5f5', glow: 0x42a5f5 },
+    epic: { label: 'Sử Thi', color: '#ab47bc', glow: 0xab47bc },
+    legendary: { label: 'Huyền Thoại', color: '#ffb300', glow: 0xffb300 },
+};
+
+const GameConfig = {
+    LEVEL_LABELS,
+    KNOWLEDGE_WORLDS,
+    GLOBAL_AWARDS,
+    RARITY_STYLE,
+    get(gameId) { return GAME_DEFINITIONS[gameId] || null; },
+    getByScene(sceneKey) {
+        return Object.values(GAME_DEFINITIONS).find(g => g.sceneKey === sceneKey) || null;
+    },
+    getLevel(gameId, level) {
+        const g = this.get(gameId);
+        return g ? g.levels[level] || g.levels[1] : null;
+    },
+    allGames() { return Object.values(GAME_DEFINITIONS); },
+    allStickers() {
+        return this.allGames().flatMap(g => g.stickers.map(s => ({ ...s, gameId: g.gameId, gameName: g.name })));
+    },
+    allAwards() {
+        const perGame = this.allGames().flatMap(g => g.awards.map(a => ({ ...a, gameId: g.gameId, gameName: g.name })));
+        return [...perGame, ...GLOBAL_AWARDS.map(a => ({ ...a, gameId: null, gameName: 'Thế Giới Tri Thức' }))];
+    },
+};
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { GameConfig, GAME_DEFINITIONS, GLOBAL_AWARDS, LEVEL_LABELS };
+}

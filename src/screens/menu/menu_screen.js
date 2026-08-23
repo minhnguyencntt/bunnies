@@ -66,6 +66,7 @@ class MenuScreen extends Phaser.Scene {
         this.blurOverlay = null;
         this.highlightMask = null;
         this.currentCityAudio = null;
+        this._resetOverlay = null;
         const width = this.cameras.main.width;
         const height = this.cameras.main.height;
 

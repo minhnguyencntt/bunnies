@@ -130,7 +130,8 @@ class ResultScreen extends Phaser.Scene {
                 fontSize: '20px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold', color: '#6a1b9a',
             }).setOrigin(0.5).setAlpha(0);
             steps.push(() => {
-                this.tweens.add({ targets: lu, alpha: 1, scale: 1.1, duration: 300, yoyo: true });
+                lu.setScale(0.6);
+                this.tweens.add({ targets: lu, alpha: 1, scale: 1, duration: 350, ease: 'Back.easeOut' });
                 AudioEngine.emit('LevelUp');
             });
             y += 30;
@@ -217,8 +218,8 @@ class ResultScreen extends Phaser.Scene {
                 .on('pointerdown', b.cb);
         });
 
-        // Play the reveal sequence
-        steps.forEach((fn, i) => this.time.delayedCall(350 + i * 320, fn));
+        // Play the reveal sequence (snappy: ~220ms per beat)
+        steps.forEach((fn, i) => this.time.delayedCall(300 + i * 220, fn));
     }
 
     spawnStarBurst(x, y) {

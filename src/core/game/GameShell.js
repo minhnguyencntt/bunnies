@@ -111,8 +111,8 @@ class GameShell extends Phaser.Scene {
                 voiceKey: null, // voice handled by VoiceEngine (GameStarted event)
                 showText: (t, ms) => this.companionSay(t, ms),
                 onComplete: begin,
-                minMs: 2500,
-                maxMs: 7000,
+                minMs: 2000,
+                maxMs: 4500,
             });
         } else {
             begin();
@@ -215,8 +215,13 @@ class GameShell extends Phaser.Scene {
                 Phaser.Math.Between(80, w - 80), Phaser.Math.Between(90, h - 80), 7));
         }
         this.time.delayedCall(1400, () => {
-            this.scene.pause();
-            this.scene.launch('ResultScreen', { rewards, gameId: this.gameId, level: this.level });
+            try {
+                this.scene.pause();
+                this.scene.launch('ResultScreen', { rewards, gameId: this.gameId, level: this.level });
+            } catch (e) {
+                console.error('ResultScreen launch failed — returning to menu', e);
+                this.exitToMenu();
+            }
         });
     }
 

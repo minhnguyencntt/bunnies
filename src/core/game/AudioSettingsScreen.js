@@ -27,9 +27,14 @@ class AudioSettingsScreen extends Phaser.Scene {
         panel.lineStyle(5, 0xffd700, 1);
         panel.strokeRoundedRect(px, py, pw, ph, 24);
 
-        this.add.text(w / 2, py + 42, '🔊 Cài Đặt Âm Thanh', {
-            fontSize: '28px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold', color: '#5c3a1e',
+        this.add.text(w / 2, py + 42, 'Cài Đặt Âm Thanh', {
+            fontSize: '28px', fontFamily: DesignTokens.typography.fontFamily, fontStyle: 'bold',
+            color: DesignTokens.css.ink,
         }).setOrigin(0.5);
+
+        UISystem.navButton(this, px + 36, py + 36, 'close', () => NavSystem.closeOverlay(this), {
+            color: DesignTokens.colors.secondary,
+        }).setDepth(20);
 
         const s = AudioEngine.settings;
         const rows = [
@@ -50,7 +55,7 @@ class AudioSettingsScreen extends Phaser.Scene {
 
         // Close
         const btnY = py + ph - 40;
-        UISystem.primaryButton(this, w / 2, btnY, '✔ Xong', () => this.scene.stop(), { width: 180, height: 48 });
+        UISystem.primaryButton(this, w / 2, btnY, 'Xong', () => NavSystem.closeOverlay(this), { width: 180, height: 48 });
     }
 
     createSlider(cx, y, width, label, channel, value) {

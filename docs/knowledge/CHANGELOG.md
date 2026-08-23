@@ -2,6 +2,21 @@
 
 Meaningful architectural/design decisions only — not trivial code changes.
 
+## 2026-08-23 (unified navigation & calm HUD)
+
+### Changed
+- `NavSystem` is the only way to leave a screen (Back ≠ Home)
+- Result / Pause Back returns to Level Select (no more dump-on-map)
+- World map: first tap plays; hover speech + dim overlay removed
+- Marker hit-areas centered; decorative bunnies no longer steal taps
+- Vector `IconSystem` for nav/HUD actions
+- Game HUD is floating storybook chips (no dark full-width bar)
+- Shared `DesignTokens.layout` so equation / HUD / answers do not collide
+
+### Reason
+Second full audit: previous “◀ Back” pass did not fix mobile tap-to-play,
+hit-areas, or the Result→Map skip. Screens felt chaotic.
+
 ## 2026-08-23 (master refactor)
 
 ### Changed

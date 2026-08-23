@@ -36,7 +36,7 @@ for generated vi-VN voice (`scripts/generate_voice_library.py`).
 ```
 src/
 ├── core/
-│   ├── design/    DesignTokens.js · UISystem.js      ← ONE design system
+│   ├── design/    DesignTokens · IconSystem · UISystem · NavSystem
 │   ├── engine/    GameConfig.js + 12 engines         ← data-driven game rules
 │   ├── game/      GameShell · VisualMathScreen · shared screens
 │   ├── audio/     AudioEngine · SFX · Music · Voice · Ambience · Events
@@ -71,8 +71,9 @@ skills/            reusable implementation skills (see skills/README.md)
 5. Never add random paid/loot-box mechanics; unlocks are deterministic.
 6. **Never lock games/levels behind progression** — Discover → Tap → Play.
    Progression = rewards/recommendations/celebration only (ADR-005).
-7. Navigation: top-left is always ◀ BACK (previous screen); Home is explicit
-   (🗺 Bản đồ). Use `UISystem.navButton` / `DesignTokens.icons`.
+7. Navigation: use `NavSystem`. Top-left is always Back (previous screen);
+   Home is an explicit house when it differs from Back. World-map first tap
+   plays — no hover gate. Use `UISystem.navButton` + `IconSystem`.
 8. Keep touch targets ≥ 46px; numbers in math gameplay extra large.
 9. Keep it offline-capable: register new files in `index.html` and `sw.js`.
 

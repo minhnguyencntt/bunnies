@@ -89,7 +89,7 @@ class SubtractionHillScreen extends GameShell {
         const item = this.pickItem();
         this.analytics.recordExploration(0, remaining);
 
-        this.storyText = this.track(this.add.text(w / 2, 108,
+        this.storyText = this.track(this.add.text(w / 2, DesignTokens.layout.equationY,
             `Cáo có ${a} ${item.emoji} — ${b} món lăn đi rồi! Còn lại: ?`, {
             fontSize: '24px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold', color: '#fff',
             stroke: '#000', strokeThickness: 3, backgroundColor: '#5c3a1ecc', padding: { x: 16, y: 8 },
@@ -184,7 +184,7 @@ class SubtractionHillScreen extends GameShell {
         this.roundTarget = remaining;
         const item = this.pickItem();
 
-        this.storyText = this.track(this.add.text(w / 2, 104,
+        this.storyText = this.track(this.add.text(w / 2, DesignTokens.layout.equationY,
             `Có ${a} ${item.emoji} — xếp ${b} vào giỏ. Còn lại mấy ${item.emoji}?`, {
             fontSize: '23px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold', color: '#fff',
             stroke: '#000', strokeThickness: 3, backgroundColor: '#5c3a1ecc', padding: { x: 16, y: 8 },

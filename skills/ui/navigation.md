@@ -6,26 +6,29 @@ Add/change navigation without surprising the player.
 
 ## Rules (ADR-005)
 
-- **Top-left = BACK (◀)** — returns to the previous screen in the flow:
-  gameplay → level select → world map. Never starts another game/world.
-- **Home** is explicit: 🗺 Bản đồ in the pause menu and result screen.
-- Use `UISystem.navButton` (26px, elevated, high contrast) for nav controls.
-- Navigation is instant — never waits for speech, audio, or animation.
+- Use `NavSystem` — never `scene.start` / `scene.stop` for screen changes.
+- **Top-left = Back** (vector chevron) → previous screen.
+  gameplay → Level Select → Map. Result Back = Level Select.
+- **Home** is explicit (vector house) when it differs from Back.
+- Instant. Never wait for speech, audio, or animation.
+- World map: first tap plays. Always-visible name + “▶ Chơi”. Centered hit-area.
 - Every screen has a visible exit.
 
-## Flow reference
+## Flow
 
 ```
-MenuScreen (world map)
-  ←◀— LevelSelectScreen
-        ←◀— GameShell gameplay (⏸ pause → 🗺 Bản đồ = Home)
-              → ResultScreen (🔄 Chơi lại · ▶ Màn tiếp · 🗺 Bản đồ)
-MenuScreen → StickerAlbumScreen (◀ back) · AudioSettingsScreen (overlay ✔)
+MenuScreen (Home)
+  ← Back — LevelSelectScreen
+        ← Back — Gameplay (pause: Chọn màn = Back, Về nhà = Home)
+              → ResultScreen (Back = Level Select, Home = Map)
+MenuScreen → Album (Back) · Settings (Close)
 ```
 
 ## Validation
 
-- [ ] Top-left control is ◀ and goes to the previous screen
-- [ ] Visible over the world background (contrast check)
-- [ ] Tap → immediate transition (no speech/audio/animation gate)
-- [ ] Play buttons are directly tappable (never title-only interaction)
+- [ ] Top-left Back returns to the previous screen (never starts a game)
+- [ ] Home returns to the world map
+- [ ] Result Back lands on Level Select, not the map
+- [ ] Map city first tap opens Level Select
+- [ ] Play / Chơi is the actual tappable control
+- [ ] Navigation does not wait for speech

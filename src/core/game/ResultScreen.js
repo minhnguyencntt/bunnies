@@ -25,6 +25,12 @@ class ResultScreen extends Phaser.Scene {
 
         this.add.graphics().fillStyle(0x1a0f2e, 0.72).fillRect(0, 0, w, h);
 
+        NavSystem.mount(this, {
+            onBack: () => this.go('levels'),
+            onHome: () => this.go('map'),
+            depth: 950,
+        });
+
         const pw = Math.min(560, w * 0.82);
         const ph = Math.min(600, h * 0.9);
         const px = w / 2 - pw / 2;
@@ -198,10 +204,10 @@ class ResultScreen extends Phaser.Scene {
         const profile = SaveEngine.load();
         const hasNext = this.level < 3 && ProgressionEngine.isLevelUnlocked(profile, this.gameId, this.level + 1);
         const buttons = [
-            { label: '🔄 Chơi lại', color: 0x42a5f5, cb: () => this.go('replay') },
+            { label: 'Chơi lại', color: 0x42a5f5, cb: () => this.go('replay') },
         ];
-        if (hasNext) buttons.push({ label: `▶ Màn ${this.level + 1}`, color: 0x66bb6a, cb: () => this.go('next') });
-        buttons.push({ label: '🗺 Bản đồ', color: 0xab47bc, cb: () => this.go('map') });
+        if (hasNext) buttons.push({ label: `Màn ${this.level + 1}`, color: 0x66bb6a, cb: () => this.go('next') });
+        buttons.push({ label: 'Chọn màn', color: DesignTokens.colors.primary, cb: () => this.go('levels') });
 
         const bw = 150;
         const gap = 18;
@@ -229,17 +235,15 @@ class ResultScreen extends Phaser.Scene {
     go(action) {
         const gameDef = GameConfig.get(this.gameId);
         const sceneKey = gameDef.sceneKey;
-        AudioEngine.emit('Transition');
-        MusicEngine.stopTheme(250);
-        this.sound.stopAll();
-        this.scene.stop();
         this.scene.stop(sceneKey);
         if (action === 'replay') {
-            this.scene.start(sceneKey, { gameId: this.gameId, level: this.level });
+            NavSystem.go(this, sceneKey, { gameId: this.gameId, level: this.level });
         } else if (action === 'next') {
-            this.scene.start(sceneKey, { gameId: this.gameId, level: this.level + 1 });
+            NavSystem.go(this, sceneKey, { gameId: this.gameId, level: this.level + 1 });
+        } else if (action === 'levels') {
+            NavSystem.backToLevels(this, this.gameId);
         } else {
-            this.scene.start('MenuScreen');
+            NavSystem.home(this);
         }
     }
 }

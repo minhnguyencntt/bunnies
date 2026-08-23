@@ -1,12 +1,13 @@
 # docs/design-system/AGENTS.md
 
 The Bunnies design system is code, not just docs:
-`src/core/design/DesignTokens.js` (tokens) + `src/core/design/UISystem.js` (components).
+`DesignTokens.js` + `IconSystem.js` + `UISystem.js` + `NavSystem.js`.
 
 ## MUST
 
 - Use `DesignTokens` for every color/spacing/radius/font/duration.
-- Use `UISystem` factories for buttons, cards, panels, bars, bubbles.
+- Use `UISystem` factories for buttons, cards, panels, bars, bubbles, chips.
+- Use `NavSystem` for every screen change. Use `IconSystem` for nav/HUD icons.
 - Press physics on every tappable: `1.0 → 0.94 → 1.03 → 1.0` (~210ms total).
 - Touch targets ≥ 46px; answer buttons ≥ 96px; numbers use `typography.number`.
 - Soft shadows + top gloss on buttons/cards (soft-toy depth).

@@ -135,7 +135,7 @@ class VisualMathScreen extends GameShell {
 
     showEquation(q) {
         const w = this.cameras.main.width;
-        const panel = this.track(this.add.container(w / 2, 108).setDepth(150));
+        const panel = this.track(this.add.container(w / 2, DesignTokens.layout.equationY).setDepth(150));
         const bg = this.add.graphics();
         bg.fillStyle(this.theme.palette.panel, 0.92);
         bg.fillRoundedRect(-170, -32, 340, 64, 18);
@@ -156,7 +156,7 @@ class VisualMathScreen extends GameShell {
         const choices = this.generateChoices(q.answer);
         const buttons = this.createChoiceButtons(
             choices.map(v => ({ label: v, value: v })),
-            h * 0.78,
+            h * DesignTokens.layout.answerY,
             (opt, btn) => this.onAnswerPick(opt, btn),
             { size: 96, fontSize: 40 }
         );

@@ -5,7 +5,7 @@
  *   sau lần tải đầu → chơi xong 1 lần là offline hoàn toàn.
  */
 
-const CACHE_VERSION = 'bunnies-pwa-v10';
+const CACHE_VERSION = 'bunnies-pwa-v11';
 const PRECACHE = `${CACHE_VERSION}-core`;
 const RUNTIME = `${CACHE_VERSION}-runtime`;
 

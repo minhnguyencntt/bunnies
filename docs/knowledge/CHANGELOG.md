@@ -2,6 +2,19 @@
 
 Meaningful architectural/design decisions only — not trivial code changes.
 
+## 2026-08-24 (world map visible after boot)
+
+### Changed
+- MenuScreen reuses `boot_bg` instead of uploading the same world-map JPEG again
+- Ambient creature sheets are generated once (`make.graphics({ add: false })`)
+- HTML `#loading` overlay hides when Boot/Menu actually create, not only on a timer
+- Phaser Scale.FIT owns canvas size (no CSS `width/height: 100%` fight)
+
+### Reason
+MenuScreen finished creating markers with no JS error, but the canvas showed a
+flat peach sky (the map JPEG / loading overlay). Duplicate GPU texture work
+plus the HTML overlay covering Scale.FIT letterboxing hid the world map.
+
 ## 2026-08-23 (unified Award Engine)
 
 ### Changed

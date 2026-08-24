@@ -46,10 +46,8 @@ class BootScreen extends Phaser.Scene {
 
     create() {
         console.log('BootScreen: create() called');
-        
-        // Play boot background music
-        this.playBootBGM();
-        
+        if (typeof hideGameLoading === 'function') hideGameLoading();
+        this.playBootBGM(); 
         // Tạo loading screen với magical garden
         const width = this.cameras.main.width;
         const height = this.cameras.main.height;

@@ -63,7 +63,7 @@
             mode: Phaser.Scale.FIT,
             autoCenter: Phaser.Scale.CENTER_BOTH,
             fullscreenTarget: 'game-container',
-            expandParent: true,
+            expandParent: false,
             min: {
                 width: 320,
                 height: 240
@@ -118,7 +118,6 @@
             } catch (e) { /* trình duyệt không hỗ trợ — bỏ qua */ }
         };
         window.addEventListener('pointerdown', enterFullscreen, { once: true });
-        // Nếu chặn fullscreen (desktop), canvas vẫn fill toàn bộ cửa sổ nhờ CSS
         
         // Global game data
         window.gameData = {

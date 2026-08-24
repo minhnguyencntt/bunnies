@@ -20,8 +20,7 @@ class MenuScreen extends Phaser.Scene {
     }
 
     preload() {
-        // Chỉ preload ảnh nền (nhỏ) — audio load nền sau khi menu hiển thị
-        if (!this.textures.exists('menu_bg')) {
+        if (!this.textures.exists('boot_bg') && !this.textures.exists('menu_bg')) {
             this.load.image('menu_bg', 'screens/menu/assets/backgrounds/bunnies_world.jpg');
             console.log('MenuScreen: Loading background image');
         }
@@ -71,11 +70,15 @@ class MenuScreen extends Phaser.Scene {
         const width = this.cameras.main.width;
         const height = this.cameras.main.height;
 
+        if (typeof hideGameLoading === 'function') hideGameLoading();
+
         // Stop any lingering sounds from previous scenes
         this.sound.stopAll();
 
         // Load audio ở chế độ nền; BGM tự phát khi tải xong
-        this.loadMenuAudioLazy();
+        this.time.delayedCall(0, () => {
+            if (this.scene.isActive()) this.loadMenuAudioLazy();
+        });
 
         // Ensure bunny textures are generated (chỉ khi KHÔNG có sprite vẽ tay)
         if (!this.textures.exists('spr_bunny_idle') && typeof generateAllBunnyTextures === 'function') {
@@ -84,14 +87,16 @@ class MenuScreen extends Phaser.Scene {
             }
         }
 
-        // Use background image
-        if (this.textures.exists('menu_bg')) {
-            const bg = this.add.image(width / 2, height / 2, 'menu_bg');
+        const bgKey = this.textures.exists('boot_bg')
+            ? 'boot_bg'
+            : (this.textures.exists('menu_bg') ? 'menu_bg' : null);
+        this.cameras.main.setBackgroundColor(0x87CEEB);
+        if (bgKey) {
+            const bg = this.add.image(width / 2, height / 2, bgKey);
             bg.setDisplaySize(width, height);
-            bg.setDepth(0);
+            bg.setDepth(-10);
+            bg.setScrollFactor(0);
         } else {
-            // Fallback: simple background color
-            this.cameras.main.setBackgroundColor(0x87CEEB);
             console.warn('Background image not found, using fallback color');
         }
 

@@ -11,37 +11,36 @@ class AmbientCreaturesGenerator {
     /**
      * Generate firefly sprite sheet
      */
+    makeSheet(spriteKey, width, height, draw) {
+        if (this.scene.textures.exists(spriteKey)) return;
+        const graphics = this.scene.make.graphics({ x: 0, y: 0, add: false });
+        draw(graphics);
+        graphics.generateTexture(spriteKey, width, height);
+        graphics.destroy();
+    }
+
     generateFirefly(fireflyKey, colorConfig) {
         const frames = 8; // Complete glow cycle
         const frameWidth = 32;
         const frameHeight = 32;
         const spriteKey = `firefly_${fireflyKey}_sheet`;
-        
-        const graphics = this.scene.add.graphics();
-        
-        for (let frame = 0; frame < frames; frame++) {
-            const progress = frame / frames;
-            const x = frame * frameWidth + frameWidth / 2;
-            const y = frameHeight / 2;
-            
-            // Glow intensity (flickering)
-            const glowIntensity = 0.6 + Math.sin(progress * Math.PI * 4) * 0.3;
-            
-            // Body position (slight bobbing)
-            const bodyBob = Math.sin(progress * Math.PI * 2) * 1;
-            
-            this.drawFireflyFrame(graphics, x, y + bodyBob, colorConfig, {
-                glowIntensity: glowIntensity,
-                frame: frame
-            });
-        }
-        
-        graphics.generateTexture(spriteKey, frames * frameWidth, frameHeight);
-        graphics.destroy();
-        
-        // Configure sprite sheet frames
+
+        this.makeSheet(spriteKey, frames * frameWidth, frameHeight, (graphics) => {
+            for (let frame = 0; frame < frames; frame++) {
+                const progress = frame / frames;
+                const x = frame * frameWidth + frameWidth / 2;
+                const y = frameHeight / 2;
+                const glowIntensity = 0.6 + Math.sin(progress * Math.PI * 4) * 0.3;
+                const bodyBob = Math.sin(progress * Math.PI * 2) * 1;
+                this.drawFireflyFrame(graphics, x, y + bodyBob, colorConfig, {
+                    glowIntensity: glowIntensity,
+                    frame: frame
+                });
+            }
+        });
+
         this.configureSpriteSheet(spriteKey, frames, frameWidth, frameHeight);
-        
+
         return {
             key: spriteKey,
             frames: frames,
@@ -90,37 +89,26 @@ class AmbientCreaturesGenerator {
         const frameWidth = 48;
         const frameHeight = 48;
         const spriteKey = `bird_${birdKey}_sheet`;
-        
-        const graphics = this.scene.add.graphics();
-        
-        for (let frame = 0; frame < frames; frame++) {
-            const progress = frame / frames;
-            const x = frame * frameWidth + frameWidth / 2;
-            const y = frameHeight / 2;
-            
-            // Wing flap cycle
-            const wingCycle = progress;
-            const wingAngle = Math.sin(wingCycle * Math.PI * 2) * 0.5;
-            
-            // Body bobbing
-            const bodyBob = Math.sin(progress * Math.PI * 4) * 2;
-            
-            // Wing follow-through
-            const wingScaleY = 1 + Math.abs(Math.sin(wingCycle * Math.PI * 2)) * 0.3;
-            
-            this.drawBirdFrame(graphics, x, y + bodyBob, colorConfig, {
-                wingAngle: wingAngle,
-                wingScaleY: wingScaleY,
-                frame: frame
-            });
-        }
-        
-        graphics.generateTexture(spriteKey, frames * frameWidth, frameHeight);
-        graphics.destroy();
-        
-        // Configure sprite sheet frames
+
+        this.makeSheet(spriteKey, frames * frameWidth, frameHeight, (graphics) => {
+            for (let frame = 0; frame < frames; frame++) {
+                const progress = frame / frames;
+                const x = frame * frameWidth + frameWidth / 2;
+                const y = frameHeight / 2;
+                const wingCycle = progress;
+                const wingAngle = Math.sin(wingCycle * Math.PI * 2) * 0.5;
+                const bodyBob = Math.sin(progress * Math.PI * 4) * 2;
+                const wingScaleY = 1 + Math.abs(Math.sin(wingCycle * Math.PI * 2)) * 0.3;
+                this.drawBirdFrame(graphics, x, y + bodyBob, colorConfig, {
+                    wingAngle: wingAngle,
+                    wingScaleY: wingScaleY,
+                    frame: frame
+                });
+            }
+        });
+
         this.configureSpriteSheet(spriteKey, frames, frameWidth, frameHeight);
-        
+
         return {
             key: spriteKey,
             frames: frames,
@@ -186,41 +174,28 @@ class AmbientCreaturesGenerator {
         const frameWidth = 24;
         const frameHeight = 24;
         const spriteKey = `particle_${particleKey}_sheet`;
-        
-        const graphics = this.scene.add.graphics();
-        
-        for (let frame = 0; frame < frames; frame++) {
-            const progress = frame / frames;
-            const x = frame * frameWidth + frameWidth / 2;
-            const y = frameHeight / 2;
-            
-            // Scale variation
-            const scale = 0.7 + Math.sin(progress * Math.PI * 2) * 0.3;
-            
-            // Rotation
-            const rotation = progress * Math.PI * 2;
-            
-            // Glow intensity
-            const glowIntensity = 0.5 + Math.sin(progress * Math.PI * 4) * 0.4;
-            
-            // Alpha (fading)
-            const alpha = 0.6 + Math.sin(progress * Math.PI * 2) * 0.3;
-            
-            this.drawParticleFrame(graphics, x, y, colorConfig, {
-                scale: scale,
-                rotation: rotation,
-                glowIntensity: glowIntensity,
-                alpha: alpha,
-                frame: frame
-            });
-        }
-        
-        graphics.generateTexture(spriteKey, frames * frameWidth, frameHeight);
-        graphics.destroy();
-        
-        // Configure sprite sheet frames
+
+        this.makeSheet(spriteKey, frames * frameWidth, frameHeight, (graphics) => {
+            for (let frame = 0; frame < frames; frame++) {
+                const progress = frame / frames;
+                const x = frame * frameWidth + frameWidth / 2;
+                const y = frameHeight / 2;
+                const scale = 0.7 + Math.sin(progress * Math.PI * 2) * 0.3;
+                const rotation = progress * Math.PI * 2;
+                const glowIntensity = 0.5 + Math.sin(progress * Math.PI * 4) * 0.4;
+                const alpha = 0.6 + Math.sin(progress * Math.PI * 2) * 0.3;
+                this.drawParticleFrame(graphics, x, y, colorConfig, {
+                    scale: scale,
+                    rotation: rotation,
+                    glowIntensity: glowIntensity,
+                    alpha: alpha,
+                    frame: frame
+                });
+            }
+        });
+
         this.configureSpriteSheet(spriteKey, frames, frameWidth, frameHeight);
-        
+
         return {
             key: spriteKey,
             frames: frames,

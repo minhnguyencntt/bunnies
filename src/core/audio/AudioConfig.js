@@ -85,6 +85,18 @@ const VOICE_LIBRARY = {
     instr_forest_adventure_1: { vi: 'Nấm bay đi mất rồi! Đếm xem còn lại bao nhiêu nhé!', en: 'Some mushrooms flew away! Count how many are left!', voice: 'narrator', game: 'forest_adventure', level: 1 },
     instr_forest_adventure_2: { vi: 'Bớt đi rồi đếm phần còn lại nào!', en: 'Take some away, then count what is left!', voice: 'narrator', game: 'forest_adventure', level: 2 },
     instr_forest_adventure_3: { vi: 'Đêm trong rừng thật bí ẩn. Tính xem còn lại bao nhiêu!', en: 'The forest night is mysterious. Work out how many remain!', voice: 'narrator', game: 'forest_adventure', level: 3 },
+
+    instr_color_magic_1: { vi: 'Nhìn hình mẫu, chọn màu, rồi tô cho giống nhé!', en: 'Look at the picture, pick a color, and make it match!', voice: 'narrator', game: 'color_magic', level: 1 },
+    instr_color_magic_2: { vi: 'Tô từng phần cho giống hình mẫu. Nhìn kỹ màu từng chỗ!', en: 'Color each part to match the picture. Look at every color!', voice: 'narrator', game: 'color_magic', level: 2 },
+    instr_color_magic_3: { vi: 'Nhớ màu trên hình mẫu, rồi tô cho giống. Bạn làm được!', en: 'Remember the colors, then make the picture match. You can do it!', voice: 'narrator', game: 'color_magic', level: 3 },
+
+    color_red: { vi: 'Đỏ', en: 'Red', voice: 'bunnine' },
+    color_orange: { vi: 'Cam', en: 'Orange', voice: 'bunnine' },
+    color_yellow: { vi: 'Vàng', en: 'Yellow', voice: 'bunnine' },
+    color_green: { vi: 'Xanh lá', en: 'Green', voice: 'bunnine' },
+    color_blue: { vi: 'Xanh dương', en: 'Blue', voice: 'bunnine' },
+    color_purple: { vi: 'Tím', en: 'Purple', voice: 'bunnine' },
+    color_pink: { vi: 'Hồng', en: 'Pink', voice: 'bunnine' },
 };
 
 const VOICE_CATEGORIES = {
@@ -107,6 +119,7 @@ const GAME_AUDIO = {
     orientation_forest: { theme: { key: 'bgm_orientation_forest', url: 'screens/orientation_forest/assets/audio/bgm/bgm.mp3', volume: 0.35 }, ambience: 'forest' },
     candy_garden: { theme: { key: 'bgm_candy_garden', url: 'screens/candy_garden/assets/audio/bgm/bgm.mp3', volume: 0.35 }, ambience: 'candy' },
     forest_adventure: { theme: { key: 'bgm_forest_adventure', url: 'screens/forest_adventure/assets/audio/bgm/bgm.mp3', volume: 0.35 }, ambience: 'forest' },
+    color_magic: { theme: { key: 'bgm_candy_garden', url: 'screens/candy_garden/assets/audio/bgm/bgm.mp3', volume: 0.35 }, ambience: 'candy' },
 };
 
 const AREA_AUDIO = {

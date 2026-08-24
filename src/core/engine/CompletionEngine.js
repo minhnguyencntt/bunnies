@@ -77,13 +77,22 @@ const CompletionEngine = {
 
         try {
             if (scene.scene.isActive('ResultScreen')) return;
-            scene.scene.pause();
+            try {
+                if (scene.cameras && scene.cameras.main && scene.cameras.main.resetFX) {
+                    scene.cameras.main.resetFX();
+                }
+            } catch (e) { /* ignore */ }
             scene.scene.launch('ResultScreen', {
                 completion: result,
                 rewards: result.raw,
                 gameId: result.gameId,
                 level: result.level,
             });
+            scene.scene.bringToTop('ResultScreen');
+            try { scene.scene.setVisible(false); } catch (e) { /* ignore */ }
+            try { scene.scene.sleep(); } catch (e) {
+                try { scene.scene.pause(); } catch (err) { /* ignore */ }
+            }
         } catch (e) {
             console.error('ResultScreen launch failed', e);
             try { NavSystem.home(scene); } catch (err) { /* ignore */ }

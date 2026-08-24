@@ -51,6 +51,10 @@
         console.error('ForestAdventureScreen not defined!');
         return;
     }
+    if (typeof ColorMagicScreen === 'undefined') {
+        console.error('ColorMagicScreen not defined!');
+        return;
+    }
     
     // Game Configuration
     const config = {
@@ -92,7 +96,8 @@
             SubtractionHillScreen,
             OrientationForestScreen,
             CandyGardenScreen,
-            ForestAdventureScreen
+            ForestAdventureScreen,
+            ColorMagicScreen
         ],
         input: {
             activePointers: 3 // Support multiple touch points
@@ -104,6 +109,7 @@
         const game = new Phaser.Game(config);
         window.game = game; // for debugging / testing
         console.log('Game initialized successfully!');
+        window.BUNNIES_JS_VERSION = window.BUNNIES_VERSION;
 
         // Vào chế độ toàn màn hình ở lần chạm đầu tiên (mobile yêu cầu gesture)
         const enterFullscreen = () => {

@@ -5,37 +5,63 @@
  *
  * Never hand-style a one-off button/card — extend these factories instead.
  */
+
 /**
- * Centered hit area for a container (containers have no origin). The visual
- * is drawn around (0,0), so the touch target must also be centered on (0,0).
+ * Centered hit area that matches the visible control.
+ * Containers have no origin — default Phaser hit boxes sit bottom-right of the
+ * drawing. Use the positional setInteractive(hitArea, callback) API and mark
+ * customHitArea so later setSize() cannot reset to (0,0,w,h).
+ *
+ * opts.circle — circular hit (icons / swatches). width = diameter.
+ * opts.ellipse — elliptical hit matching visual oval regions.
+ * opts.pad — expand hit by ±pad px (keep ≤ 8 near neighbors).
+ * opts.draggable / useHandCursor — forwarded to Phaser input.
  */
-function setCenteredInput(obj, width, height, opts = {}) {
-    obj.setSize(width, height);
-    obj.setInteractive(Object.assign({
-        hitArea: new Phaser.Geom.Rectangle(-width / 2, -height / 2, width, height),
-        hitAreaCallback: Phaser.Geom.Rectangle.Contains,
-        useHandCursor: true,
-    }, opts));
+function enableHit(obj, width, height, opts = {}) {
+    if (!obj) return obj;
+    const pad = Math.min(opts.pad || 0, 8);
+    const w = Math.max(1, (width || obj.width || 48) + pad * 2);
+    const h = Math.max(1, (height || obj.height || 48) + pad * 2);
+    try { if (obj.removeInteractive) obj.removeInteractive(); } catch (e) { /* ignore */ }
+    if (obj.setSize) obj.setSize(w, h);
+
+    let area;
+    let contains;
+    if (opts.circle) {
+        const r = Math.max(1, w / 2);
+        area = new Phaser.Geom.Circle(0, 0, r);
+        contains = Phaser.Geom.Circle.Contains;
+    } else if (opts.ellipse) {
+        area = new Phaser.Geom.Ellipse(0, 0, w, h);
+        contains = Phaser.Geom.Ellipse.Contains;
+    } else {
+        area = new Phaser.Geom.Rectangle(-w / 2, -h / 2, w, h);
+        contains = Phaser.Geom.Rectangle.Contains;
+    }
+    obj.setInteractive(area, contains);
+    if (obj.input) {
+        obj.input.customHitArea = true;
+        if (opts.useHandCursor !== false) obj.input.cursor = 'pointer';
+        if (opts.draggable) obj.input.draggable = true;
+    }
     return obj;
 }
 
+/** @deprecated Prefer UISystem.enableHit — kept as thin wrapper. */
+function setCenteredInput(obj, width, height, opts = {}) {
+    return enableHit(obj, width, height, opts);
+}
+
 /**
- * Centered hit area for an origin-based object (Text/Image/Sprite/Zone).
- * Phaser's default hit area starts at the origin; for origin 0.5 that leaves
- * the clickable zone offset to the bottom-right of the visible glyph.
+ * Centered hit for origin-based objects (Text/Image/Sprite/Zone with origin 0.5).
+ * @deprecated Prefer UISystem.enableHit.
  */
 function setOriginCenteredInput(obj, width, height, opts = {}) {
-    const w = width || obj.width || 48;
-    const h = height || obj.height || 48;
-    obj.setInteractive(Object.assign({
-        hitArea: new Phaser.Geom.Rectangle(-w / 2, -h / 2, w, h),
-        hitAreaCallback: Phaser.Geom.Rectangle.Contains,
-        useHandCursor: true,
-    }, opts));
-    return obj;
+    return enableHit(obj, width, height, opts);
 }
 
 const UISystem = {
+    enableHit,
     setCenteredInput,
     setOriginCenteredInput,
     T: () => DesignTokens,
@@ -134,7 +160,7 @@ const UISystem = {
             fontFamily: DesignTokens.typography.fontFamily, fontStyle: 'bold',
             color: DesignTokens.css.white, stroke: '#00000044', strokeThickness: 2,
         }).setOrigin(0.5));
-        setCenteredInput(c, w, h);
+        enableHit(c, w, h);
         this.bindTap(scene, c, () => onTap(c));
         return c;
     },
@@ -160,7 +186,7 @@ const UISystem = {
             fontFamily: DesignTokens.typography.fontFamily, fontStyle: 'bold',
             color: DesignTokens.css.white, stroke: '#00000044', strokeThickness: 2,
         }).setOrigin(0.5));
-        setCenteredInput(c, w, h);
+        enableHit(c, w, h);
         this.bindTap(scene, c, () => onTap(c));
         return c;
     },
@@ -220,7 +246,7 @@ const UISystem = {
         } else {
             c.add(scene.add.text(0, 0, icon, { fontSize: (opts.fontSize || 20) + 'px' }).setOrigin(0.5));
         }
-        setCenteredInput(c, Math.max(r * 2, DesignTokens.touch.minTarget), Math.max(r * 2, DesignTokens.touch.minTarget));
+        enableHit(c, r * 2, r * 2, { circle: true });
         this.bindTap(scene, c, () => onTap(c));
         return c;
     },
@@ -266,7 +292,7 @@ const UISystem = {
             fontFamily: DesignTokens.typography.fontFamily, fontStyle: 'bold',
             color: DesignTokens.css.white, stroke: '#00000066', strokeThickness: 4,
         }).setOrigin(0.5));
-        setCenteredInput(c, size + 8, size + 8);
+        enableHit(c, size, size);
         this.bindTap(scene, c, () => onTap(c), { sfx: false });
         return c;
     },
@@ -410,7 +436,7 @@ const UISystem = {
         }
 
         if (opts.onTap) {
-            setCenteredInput(c, Math.max(w, DesignTokens.touch.minTarget), Math.max(h, DesignTokens.touch.minTarget));
+            enableHit(c, Math.max(w, DesignTokens.touch.minTarget), Math.max(h, DesignTokens.touch.minTarget));
             this.bindTap(scene, c, () => opts.onTap(award, c));
         }
         if (opts.reveal !== false && (size === 'hero' || isNew)) {
@@ -429,6 +455,59 @@ const UISystem = {
         } catch (e) {
             return null;
         }
+    },
+
+    /** Large color token for palette selection (Color Magic and future color games). */
+    colorSwatch(scene, x, y, colorDef, onTap, opts = {}) {
+        const size = Math.max(opts.size || 56, DesignTokens.touch.minTarget);
+        const fill = colorDef.fill || DesignTokens.colors.primary;
+        const c = scene.add.container(x, y);
+        const g = scene.add.graphics();
+        g.fillStyle(DesignTokens.shadow.color, DesignTokens.shadow.alpha);
+        g.fillCircle(0, 4, size / 2);
+        g.fillStyle(fill, 1);
+        g.fillCircle(0, 0, size / 2);
+        g.lineStyle(4, 0xffffff, 0.95);
+        g.strokeCircle(0, 0, size / 2);
+        c.add(g);
+        c.add(scene.add.text(0, 0, colorDef.glyph || '', {
+            fontSize: Math.round(size * 0.42) + 'px',
+        }).setOrigin(0.5));
+        const name = scene.add.text(0, size / 2 + 12, colorDef.name || '', {
+            fontSize: '13px', fontFamily: DesignTokens.typography.fontFamily, fontStyle: 'bold',
+            color: DesignTokens.css.ink,
+        }).setOrigin(0.5);
+        name.setVisible(!!opts.showName);
+        c.add(name);
+        c.setData('ring', g);
+        c.setData('name', name);
+        c.setData('fill', fill);
+        c.setData('size', size);
+        enableHit(c, size, size, { circle: true });
+        this.bindTap(scene, c, () => onTap(colorDef, c), { sfx: false });
+        return c;
+    },
+
+    setSwatchSelected(swatch, selected) {
+        if (!swatch) return;
+        const g = swatch.getData('ring');
+        const size = swatch.getData('size') || 56;
+        const fill = swatch.getData('fill');
+        const name = swatch.getData('name');
+        if (name) name.setVisible(!!selected);
+        if (!g || fill == null) return;
+        g.clear();
+        g.fillStyle(DesignTokens.shadow.color, DesignTokens.shadow.alpha);
+        g.fillCircle(0, 4, size / 2);
+        g.fillStyle(fill, 1);
+        g.fillCircle(0, 0, size / 2);
+        g.lineStyle(selected ? 6 : 4, selected ? DesignTokens.colors.ink : 0xffffff, 1);
+        g.strokeCircle(0, 0, size / 2);
+        if (selected) {
+            g.lineStyle(3, DesignTokens.colors.accent, 1);
+            g.strokeCircle(0, 0, size / 2 + 6);
+        }
+        swatch.setScale(selected ? 1.12 : 1);
     },
 
     /** Speech bubble — consistent across all characters. */
@@ -459,5 +538,5 @@ const UISystem = {
 };
 
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { UISystem };
+    module.exports = { UISystem, enableHit };
 }

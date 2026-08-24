@@ -57,12 +57,13 @@ const WORLD_MAP_CITIES = [
     },
     {
         id: 6,
-        name: 'Bến Cảng Màu Sắc',
+        name: 'Phép Màu Sắc',
         x: 880,
         y: 340,
-        description: 'Phân loại các vật theo màu sắc rực rỡ.',
-        puzzleTheme: 'Màu sắc',
-        visible: false
+        description: 'Nhìn hình mẫu rồi tô màu cho giống. Quan sát, nhớ, và khớp màu!',
+        puzzleTheme: 'Tô theo hình mẫu',
+        screenKey: 'ColorMagicScreen',
+        visible: true
     },
     {
         id: 7,

@@ -48,6 +48,77 @@
             display: block;
         }
 
+        #update-banner {
+            display: none;
+            position: fixed;
+            left: 50%;
+            bottom: 18px;
+            transform: translateX(-50%);
+            z-index: 1100;
+            max-width: min(560px, calc(100vw - 24px));
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            padding: 12px 16px;
+            background: #FFF8E7;
+            border: 3px solid #ffd166;
+            border-radius: 22px;
+            box-shadow: 0 8px 0 rgba(26, 15, 46, 0.22);
+            touch-action: auto;
+            pointer-events: auto;
+        }
+
+        #update-banner.show {
+            display: flex;
+        }
+
+        #update-banner p {
+            margin: 0;
+            color: #4A3728;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        #update-banner button {
+            min-height: 48px;
+            min-width: 96px;
+            padding: 8px 18px;
+            border-radius: 999px;
+            font-family: inherit;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            border: 3px solid #ffffff;
+        }
+
+        #update-banner button:active {
+            transform: scale(0.94);
+        }
+
+        #update-reload {
+            background: #66bb6a;
+            color: #fff;
+        }
+
+        #update-later {
+            background: #e8dcc8;
+            color: #4A3728;
+        }
+
+        #game-container {
+            position: fixed;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+        }
+
         /* Loading screen — hiển thị bản đồ thế giới ngay từ frame đầu tiên */
         #loading {
             position: fixed;
@@ -82,8 +153,14 @@
     </style>
 </head>
 <body>
+    <script>window.BUNNIES_VERSION = 'bunnies-pwa-v20';</script>
     <div id="loading"><span>🐰 Đang tải game...</span></div>
     <div id="game-container"></div>
+    <div id="update-banner" role="status">
+        <p>Có phiên bản mới!</p>
+        <button type="button" id="update-reload">Tải lại</button>
+        <button type="button" id="update-later">Để sau</button>
+    </div>
     <script>
         window.hideGameLoading = function () {
             var el = document.getElementById('loading');
@@ -184,6 +261,8 @@
     <script src="screens/candy_garden/screen.js"></script>
     <script src="screens/forest_adventure/puzzle.js"></script>
     <script src="screens/forest_adventure/screen.js"></script>
+    <script src="screens/color_magic/puzzle.js"></script>
+    <script src="screens/color_magic/screen.js"></script>
     
     <!-- Game Flow Configuration -->
     <script src="GameFlowConfig.js"></script>
@@ -193,12 +272,87 @@
     
     <!-- Đăng ký Service Worker → cài được như app, chơi offline -->
     <script>
+        window.applyGameUpdate = function () {
+            var done = function () { window.location.reload(); };
+            var clear = Promise.resolve();
+            if (window.caches) {
+                clear = caches.keys().then(function (keys) {
+                    return Promise.all(keys.map(function (k) { return caches.delete(k); }));
+                });
+            }
+            var unreg = Promise.resolve();
+            if (navigator.serviceWorker) {
+                unreg = navigator.serviceWorker.getRegistrations().then(function (regs) {
+                    return Promise.all(regs.map(function (reg) {
+                        if (reg.waiting) {
+                            try { reg.waiting.postMessage({ type: 'SKIP_WAITING' }); } catch (e) { /* ignore */ }
+                        }
+                        return reg.unregister();
+                    }));
+                });
+            }
+            Promise.all([clear, unreg]).then(done).catch(done);
+        };
+
+        window.showGameUpdateBanner = function () {
+            var banner = document.getElementById('update-banner');
+            if (!banner || banner.classList.contains('show')) return;
+            if (sessionStorage.getItem('bunnies-update-dismissed') === window.BUNNIES_VERSION) return;
+            banner.classList.add('show');
+        };
+
+        (function bindUpdateBanner() {
+            var reloadBtn = document.getElementById('update-reload');
+            var laterBtn = document.getElementById('update-later');
+            if (reloadBtn) reloadBtn.addEventListener('click', function () {
+                sessionStorage.removeItem('bunnies-update-dismissed');
+                window.applyGameUpdate();
+            });
+            if (laterBtn) laterBtn.addEventListener('click', function () {
+                sessionStorage.setItem('bunnies-update-dismissed', window.BUNNIES_VERSION || '');
+                var banner = document.getElementById('update-banner');
+                if (banner) banner.classList.remove('show');
+            });
+        })();
+
+        function checkGameVersion() {
+            if (!window.BUNNIES_JS_VERSION || window.BUNNIES_JS_VERSION !== window.BUNNIES_VERSION) {
+                window.showGameUpdateBanner();
+            }
+            fetch('version.json?t=' + Date.now(), { cache: 'no-store' })
+                .then(function (res) { return res.ok ? res.json() : null; })
+                .then(function (data) {
+                    if (data && data.version && data.version !== window.BUNNIES_VERSION) {
+                        window.showGameUpdateBanner();
+                    }
+                })
+                .catch(function () { /* offline — giữ bản đang chơi */ });
+        }
+
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-                navigator.serviceWorker.register('sw.js').catch(function(err) {
+            window.addEventListener('load', function () {
+                navigator.serviceWorker.register('sw.js').then(function (reg) {
+                    if (reg.waiting) window.showGameUpdateBanner();
+                    reg.addEventListener('updatefound', function () {
+                        var incoming = reg.installing;
+                        if (!incoming) return;
+                        incoming.addEventListener('statechange', function () {
+                            if (incoming.state === 'installed' && navigator.serviceWorker.controller) {
+                                window.showGameUpdateBanner();
+                            }
+                        });
+                    });
+                    setInterval(function () { reg.update().catch(function () {}); }, 60000);
+                }).catch(function (err) {
                     console.warn('Service worker registration failed:', err);
                 });
+                checkGameVersion();
             });
+            document.addEventListener('visibilitychange', function () {
+                if (document.visibilityState === 'visible') checkGameVersion();
+            });
+        } else {
+            window.addEventListener('load', checkGameVersion);
         }
     </script>
 

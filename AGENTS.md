@@ -44,7 +44,8 @@ src/
 │   ├── ui/        IntroHelper (intro + skip)
 │   └── effects/   RewardFX (celebrations)
 ├── screens/       menu (world map) + one folder per game world
-└── sw.js          PWA offline cache (bump CACHE_VERSION when assets change)
+└── sw.js          PWA offline cache (bump CACHE_VERSION + version.json +
+                   index.html `BUNNIES_VERSION` together)
 docs/              design-system · gameplay · worlds · architecture/adr · knowledge
 skills/            reusable implementation skills (see skills/README.md)
 ```

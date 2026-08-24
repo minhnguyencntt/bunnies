@@ -34,6 +34,7 @@ const DesignTokens = {
             mystery_village: 0x9370db,
             candy_garden: 0xff69b4,
             forest_adventure: 0x43a047,
+            rainbow_garden: 0x7c5cbf,
         },
     },
 

@@ -2,6 +2,58 @@
 
 Meaningful architectural/design decisions only — not trivial code changes.
 
+## 2026-08-24 (centered hit areas for all controls)
+
+### Changed
+- `UISystem.enableHit` is the one hit-area API: positional `setInteractive` +
+  `customHitArea` so Container clicks match the drawing (not bottom-right)
+- Factories use visual-sized hits (circle for icons/swatches; no size+8 on
+  answer buttons); GameShell/Menu/LevelSelect/AudioSettings/gameplay zones
+  all route through it; `input.setTopOnly(true)` on main scenes
+
+### Reason
+Neighbor buttons (e.g. answer "4" next to "5") stole hover/tap at the visual
+center because Phaser default container hits sit bottom-right of the art.
+
+## 2026-08-24 (Color Magic — color by pattern)
+
+### Changed
+- New native game `color_magic` / `ColorMagicScreen` on GameShell
+- Challenges come from artwork templates + valid color patterns in
+  `screens/color_magic/puzzle.js` (new art does not touch gameplay)
+- Difficulty uses existing dimensions: `objectCount` (regions), `paletteSize`
+  (colors), `memoryLoad` (full / compact / peek reference), timer, hints
+- Completion still goes through CompletionEngine → AwardGenerator → ResultScreen
+
+### Reason
+Color matching is a core early-learning loop (observe → remember → match) and
+must live in the same engine as the other Knowledge World games, not as a
+separate coloring toy.
+
+## 2026-08-24 (opt-in reload for a new game version)
+
+### Changed
+- Shell version lives in `index.html` + `version.json` + `sw.js` `CACHE_VERSION`
+- HTML banner **Có phiên bản mới!** / **Tải lại** / **Để sau** when JS, JSON,
+  or a waiting service worker is ahead of the running shell
+- **Tải lại** unregisters the SW, deletes Cache Storage, then reloads
+- `version.json` is network-only so stale cache cannot hide a new build
+
+### Reason
+PWA cache-first left children on old JS after a deploy (orange award screen).
+Reload is a child tap, never an automatic refresh mid-play.
+
+## 2026-08-24 (award screen not covered by last-answer flash)
+
+### Changed
+- Last correct answer skips `Camera.flash`; CompletionEngine resets FX, hides the
+  paused game scene, and `bringToTop('ResultScreen')`
+
+### Reason
+`RewardFX.correctAnswer` flashed (255, 235, 170) then `scene.pause()` froze that
+overlay. Game scenes render after ResultScreen, so the child saw a solid orange
+canvas instead of the award UI.
+
 ## 2026-08-24 (world map visible after boot)
 
 ### Changed

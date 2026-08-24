@@ -119,14 +119,8 @@ class CountingForestScreen extends GameShell {
             g.fillEllipse(6, -26, 14, 8);
             apple.add(g);
             apple.setSize(56, 56);
-            // Containers have no origin: default hitArea would sit bottom-right of
-            // the visual apple. Use an explicit centered, generous touch target.
-            apple.setInteractive({
-                hitArea: new Phaser.Geom.Circle(0, 0, 40),
-                hitAreaCallback: Phaser.Geom.Circle.Contains,
-                draggable: true,
-                useHandCursor: true,
-            });
+            // Containers have no origin: use centered circular touch target.
+            UISystem.enableHit(apple, 80, 80, { circle: true, draggable: true });
             apple.setData('ox', ox);
             apple.setData('oy', oy);
             apple.setData('collected', false);
@@ -255,7 +249,7 @@ class CountingForestScreen extends GameShell {
                 fontSize: '32px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold',
                 color: '#ffd700', stroke: '#000', strokeThickness: 3,
             }).setOrigin(0.5));
-            setCenteredInput(sign, 116, 72);
+            UISystem.enableHit(sign, 116, 72);
             sign.on('pointerdown', () => {
                 if (!this.acceptingInput || this.isPaused) return;
                 if (val === correct) {

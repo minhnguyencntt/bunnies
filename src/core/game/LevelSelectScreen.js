@@ -22,6 +22,7 @@ class LevelSelectScreen extends Phaser.Scene {
         AudioEngine.attachScene(this);
         AudioEngine.loadSettings();
         AudioEvents.register();
+        try { this.input.setTopOnly(true); } catch (e) { /* ignore */ }
         const menuAudio = AudioConfig.AREA_AUDIO.menu;
         MusicEngine.playTheme(this, menuAudio.theme.key, menuAudio.theme.url, { volume: menuAudio.theme.volume });
 
@@ -105,7 +106,7 @@ class LevelSelectScreen extends Phaser.Scene {
         });
         c.add(playBtn);
 
-        setCenteredInput(c, cw, ch);
+        UISystem.enableHit(c, cw, ch);
         c.on('pointerover', () => c.setScale(1.04));
         c.on('pointerout', () => c.setScale(1));
         c.on('pointerdown', startLevel);

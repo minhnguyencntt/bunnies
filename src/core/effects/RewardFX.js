@@ -10,12 +10,15 @@ const RewardFX = {
     CONFETTI: ['🎉', '⭐', '✨', '💖', '🌟', '🎊', '💛', '💜'],
 
     correctAnswer(scene, x, y, opts = {}) {
-        const { addStar = true } = opts;
+        const { addStar = true, flash = true } = opts;
         const w = scene.cameras.main.width;
         const DEPTH = 600;
 
-        // Flash vàng nhẹ toàn màn
-        scene.cameras.main.flash(160, 255, 235, 170, false);
+        // Skip flash on last-answer → completion: pause freezes the overlay
+        // (255, 235, 170) over ResultScreen.
+        if (flash !== false && scene.cameras && scene.cameras.main) {
+            scene.cameras.main.flash(160, 255, 235, 170, false);
+        }
 
         // Hai vòng sáng lan ra từ điểm đúng
         for (let i = 0; i < 2; i++) {

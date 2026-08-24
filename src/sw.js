@@ -5,7 +5,7 @@
  *   sau lần tải đầu → chơi xong 1 lần là offline hoàn toàn.
  */
 
-const CACHE_VERSION = 'bunnies-pwa-v11';
+const CACHE_VERSION = 'bunnies-pwa-v20';
 const PRECACHE = `${CACHE_VERSION}-core`;
 const RUNTIME = `${CACHE_VERSION}-runtime`;
 
@@ -101,6 +101,8 @@ const CORE_ASSETS = [
     './screens/candy_garden/screen.js',
     './screens/forest_adventure/puzzle.js',
     './screens/forest_adventure/screen.js',
+    './screens/color_magic/puzzle.js',
+    './screens/color_magic/screen.js',
     './screens/ScreenLevelBackground.js',
 
     // Config + main
@@ -130,6 +132,10 @@ const CORE_ASSETS = [
     './core/characters/assets/fox_walk.png',
 ];
 
+self.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting();
+});
+
 self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(PRECACHE)
@@ -156,6 +162,13 @@ self.addEventListener('fetch', (event) => {
 
     const url = new URL(request.url);
     if (url.origin !== self.location.origin) return;
+
+    if (url.pathname.endsWith('/version.json')) {
+        event.respondWith(
+            fetch(request, { cache: 'no-store' }).catch(() => caches.match('./version.json'))
+        );
+        return;
+    }
 
     // Điều hướng (mở app): network-first, rớt mạng thì trả index.html đã cache
     if (request.mode === 'navigate') {

@@ -18,5 +18,5 @@ entry + map city + audio profile.
 - [ ] Register in `index.html`, `game.js`, `sw.js`
 - [ ] E2E: all 3 levels complete to Result Screen, zero console errors
 
-Existing worlds: see `candy-garden.md`, `magical-forest.md` (newest reference
-implementations) and the four original games in `docs/GAME_REDESIGN.md`.
+Existing worlds: see `candy-garden.md`, `magical-forest.md`, `color-magic.md`
+(newest reference implementations) and the four original games in `docs/GAME_REDESIGN.md`.

@@ -31,6 +31,7 @@ class AdaptiveDifficultyEngine {
         if (d.timeLimit > 0) d.timeLimit = Math.round(d.timeLimit * (1 - t * 0.12));
         if (d.sequenceLength > 0) d.sequenceLength = Math.max(2, d.sequenceLength + t);
         if (d.objectCount > 0) d.objectCount = Math.max(3, d.objectCount + t);
+        if (d.paletteSize > 0) d.paletteSize = Phaser.Math.Clamp(d.paletteSize + t, 2, 7);
         if (t < 0) d.hintLevel = Math.min(3, d.hintLevel + 1); // struggling → richer hints
         return d;
     }

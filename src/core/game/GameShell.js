@@ -16,20 +16,6 @@
  * Optional overrides: introText(), introVoiceKey(), parTimeMs,
  *   handleTimeout(), showHintVisual(hint), onSessionStart()
  */
-/**
- * Containers have no origin, so their default input hitArea sits bottom-right
- * of the visual center. This helper gives any container a centered hitArea.
- */
-function setCenteredInput(obj, width, height, opts = {}) {
-    obj.setSize(width, height);
-    obj.setInteractive(Object.assign({
-        hitArea: new Phaser.Geom.Rectangle(-width / 2, -height / 2, width, height),
-        hitAreaCallback: Phaser.Geom.Rectangle.Contains,
-        useHandCursor: true,
-    }, opts));
-    return obj;
-}
-
 class GameShell extends Phaser.Scene {
     constructor(key) {
         super({ key });
@@ -81,6 +67,7 @@ class GameShell extends Phaser.Scene {
         AudioEngine.attachScene(this);
         AudioEngine.loadSettings();
         AudioEvents.register();
+        try { this.input.setTopOnly(true); } catch (e) { /* ignore */ }
 
         const w = this.cameras.main.width;
         const h = this.cameras.main.height;
@@ -146,11 +133,15 @@ class GameShell extends Phaser.Scene {
         this.clearRoundTimer();
         this.analytics.recordAnswer(true);
         this.adaptive.update(this.analytics);
-        if (typeof RewardFX !== 'undefined') RewardFX.correctAnswer(this, x ?? this.scale.width / 2, y ?? this.scale.height / 2, { addStar: false });
+        const last = this.roundIndex >= this.levelCfg.rounds - 1;
+        if (typeof RewardFX !== 'undefined') {
+            RewardFX.correctAnswer(this, x ?? this.scale.width / 2, y ?? this.scale.height / 2, {
+                addStar: false, flash: !last,
+            });
+        }
         this.companionReact('happy');
         AudioEngine.emit('CorrectAnswer');
         this.refreshLiveScore();
-        const last = this.roundIndex >= this.levelCfg.rounds - 1;
         if (last) {
             CompletionEngine.notifyLastAnswer();
             this.analytics.finishRound();

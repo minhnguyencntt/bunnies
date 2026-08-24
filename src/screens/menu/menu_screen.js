@@ -74,6 +74,7 @@ class MenuScreen extends Phaser.Scene {
 
         // Stop any lingering sounds from previous scenes
         this.sound.stopAll();
+        try { this.input.setTopOnly(true); } catch (e) { /* ignore */ }
 
         // Load audio ở chế độ nền; BGM tự phát khi tải xong
         this.time.delayedCall(0, () => {
@@ -1343,7 +1344,7 @@ class MenuScreen extends Phaser.Scene {
         }
 
         const hitRadius = Math.max(markerSize * 2.1, 56);
-        setCenteredInput(markerContainer, hitRadius * 2, hitRadius * 2.4);
+        UISystem.enableHit(markerContainer, hitRadius * 2, hitRadius * 2.4);
 
         markerContainer.on('pointerover', () => {
             this.tweens.killTweensOf(markerContainer);

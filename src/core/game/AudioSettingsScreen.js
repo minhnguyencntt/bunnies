@@ -78,7 +78,8 @@ class AudioSettingsScreen extends Phaser.Scene {
         };
         drawFill(value);
 
-        const zone = this.add.zone(cx, y + 11, width + 30, 40).setInteractive({ useHandCursor: true });
+        const zone = this.add.zone(cx, y + 11, width + 30, 40).setOrigin(0.5);
+        UISystem.enableHit(zone, width + 30, 40);
         const setFromPointer = (p) => {
             const v = Phaser.Math.Clamp((p.x - (cx - width / 2)) / width, 0, 1);
             handle.x = cx - width / 2 + width * v;
@@ -103,14 +104,15 @@ class AudioSettingsScreen extends Phaser.Scene {
         const text = this.add.text(x, y, `${label}: ${on ? 'Bật' : 'Tắt'}`, {
             fontSize: '18px', fontFamily: 'Comic Sans MS, Arial', fontStyle: 'bold', color: '#fff',
         }).setOrigin(0.5);
-        this.add.zone(x, y, 190, 48).setInteractive({ useHandCursor: true })
-            .on('pointerdown', () => {
-                on = onToggle();
-                text.setText(`${label}: ${on ? 'Bật' : 'Tắt'}`);
-                draw();
-                AudioEngine.emit('UITap');
-                AudioEngine.track(on ? 'unmuted' : 'muted');
-            });
+        const zone = this.add.zone(x, y, 190, 48).setOrigin(0.5);
+        UISystem.enableHit(zone, 190, 48);
+        zone.on('pointerdown', () => {
+            on = onToggle();
+            text.setText(`${label}: ${on ? 'Bật' : 'Tắt'}`);
+            draw();
+            AudioEngine.emit('UITap');
+            AudioEngine.track(on ? 'unmuted' : 'muted');
+        });
     }
 }
 

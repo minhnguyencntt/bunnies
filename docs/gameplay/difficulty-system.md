@@ -4,7 +4,8 @@
 
 `complexity, objectCount, choiceCount, timeLimit, memoryLoad, distractionLevel,
 hintLevel, interactionSteps, questionComplexity, visualComplexity,
-sequenceLength, mathRange, errorTolerance` (+ game-specific extras).
+sequenceLength, mathRange, errorTolerance` (+ game-specific extras such as
+`paletteSize` for color-matching games).
 
 Level design targets (constraints, not UI labels):
 

@@ -7,7 +7,10 @@ Applies to all game source code.
 `lib/phaser.min.js` → characters → `core/ui` + `core/effects` → `core/design`
 → `core/audio` → `core/engine` → `core/game` → `screens/*` (puzzle.js before
 screen.js) → `GameFlowConfig.js` → `game.js`. New files must be added to
-`index.html` AND `sw.js` (precache) — bump `CACHE_VERSION` in `sw.js`.
+`index.html` AND `sw.js` (precache) — bump `CACHE_VERSION` in `sw.js`,
+`window.BUNNIES_VERSION` in `index.html`, and `version.json` together.
+A HTML banner offers **Tải lại** when the shell/JS/SW versions diverge
+(stale PWA cache). Do not auto-reload — the child taps the button.
 
 ## Conventions
 
@@ -21,5 +24,5 @@ screen.js) → `GameFlowConfig.js` → `game.js`. New files must be added to
   `NavSystem`; all sound via `AudioEngine.emit`; all rewards via AwardGenerator
   / RewardEngine.
 - Vietnamese UI text; keep strings short and child-friendly.
-- Containers have no origin — always use `setCenteredInput` for hit areas.
+- Containers have no origin — always use `UISystem.enableHit` for hit areas.
 - Kill idle tweens on `dragstart` (idle motion must never fight drags).

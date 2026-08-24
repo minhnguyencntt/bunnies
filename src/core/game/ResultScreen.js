@@ -21,9 +21,17 @@ class ResultScreen extends Phaser.Scene {
 
     create() {
         NavSystem.ready(this);
+        try { this.input.setTopOnly(true); } catch (e) { /* ignore */ }
         const r = this.completion;
         const w = this.cameras.main.width;
         const h = this.cameras.main.height;
+        try {
+            this.game.scene.getScenes(true).forEach((s) => {
+                if (s === this) return;
+                try { if (s.cameras && s.cameras.main && s.cameras.main.resetFX) s.cameras.main.resetFX(); } catch (e) { /* ignore */ }
+                try { s.scene.setVisible(false); } catch (e) { /* ignore */ }
+            });
+        } catch (e) { /* ignore */ }
 
         try {
             AudioEngine.attachScene(this);

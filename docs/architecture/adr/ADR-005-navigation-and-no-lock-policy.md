@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted (2026-08-23) · Amended (same day — second audit)
+Accepted (2026-08-23) · Amended (2026-08-29 — history stack)
 
 ## Context
 
@@ -20,9 +20,12 @@ was still broken for children:
 ## Decision
 
 1. **One `NavSystem`** owns leave/back/home. Leave is immediate (speech, music,
-   and animation never gate a tap).
-2. **Top-left = BACK** (vector chevron). Back is always the previous screen:
-   gameplay → Level Select → world map. Result Back = Level Select.
+   and animation never gate a tap). `go` pushes a history entry; `back` pops
+   it (browser-like). Home clears the stack. Result / settings overlays are
+   not pushed — Result Back still lands on Level Select.
+2. **Top-left = BACK** (vector chevron). Back is the previous screen on the
+   stack: gameplay → Level Select → world map (or Map if the game was opened
+   without Level Select).
 3. **Home is explicit** (vector house). Home = `MenuScreen`. Shown when it
    differs from Back (gameplay pause, result chrome).
 4. **World map: first tap plays.** No hover-speech, no dim overlay. City name

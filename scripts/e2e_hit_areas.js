@@ -35,37 +35,41 @@ const CHROME = process.env.CHROME || '/Applications/Google Chrome.app/Contents/M
     });
     await page.waitForFunction(() => {
         const g = window.game.scene.getScene('CandyGardenScreen');
-        return g && g.acceptingInput && g.choiceButtons && g.choiceButtons.length === 3;
+        return g && g.acceptingInput && g.choiceButtons && g.choiceButtons.length === 3
+            && g.choiceButtons.every((b) => b.scaleX > 0.9);
     }, { timeout: 10000 });
 
     const candyHits = await page.evaluate(() => {
         const g = window.game.scene.getScene('CandyGardenScreen');
+        const mgr = g.input.manager;
         const buttons = g.choiceButtons;
+        const labelOf = (b) => ((b.list.find((c) => c.type === 'Text') || {}).text);
+        const ownersAt = (px, py) => buttons.filter((b) => mgr.pointWithinHitArea(b, px - b.x, py - b.y));
         const out = [];
         for (let i = 0; i < buttons.length; i++) {
             const b = buttons[i];
             const ha = b.input && b.input.hitArea;
             const custom = !!(b.input && b.input.customHitArea);
-            // Hit area must be centered: Rectangle x = -w/2 (or Circle at 0,0)
-            let centered = false;
-            if (ha && typeof ha.radius === 'number') {
-                centered = ha.x === 0 && ha.y === 0;
-            } else if (ha) {
-                centered = Math.abs(ha.x + ha.width / 2) < 0.5 && Math.abs(ha.y + ha.height / 2) < 0.5;
-            }
-            // Neighbor center must not fall inside this button's world hit box
-            let stealsNeighbor = false;
-            if (i < buttons.length - 1 && ha && ha.width) {
-                const next = buttons[i + 1];
-                const dx = next.x - b.x;
-                const half = ha.width / 2;
-                stealsNeighbor = Math.abs(dx) <= half;
-            }
+            const hw = (ha && ha.width) ? ha.width / 2 : (b.width / 2);
+            const hh = (ha && ha.height) ? ha.height / 2 : (b.height / 2);
+            const spots = [
+                ['center', b.x, b.y],
+                ['tl', b.x - hw + 2, b.y - hh + 2],
+                ['br', b.x + hw - 2, b.y + hh - 2],
+                ['right', b.x + hw - 2, b.y],
+                ['bottom', b.x, b.y + hh - 2],
+            ];
+            const misses = spots.filter(([, px, py]) => {
+                const owners = ownersAt(px, py);
+                return !(owners.length === 1 && owners[0] === b);
+            }).map((s) => s[0]);
+            const next = buttons[i + 1];
+            const stealsNeighbor = !!(next && ownersAt(next.x, next.y).includes(b));
             out.push({
                 i,
-                label: (b.list.find((c) => c.type === 'Text') || {}).text,
+                label: labelOf(b),
                 custom,
-                centered,
+                misses,
                 stealsNeighbor,
                 hit: ha ? { x: ha.x, y: ha.y, w: ha.width, h: ha.height, r: ha.radius } : null,
             });
@@ -75,44 +79,27 @@ const CHROME = process.env.CHROME || '/Applications/Google Chrome.app/Contents/M
     console.log('candy', JSON.stringify(candyHits));
     for (const h of candyHits) {
         if (!h.custom) throw new Error('candy button missing customHitArea: ' + h.i);
-        if (!h.centered) throw new Error('candy button hit not centered: ' + h.i + ' ' + JSON.stringify(h.hit));
+        if (h.misses.length) throw new Error('candy button visual not fully clickable: ' + h.i + ' ' + h.misses);
         if (h.stealsNeighbor) throw new Error('candy button steals neighbor: ' + h.i);
     }
 
-    // Geometric hover: world point at center of button i must fall only in button i's hit box
-    const hoverOk = await page.evaluate(() => {
+    const br = await page.evaluate(() => {
         const g = window.game.scene.getScene('CandyGardenScreen');
-        const buttons = g.choiceButtons;
-        const results = [];
-        for (let i = 0; i < buttons.length; i++) {
-            const target = buttons[i];
-            const px = target.x;
-            const py = target.y;
-            const owners = buttons.filter((b) => {
-                const ha = b.input && b.input.hitArea;
-                if (!ha) return false;
-                const lx = px - b.x;
-                const ly = py - b.y;
-                if (typeof ha.radius === 'number') {
-                    return lx * lx + ly * ly <= ha.radius * ha.radius;
-                }
-                return lx >= ha.x && lx <= ha.x + ha.width && ly >= ha.y && ly <= ha.y + ha.height;
-            });
-            results.push({
-                i,
-                owners: owners.map((o) => {
-                    const t = o.list && o.list.find((c) => c.type === 'Text');
-                    return t && t.text;
-                }),
-                ok: owners.length === 1 && owners[0] === target,
-            });
-        }
-        return results;
+        const b = g.choiceButtons[0];
+        const ha = b.input.hitArea;
+        return { x: b.x + ha.width / 2 - 4, y: b.y + ha.height / 2 - 4 };
     });
-    console.log('hover', JSON.stringify(hoverOk));
-    for (const h of hoverOk) {
-        if (!h.ok) throw new Error('hover center of button ' + h.i + ' hit ' + JSON.stringify(h.owners));
-    }
+    const box = await page.evaluate((gx, gy) => {
+        const g = window.game;
+        const r = g.canvas.getBoundingClientRect();
+        return { x: r.left + gx * (r.width / g.scale.width), y: r.top + gy * (r.height / g.scale.height) };
+    }, br.x, br.y);
+    await page.mouse.click(box.x, box.y);
+    const afterTap = await page.evaluate(() => {
+        const g = window.game.scene.getScene('CandyGardenScreen');
+        return { accepting: g.acceptingInput, score: g.displayScore || 0 };
+    });
+    if (afterTap.accepting) throw new Error('bottom-right of answer button did not register a tap');
 
     // ── Color Magic palette swatches ──
     await page.evaluate(() => {
@@ -134,26 +121,22 @@ const CHROME = process.env.CHROME || '/Applications/Google Chrome.app/Contents/M
 
     const paletteHits = await page.evaluate(() => {
         const g = window.game.scene.getScene('ColorMagicScreen');
+        const mgr = g.input.manager;
         return g.swatches.map((sw, i) => {
             const ha = sw.input && sw.input.hitArea;
             const custom = !!(sw.input && sw.input.customHitArea);
-            const centered = ha && typeof ha.radius === 'number'
-                ? ha.x === 0 && ha.y === 0
-                : ha && Math.abs(ha.x + ha.width / 2) < 0.5;
-            let steals = false;
-            if (i < g.swatches.length - 1 && ha) {
-                const next = g.swatches[i + 1];
-                const dx = next.x - sw.x;
-                const half = (ha.radius != null) ? ha.radius : ha.width / 2;
-                steals = Math.abs(dx) <= half;
-            }
-            return { i, custom, centered, steals, colorId: sw.getData('colorId') };
+            const r = (ha && ha.radius != null) ? ha.radius : ((ha && ha.width) ? ha.width / 2 : 24);
+            const centerOk = mgr.pointWithinHitArea(sw, 0, 0);
+            const edgeOk = mgr.pointWithinHitArea(sw, r - 2, 0);
+            const next = g.swatches[i + 1];
+            const steals = !!(next && mgr.pointWithinHitArea(sw, next.x - sw.x, next.y - sw.y));
+            return { i, custom, centerOk, edgeOk, steals, colorId: sw.getData('colorId') };
         });
     });
     console.log('palette', JSON.stringify(paletteHits));
     for (const h of paletteHits) {
         if (!h.custom) throw new Error('swatch missing customHitArea');
-        if (!h.centered) throw new Error('swatch hit not centered');
+        if (!h.centerOk || !h.edgeOk) throw new Error('swatch visual not fully clickable ' + h.i);
         if (h.steals) throw new Error('swatch steals neighbor ' + h.i);
     }
 

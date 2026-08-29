@@ -1,6 +1,6 @@
 /**
- * test_hit_areas.js — UISystem.enableHit must center the clickable zone on
- * the visual control (not bottom-right of a container).
+ * test_hit_areas.js — UISystem.enableHit must match the visual control.
+ * Phaser adds displayOrigin before Contains(); geometry must live in that space.
  */
 global.Phaser = {
     Geom: {
@@ -15,8 +15,14 @@ global.Phaser = {
         },
     },
 };
-Phaser.Geom.Rectangle.Contains = () => true;
-Phaser.Geom.Circle.Contains = () => true;
+Phaser.Geom.Rectangle.Contains = (rect, x, y) => (
+    x >= rect.x && x <= rect.x + rect.width && y >= rect.y && y <= rect.y + rect.height
+);
+Phaser.Geom.Circle.Contains = (c, x, y) => {
+    const dx = x - c.x;
+    const dy = y - c.y;
+    return dx * dx + dy * dy <= c.radius * c.radius;
+};
 Phaser.Geom.Ellipse.Contains = () => true;
 
 global.DesignTokens = {
@@ -38,11 +44,20 @@ function assert(cond, msg) {
 
 function mockObj() {
     const o = {
+        x: 0,
+        y: 0,
         width: 0,
         height: 0,
+        displayOriginX: 0,
+        displayOriginY: 0,
         input: null,
         removeInteractive() { this.input = null; },
-        setSize(w, h) { this.width = w; this.height = h; },
+        setSize(w, h) {
+            this.width = w;
+            this.height = h;
+            this.displayOriginX = w / 2;
+            this.displayOriginY = h / 2;
+        },
         setInteractive(area, contains) {
             this.input = {
                 hitArea: area,
@@ -58,22 +73,42 @@ function mockObj() {
     return o;
 }
 
-// Rect centered on (0,0)
+/** Phaser.Input.InputManager.pointWithinHitArea */
+function phaserHits(obj, worldX, worldY) {
+    const lx = worldX - obj.x + (Number(obj.displayOriginX) || 0);
+    const ly = worldY - obj.y + (Number(obj.displayOriginY) || 0);
+    return obj._contains(obj._area, lx, ly, obj);
+}
+
+// Rect: visual 96×96 at (200, 300) — every corner + center must hit
 {
     const o = mockObj();
+    o.x = 200;
+    o.y = 300;
     enableHit(o, 96, 96);
     assert(o.input.customHitArea === true, 'customHitArea must be set');
-    assert(o._area.x === -48 && o._area.y === -48, 'rect origin centered, got ' + o._area.x + ',' + o._area.y);
-    assert(o._area.width === 96 && o._area.height === 96, 'rect size');
-    assert(o.width === 96 && o.height === 96, 'setSize');
+    assert(o._area.width === 96 && o._area.height === 96, 'rect size equals visual');
+    assert(o._area.x === 0 && o._area.y === 0, 'rect sits at displayOrigin so Phaser Contains matches');
+    assert(phaserHits(o, 200, 300), 'center');
+    assert(phaserHits(o, 200 - 47, 300 - 47), 'top-left of visual');
+    assert(phaserHits(o, 200 + 47, 300 + 47), 'bottom-right of visual');
+    assert(phaserHits(o, 200 + 47, 300), 'right edge');
+    assert(phaserHits(o, 200, 300 + 47), 'bottom edge');
+    assert(!phaserHits(o, 200 + 49, 300), 'just outside right');
+    assert(!phaserHits(o, 200, 300 + 49), 'just outside bottom');
 }
 
 // Circle for icons / swatches
 {
     const o = mockObj();
+    o.x = 100;
+    o.y = 80;
     enableHit(o, 48, 48, { circle: true });
     assert(o._area.radius === 24, 'circle radius = diameter/2');
-    assert(o._area.x === 0 && o._area.y === 0, 'circle at center');
+    assert(o._area.x === 24 && o._area.y === 24, 'circle center at displayOrigin');
+    assert(phaserHits(o, 100, 80), 'circle center');
+    assert(phaserHits(o, 100 + 16, 80), 'inside radius');
+    assert(!phaserHits(o, 100 + 25, 80), 'outside radius');
 }
 
 // Ellipse for oval coloring regions
@@ -81,6 +116,7 @@ function mockObj() {
     const o = mockObj();
     enableHit(o, 80, 40, { ellipse: true });
     assert(o._area.width === 80 && o._area.height === 40, 'ellipse size');
+    assert(o._area.x === 40 && o._area.y === 20, 'ellipse center at displayOrigin');
 }
 
 // Pad expands, capped at 8
@@ -90,44 +126,27 @@ function mockObj() {
     assert(o._area.width === 56, 'pad capped at 8 → 40+16');
 }
 
-// Neighbor overlap check: answer buttons size=96 gap=22 → hit must not exceed size
+// Neighbor overlap: answer buttons size=96 gap=22
 {
     const size = 96;
     const gap = 22;
     const a = mockObj();
     const b = mockObj();
+    a.x = 100;
+    a.y = 200;
+    b.x = a.x + size + gap;
+    b.y = 200;
     enableHit(a, size, size);
     enableHit(b, size, size);
-    // Place centers like createChoiceButtons: startX and startX+(size+gap)
-    const ax = 100;
-    const bx = ax + size + gap;
-    // Point at visual center of B
-    const px = bx;
-    const py = 200;
-    // Old broken hit for A would be [ax, ay] → [ax+size, ay+size] in local…
-    // With centered hit, local point relative to A center:
-    const localInA = { x: px - ax, y: py - 200 }; // (size+gap, 0) = (118, 0)
-    const half = size / 2;
-    const aContains = Math.abs(localInA.x) <= half && Math.abs(localInA.y) <= half;
-    assert(!aContains, 'center of button B must NOT be inside A hit box');
-    const localInB = { x: px - bx, y: 0 };
-    const bContains = Math.abs(localInB.x) <= half && Math.abs(localInB.y) <= half;
-    assert(bContains, 'center of button B must be inside B hit box');
+    assert(phaserHits(b, b.x, b.y), 'center of B hits B');
+    assert(!phaserHits(a, b.x, b.y), 'center of B must not hit A');
+    assert(phaserHits(a, a.x + 47, a.y), 'A right edge still belongs to A');
+    assert(!phaserHits(a, a.x + 49, a.y), 'gap between A and B is empty');
 }
 
 // Wrappers still exist
 assert(typeof UISystem.enableHit === 'function', 'UISystem.enableHit');
 assert(typeof UISystem.setCenteredInput === 'function', 'setCenteredInput wrapper');
 assert(typeof UISystem.setOriginCenteredInput === 'function', 'setOriginCenteredInput wrapper');
-
-// Size+8 would overlap neighbors at gap 22 — factories must not do that
-{
-    const size = 96;
-    const gap = 22;
-    const halfOld = (size + 8) / 2; // 52
-    const dist = size + gap; // 118
-    // Old oversized hit from A reaches into B when halfA + halfB > dist
-    assert(halfOld * 2 < dist, 'visual-sized hits leave a gap; size+8 would be tight');
-}
 
 console.log('PASS hit areas');

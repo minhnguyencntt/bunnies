@@ -7,9 +7,10 @@ Add/change navigation without surprising the player.
 ## Rules (ADR-005)
 
 - Use `NavSystem` — never `scene.start` / `scene.stop` for screen changes.
-- **Top-left = Back** (vector chevron) → previous screen.
-  gameplay → Level Select → Map. Result Back = Level Select.
-- **Home** is explicit (vector house) when it differs from Back.
+- **Top-left = Back** (vector chevron) → `NavSystem.back()` pops the history
+  stack (browser-like). Typical: gameplay → Level Select → Map.
+  Result is launched (not pushed), so Result Back = Level Select.
+- **Home** is explicit (vector house) when it differs from Back. Clears the stack.
 - Instant. Never wait for speech, audio, or animation.
 - World map: first tap plays. Always-visible name + “▶ Chơi”. Centered hit-area.
 - Every screen has a visible exit.

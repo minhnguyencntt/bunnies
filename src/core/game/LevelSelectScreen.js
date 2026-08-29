@@ -54,10 +54,7 @@ class LevelSelectScreen extends Phaser.Scene {
             this.createLevelCard(x, y, cardW, cardH, gameDef, gp, level, profile);
         }
 
-        NavSystem.mount(this, {
-            onBack: () => NavSystem.home(this),
-            depth: 20,
-        });
+        NavSystem.mount(this, { depth: 20 });
     }
 
     createLevelCard(x, y, cw, ch, gameDef, gp, level, profile) {

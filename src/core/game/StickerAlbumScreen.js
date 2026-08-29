@@ -43,10 +43,7 @@ class StickerAlbumScreen extends Phaser.Scene {
             this.createAlbumRow(w, y, rowH, album);
         });
 
-        NavSystem.mount(this, {
-            onBack: () => NavSystem.home(this),
-            depth: 20,
-        });
+        NavSystem.mount(this, { depth: 20 });
 
         this.hintBubble = null;
     }

@@ -93,10 +93,12 @@ async function tapCanvas(page, gx, gy) {
     console.log('after city tap', scenes);
     if (scenes.includes('MenuScreen')) fail('Menu still active after city tap');
 
-    // Back from Level Select → Map
-    await page.evaluate(() => NavSystem.home(window.game.scene.getScene('LevelSelectScreen')));
+    // Back from Level Select → Map (history pop, not a hardcoded Home)
+    await page.evaluate(() => NavSystem.back(window.game.scene.getScene('LevelSelectScreen')));
     await waitForScene(page, 'MenuScreen', 8000);
     console.log('back to menu', await activeScenes(page));
+    const stackAfterLevelsBack = await page.evaluate(() => NavSystem.history().map((e) => e.key));
+    if (stackAfterLevelsBack.length) fail('stack should be empty after back to menu', stackAfterLevelsBack);
 
     // Re-enter first city, tap Play via NavSystem-equivalent (card start)
     await page.evaluate(() => {
@@ -115,7 +117,7 @@ async function tapCanvas(page, gx, gy) {
     await waitForScene(page, started, 10000);
     console.log('gameplay', started, await activeScenes(page));
 
-    // Back from gameplay → Level Select (NOT menu)
+    // Back from gameplay → Level Select (NOT menu) via history
     await page.evaluate(() => {
         const key = window.game.scene.getScenes(true).find((s) => s.goBack).sys.settings.key;
         window.game.scene.getScene(key).goBack();
@@ -173,13 +175,27 @@ async function tapCanvas(page, gx, gy) {
     }, gameId);
     await waitForScene(page, 'ResultScreen', 8000);
     await page.evaluate(() => {
-        window.game.scene.getScene('ResultScreen').go('levels');
+        NavSystem.back(window.game.scene.getScene('ResultScreen'), {
+            key: 'LevelSelectScreen',
+            data: { gameId: window.game.scene.getScene('ResultScreen').gameId },
+        });
     });
     await waitForScene(page, 'LevelSelectScreen', 8000);
     scenes = await activeScenes(page);
     console.log('result back', scenes);
     if (!scenes.includes('LevelSelectScreen')) fail('Result Back did not reach Level Select');
     if (scenes.includes('MenuScreen')) fail('Result Back went to Map');
+
+    // Album Back uses the same history stack
+    await page.evaluate(() => NavSystem.home(window.game.scene.getScenes(true)[0]));
+    await waitForScene(page, 'MenuScreen', 8000);
+    await page.evaluate(() => {
+        NavSystem.go(window.game.scene.getScene('MenuScreen'), 'StickerAlbumScreen');
+    });
+    await waitForScene(page, 'StickerAlbumScreen', 8000);
+    await page.evaluate(() => NavSystem.back(window.game.scene.getScene('StickerAlbumScreen')));
+    await waitForScene(page, 'MenuScreen', 8000);
+    console.log('album back', await activeScenes(page));
 
     if (errors.length) fail('page errors', errors);
     if (process.exitCode) {

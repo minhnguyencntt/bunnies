@@ -42,8 +42,8 @@ class ResultScreen extends Phaser.Scene {
         this.add.graphics().fillStyle(0x1a0f2e, 0.78).fillRect(0, 0, w, h);
 
         NavSystem.mount(this, {
-            onBack: () => this.go('levels'),
-            onHome: () => this.go('home'),
+            onBack: () => NavSystem.back(this, { key: NavSystem.LEVELS, data: { gameId: this.gameId } }),
+            onHome: () => NavSystem.home(this),
             depth: 950,
         });
 

@@ -420,10 +420,10 @@ class GameShell extends Phaser.Scene {
         if (this.pauseOverlay) { this.pauseOverlay.destroy(true); this.pauseOverlay = null; }
     }
 
-    /** Back = previous screen (level select of this game). Never Home. */
+    /** Back = previous screen on the history stack. Never Home. */
     goBack() {
         this.hidePause();
-        NavSystem.backToLevels(this, this.gameId);
+        NavSystem.back(this, { key: NavSystem.LEVELS, data: { gameId: this.gameId } });
     }
 
     exitToMenu() {
@@ -553,8 +553,10 @@ class GameShell extends Phaser.Scene {
                 onPick(opt, btn);
             }, { size, fontSize: opts.fontSize || DesignTokens.typography.number, index: i });
             c.setDepth(300);
-            c.setScale(0);
-            this.tweens.add({ targets: c, scale: 1, duration: DesignTokens.motion.uiTransition, delay: i * 90, ease: DesignTokens.motion.easeOut });
+            this.tweens.add({
+                targets: c, scale: 1.06, duration: 140, delay: i * 50,
+                yoyo: true, ease: 'Sine.easeOut',
+            });
             buttons.push(c);
         });
         return buttons;

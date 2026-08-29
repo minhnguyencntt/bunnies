@@ -17,7 +17,7 @@ Build any UI element with the one Bunnies visual language.
 | `speechBubble` | all character speech (consistent tail + cream card) |
 | `awardCard` | first-class Award collectible (`hero` / `support` / `album`) |
 | `colorSwatch` | large color token (palette; circle hit + name ring) |
-| `enableHit` | centered hit area for any control (rect or circle) |
+| `enableHit` | clickable = visual (rect / circle / ellipse; Phaser displayOrigin-aware) |
 
 All use `DesignTokens` and `UISystem.bindTap`:
 IDLE → PRESSED (immediate scale) → TRIGGERED → ACTION.
@@ -27,9 +27,9 @@ override a pressed button. Navigation duplicates are ignored by `NavSystem.begin
 ## Rules
 
 - Never hand-draw a one-off button/card — extend UISystem.
-- Hit areas: use `UISystem.enableHit` (centered rect/circle). Containers have
-  no origin — default Phaser boxes sit bottom-right of the drawing. Text/Image/
-  Zone with origin 0.5 also need enableHit. Never raw `setInteractive()` alone.
+- Hit areas: use `UISystem.enableHit` so the clickable box equals the drawing
+  (Phaser adds `displayOrigin` before Contains — do not hand-place geometry).
+  Never raw `setInteractive()` alone.
 - Touch targets ≥ 46px (icon) / ≥ 96px (answers).
 - Every tap: immediate press + `AudioEngine.emit('UITap')` (built into factories).
 - Never debounce taps with `sleep` / `delayedCall`. Use action transactions.

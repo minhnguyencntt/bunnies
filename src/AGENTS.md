@@ -24,5 +24,5 @@ A HTML banner offers **Tải lại** when the shell/JS/SW versions diverge
   `NavSystem`; all sound via `AudioEngine.emit`; all rewards via AwardGenerator
   / RewardEngine.
 - Vietnamese UI text; keep strings short and child-friendly.
-- Containers have no origin — always use `UISystem.enableHit` for hit areas.
+- Always use `UISystem.enableHit` for hit areas (Phaser adds displayOrigin).
 - Kill idle tweens on `dragstart` (idle motion must never fight drags).

@@ -2,6 +2,19 @@
 
 Meaningful architectural/design decisions only — not trivial code changes.
 
+## 2026-08-29 (clickable = visual + history Back)
+
+### Changed
+- `UISystem.enableHit` offsets hit geometry by Phaser `displayOrigin` so the
+  clickable box equals the drawing (Container origin is width/2 after setSize)
+- `NavSystem` keeps a history stack: `go` pushes, `back` pops, `home` clears.
+  Overlays (Result, settings) are not pushed
+
+### Reason
+Hit tests used a box at (-w/2,-h/2). Phaser then adds displayOrigin, so only
+the top-left of buttons / back / city markers / color regions received taps.
+Back was hardcoded per screen and skipped the real previous screen.
+
 ## 2026-08-24 (centered hit areas for all controls)
 
 ### Changed

@@ -7,10 +7,13 @@
  */
 
 /**
- * Centered hit area that matches the visible control.
- * Containers have no origin — default Phaser hit boxes sit bottom-right of the
- * drawing. Use the positional setInteractive(hitArea, callback) API and mark
- * customHitArea so later setSize() cannot reset to (0,0,w,h).
+ * Clickable area that matches the visible control (same size, same place).
+ *
+ * Phaser.Input.InputManager.pointWithinHitArea adds displayOrigin after it
+ * transforms the pointer into the object's space. Container.displayOrigin is
+ * width/2 after setSize — a hit box at (-w/2,-h/2) therefore only covers the
+ * top-left of the drawing. Offset geometry by displayOrigin so a 5×5 visual
+ * is a 5×5 clickable.
  *
  * opts.circle — circular hit (icons / swatches). width = diameter.
  * opts.ellipse — elliptical hit matching visual oval regions.
@@ -25,17 +28,20 @@ function enableHit(obj, width, height, opts = {}) {
     try { if (obj.removeInteractive) obj.removeInteractive(); } catch (e) { /* ignore */ }
     if (obj.setSize) obj.setSize(w, h);
 
+    const ox = Number(obj.displayOriginX) || 0;
+    const oy = Number(obj.displayOriginY) || 0;
+
     let area;
     let contains;
     if (opts.circle) {
         const r = Math.max(1, w / 2);
-        area = new Phaser.Geom.Circle(0, 0, r);
+        area = new Phaser.Geom.Circle(ox, oy, r);
         contains = Phaser.Geom.Circle.Contains;
     } else if (opts.ellipse) {
-        area = new Phaser.Geom.Ellipse(0, 0, w, h);
+        area = new Phaser.Geom.Ellipse(ox, oy, w, h);
         contains = Phaser.Geom.Ellipse.Contains;
     } else {
-        area = new Phaser.Geom.Rectangle(-w / 2, -h / 2, w, h);
+        area = new Phaser.Geom.Rectangle(ox - w / 2, oy - h / 2, w, h);
         contains = Phaser.Geom.Rectangle.Contains;
     }
     obj.setInteractive(area, contains);

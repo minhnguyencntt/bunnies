@@ -7,6 +7,7 @@ Meaningful architectural/design decisions only — not trivial code changes.
 ### Changed
 - `UISystem.enableHit` offsets hit geometry by Phaser `displayOrigin` so the
   clickable box equals the drawing (Container origin is width/2 after setSize)
+- Tappable controls appear at full size (no scale-0 intro that shrinks the hit)
 - `NavSystem` keeps a history stack: `go` pushes, `back` pops, `home` clears.
   Overlays (Result, settings) are not pushed
 

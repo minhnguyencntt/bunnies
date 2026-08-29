@@ -259,8 +259,10 @@ class CountingForestScreen extends GameShell {
                     this.answerWrong(cx, h * 0.24);
                 }
             });
-            sign.setScale(0);
-            this.tweens.add({ targets: sign, scale: 1, duration: 300, delay: i * 100, ease: 'Back.easeOut' });
+            this.tweens.add({
+                targets: sign, scale: 1.06, duration: 140, delay: i * 50,
+                yoyo: true, ease: 'Sine.easeOut',
+            });
         });
     }
 

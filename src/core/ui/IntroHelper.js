@@ -79,10 +79,9 @@ const IntroHelper = {
         glow.strokeRoundedRect(-99, -34, 198, 68, 34);
         skipBtn.add(glow);
         scene.tweens.add({ targets: glow, alpha: 0.25, duration: 700, yoyo: true, repeat: -1 });
-
-        // Nảy vào
-        skipBtn.setScale(0);
-        scene.tweens.add({ targets: skipBtn, scale: 1, duration: 300, ease: 'Back.easeOut' });
+        scene.tweens.add({
+            targets: skipBtn, scale: 1.06, duration: 140, yoyo: true, ease: 'Sine.easeOut',
+        });
 
         timer = scene.time.delayedCall(duration, finish);
 

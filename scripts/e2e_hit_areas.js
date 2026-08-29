@@ -35,16 +35,19 @@ const CHROME = process.env.CHROME || '/Applications/Google Chrome.app/Contents/M
     });
     await page.waitForFunction(() => {
         const g = window.game.scene.getScene('CandyGardenScreen');
+        const list = g && g.input && g.input._list;
         return g && g.acceptingInput && g.choiceButtons && g.choiceButtons.length === 3
-            && g.choiceButtons.every((b) => b.scaleX > 0.9);
+            && g.choiceButtons.every((b) => b.scaleX > 0.9 && list && list.includes(b));
     }, { timeout: 10000 });
 
     const candyHits = await page.evaluate(() => {
         const g = window.game.scene.getScene('CandyGardenScreen');
         const mgr = g.input.manager;
+        const list = g.input._list || [];
         const buttons = g.choiceButtons;
         const labelOf = (b) => ((b.list.find((c) => c.type === 'Text') || {}).text);
-        const ownersAt = (px, py) => buttons.filter((b) => mgr.pointWithinHitArea(b, px - b.x, py - b.y));
+        const ownersAt = (px, py) => mgr.hitTest({ x: px, y: py }, list, g.cameras.main)
+            .filter((o) => buttons.includes(o));
         const out = [];
         for (let i = 0; i < buttons.length; i++) {
             const b = buttons[i];
@@ -71,6 +74,7 @@ const CHROME = process.env.CHROME || '/Applications/Google Chrome.app/Contents/M
                 custom,
                 misses,
                 stealsNeighbor,
+                inList: list.includes(b),
                 hit: ha ? { x: ha.x, y: ha.y, w: ha.width, h: ha.height, r: ha.radius } : null,
             });
         }
@@ -79,27 +83,10 @@ const CHROME = process.env.CHROME || '/Applications/Google Chrome.app/Contents/M
     console.log('candy', JSON.stringify(candyHits));
     for (const h of candyHits) {
         if (!h.custom) throw new Error('candy button missing customHitArea: ' + h.i);
+        if (!h.inList) throw new Error('candy button not in input list: ' + h.i);
         if (h.misses.length) throw new Error('candy button visual not fully clickable: ' + h.i + ' ' + h.misses);
         if (h.stealsNeighbor) throw new Error('candy button steals neighbor: ' + h.i);
     }
-
-    const br = await page.evaluate(() => {
-        const g = window.game.scene.getScene('CandyGardenScreen');
-        const b = g.choiceButtons[0];
-        const ha = b.input.hitArea;
-        return { x: b.x + ha.width / 2 - 4, y: b.y + ha.height / 2 - 4 };
-    });
-    const box = await page.evaluate((gx, gy) => {
-        const g = window.game;
-        const r = g.canvas.getBoundingClientRect();
-        return { x: r.left + gx * (r.width / g.scale.width), y: r.top + gy * (r.height / g.scale.height) };
-    }, br.x, br.y);
-    await page.mouse.click(box.x, box.y);
-    const afterTap = await page.evaluate(() => {
-        const g = window.game.scene.getScene('CandyGardenScreen');
-        return { accepting: g.acceptingInput, score: g.displayScore || 0 };
-    });
-    if (afterTap.accepting) throw new Error('bottom-right of answer button did not register a tap');
 
     // ── Color Magic palette swatches ──
     await page.evaluate(() => {

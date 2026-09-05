@@ -5,7 +5,7 @@
  *   sau lần tải đầu → chơi xong 1 lần là offline hoàn toàn.
  */
 
-const CACHE_VERSION = 'bunnies-pwa-v21';
+const CACHE_VERSION = 'bunnies-pwa-v30';
 const PRECACHE = `${CACHE_VERSION}-core`;
 const RUNTIME = `${CACHE_VERSION}-runtime`;
 
@@ -103,6 +103,17 @@ const CORE_ASSETS = [
     './screens/forest_adventure/screen.js',
     './screens/color_magic/puzzle.js',
     './screens/color_magic/screen.js',
+    './screens/bunny_maze/maze_lib.js',
+    './screens/bunny_maze/maze_engine.js',
+    './screens/bunny_maze/puzzle.js',
+    './screens/bunny_maze/screen.js',
+    './screens/bunny_piano/piano_staff.js',
+    './screens/bunny_piano/piano_lib.js',
+    './screens/bunny_piano/piano_songs.js',
+    './screens/bunny_piano/piano_engine.js',
+    './screens/bunny_piano/piano_audio.js',
+    './screens/bunny_piano/puzzle.js',
+    './screens/bunny_piano/screen.js',
     './screens/ScreenLevelBackground.js',
 
     // Config + main

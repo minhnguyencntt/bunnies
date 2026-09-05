@@ -48,7 +48,11 @@ function enableHit(obj, width, height, opts = {}) {
     if (obj.input) {
         obj.input.customHitArea = true;
         if (opts.useHandCursor !== false) obj.input.cursor = 'pointer';
-        if (opts.draggable) obj.input.draggable = true;
+        if (opts.draggable && obj.scene && obj.scene.input && obj.scene.input.setDraggable) {
+            obj.scene.input.setDraggable(obj);
+        } else if (opts.draggable) {
+            obj.input.draggable = true;
+        }
     }
     return obj;
 }

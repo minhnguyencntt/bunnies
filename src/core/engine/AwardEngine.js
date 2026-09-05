@@ -33,6 +33,8 @@ const AwardEngine = {
         switch (cond.type) {
             case 'complete_any_level':
                 return true; // session completed by definition
+            case 'complete_level':
+                return session.level === cond.level;
             case 'streak':
                 return session.metrics.bestStreak >= cond.count;
             case 'perfect_round':

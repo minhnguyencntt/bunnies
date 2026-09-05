@@ -520,6 +520,136 @@
       "voice": "narrator",
       "game": "forest_adventure",
       "level": 3
+    },
+    "instr_color_magic_1": {
+      "text": {
+        "vi": "Nhìn hình mẫu, chọn màu, rồi tô cho giống nhé!",
+        "en": "Look at the picture, pick a color, and make it match!"
+      },
+      "voice": "narrator",
+      "game": "color_magic",
+      "level": 1
+    },
+    "instr_color_magic_2": {
+      "text": {
+        "vi": "Tô từng phần cho giống hình mẫu. Nhìn kỹ màu từng chỗ!",
+        "en": "Color each part to match the picture. Look at every color!"
+      },
+      "voice": "narrator",
+      "game": "color_magic",
+      "level": 2
+    },
+    "instr_color_magic_3": {
+      "text": {
+        "vi": "Nhớ màu trên hình mẫu, rồi tô cho giống. Bạn làm được!",
+        "en": "Remember the colors, then make the picture match. You can do it!"
+      },
+      "voice": "narrator",
+      "game": "color_magic",
+      "level": 3
+    },
+    "instr_bunny_maze_1": {
+      "text": {
+        "vi": "Bunnine đói cà rốt rồi! Chạm ô đất cạnh Bunnine để dẫn đi nào!",
+        "en": "Bunnine is hungry! Tap the dirt next to Bunnine to hop!"
+      },
+      "voice": "narrator",
+      "game": "bunny_maze",
+      "level": 1
+    },
+    "instr_bunny_maze_2": {
+      "text": {
+        "vi": "Cổng gỗ chắn đường. Tìm chìa rồi mở cổng giúp Bunnine nhé!",
+        "en": "A wooden gate blocks the path. Find the key and open it!"
+      },
+      "voice": "narrator",
+      "game": "bunny_maze",
+      "level": 2
+    },
+    "instr_bunny_maze_3": {
+      "text": {
+        "vi": "Bạn ốc sên đang dạo chơi. Tránh bạn ấy rồi tìm cà rốt nào!",
+        "en": "A snail friend is strolling. Step aside, then find the carrot!"
+      },
+      "voice": "narrator",
+      "game": "bunny_maze",
+      "level": 3
+    },
+    "instr_bunny_piano_1": {
+      "text": {
+        "vi": "Bunnine chơi giai điệu trước. Nhìn nốt trên khuông nhạc, rồi bấm phím piano nhé!",
+        "en": "Bunnine plays first. Look at the note on the staff, then tap the piano key!"
+      },
+      "voice": "narrator",
+      "game": "bunny_piano",
+      "level": 1
+    },
+    "instr_bunny_piano_2": {
+      "text": {
+        "vi": "Đọc nốt trên khuông nhạc rồi tìm phím piano tương ứng nhé!",
+        "en": "Read the notes on the staff, then find the matching piano key!"
+      },
+      "voice": "narrator",
+      "game": "bunny_piano",
+      "level": 2
+    },
+    "instr_bunny_piano_3": {
+      "text": {
+        "vi": "Theo cả khuông nhạc. Nhìn nốt đang sáng rồi bấm phím đó nhé!",
+        "en": "Follow the staff. Look at the glowing note, then tap that key!"
+      },
+      "voice": "narrator",
+      "game": "bunny_piano",
+      "level": 3
+    },
+    "color_red": {
+      "text": {
+        "vi": "Đỏ",
+        "en": "Red"
+      },
+      "voice": "bunnine"
+    },
+    "color_orange": {
+      "text": {
+        "vi": "Cam",
+        "en": "Orange"
+      },
+      "voice": "bunnine"
+    },
+    "color_yellow": {
+      "text": {
+        "vi": "Vàng",
+        "en": "Yellow"
+      },
+      "voice": "bunnine"
+    },
+    "color_green": {
+      "text": {
+        "vi": "Xanh lá",
+        "en": "Green"
+      },
+      "voice": "bunnine"
+    },
+    "color_blue": {
+      "text": {
+        "vi": "Xanh dương",
+        "en": "Blue"
+      },
+      "voice": "bunnine"
+    },
+    "color_purple": {
+      "text": {
+        "vi": "Tím",
+        "en": "Purple"
+      },
+      "voice": "bunnine"
+    },
+    "color_pink": {
+      "text": {
+        "vi": "Hồng",
+        "en": "Pink"
+      },
+      "voice": "bunnine"
     }
   }
 }

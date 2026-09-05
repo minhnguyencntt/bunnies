@@ -67,21 +67,23 @@ const WORLD_MAP_CITIES = [
     },
     {
         id: 7,
-        name: 'Sa mạc Chữ Cái',
+        name: 'Mê Cung Cà Rốt',
         x: 1030,
         y: 380,
-        description: 'Tìm chữ cái đúng để giúp chú thỏ vượt qua sa mạc.',
-        puzzleTheme: 'Chữ cái',
-        visible: false
+        description: 'Bunnine đói cà rốt rồi! Dẫn Bunnine đi theo lối đất, tìm cà rốt ở cuối đường. Chủ đề: Tìm đường.',
+        puzzleTheme: 'Tìm đường',
+        screenKey: 'BunnyMazeScreen',
+        visible: true
     },
     {
         id: 8,
-        name: 'Núi Âm Thanh',
+        name: 'Vườn Nhạc Bunnine',
         x: 1180,
         y: 420,
-        description: 'Nghe âm thanh và chọn hình ảnh phù hợp.',
-        puzzleTheme: 'Âm thanh',
-        visible: false
+        description: 'Nghe giai điệu của Bunnine, rồi chơi lại trên piano màu. Chủ đề: Âm nhạc.',
+        puzzleTheme: 'Âm nhạc',
+        screenKey: 'BunnyPianoScreen',
+        visible: true
     },
     {
         id: 9,

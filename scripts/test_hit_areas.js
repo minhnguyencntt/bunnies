@@ -144,6 +144,21 @@ function phaserHits(obj, worldX, worldY) {
     assert(!phaserHits(a, a.x + 49, a.y), 'gap between A and B is empty');
 }
 
+// draggable: register with Phaser InputPlugin._draggable via setDraggable
+{
+    const o = mockObj();
+    let registered = null;
+    o.scene = { input: { setDraggable(obj) { registered = obj; obj.input.draggable = true; } } };
+    enableHit(o, 80, 80, { circle: true, draggable: true });
+    assert(registered === o, 'setDraggable must be called when scene.input exists');
+    assert(o.input.draggable === true, 'input.draggable after setDraggable');
+}
+{
+    const o = mockObj();
+    enableHit(o, 80, 80, { draggable: true });
+    assert(o.input.draggable === true, 'input.draggable when no scene');
+}
+
 // Wrappers still exist
 assert(typeof UISystem.enableHit === 'function', 'UISystem.enableHit');
 assert(typeof UISystem.setCenteredInput === 'function', 'setCenteredInput wrapper');

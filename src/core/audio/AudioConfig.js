@@ -90,6 +90,14 @@ const VOICE_LIBRARY = {
     instr_color_magic_2: { vi: 'Tô từng phần cho giống hình mẫu. Nhìn kỹ màu từng chỗ!', en: 'Color each part to match the picture. Look at every color!', voice: 'narrator', game: 'color_magic', level: 2 },
     instr_color_magic_3: { vi: 'Nhớ màu trên hình mẫu, rồi tô cho giống. Bạn làm được!', en: 'Remember the colors, then make the picture match. You can do it!', voice: 'narrator', game: 'color_magic', level: 3 },
 
+    instr_bunny_maze_1: { vi: 'Bunnine đói cà rốt rồi! Chạm ô đất cạnh Bunnine để dẫn đi nào!', en: 'Bunnine is hungry! Tap the dirt next to Bunnine to hop!', voice: 'narrator', game: 'bunny_maze', level: 1 },
+    instr_bunny_maze_2: { vi: 'Cổng gỗ chắn đường. Tìm chìa rồi mở cổng giúp Bunnine nhé!', en: 'A wooden gate blocks the path. Find the key and open it!', voice: 'narrator', game: 'bunny_maze', level: 2 },
+    instr_bunny_maze_3: { vi: 'Bạn ốc sên đang dạo chơi. Tránh bạn ấy rồi tìm cà rốt nào!', en: 'A snail friend is strolling. Step aside, then find the carrot!', voice: 'narrator', game: 'bunny_maze', level: 3 },
+
+    instr_bunny_piano_1: { vi: 'Bunnine chơi giai điệu trước. Nhìn nốt trên khuông nhạc, rồi bấm phím piano nhé!', en: 'Bunnine plays first. Look at the note on the staff, then tap the piano key!', voice: 'narrator', game: 'bunny_piano', level: 1 },
+    instr_bunny_piano_2: { vi: 'Đọc nốt trên khuông nhạc rồi tìm phím piano tương ứng nhé!', en: 'Read the notes on the staff, then find the matching piano key!', voice: 'narrator', game: 'bunny_piano', level: 2 },
+    instr_bunny_piano_3: { vi: 'Theo cả khuông nhạc. Nhìn nốt đang sáng rồi bấm phím đó nhé!', en: 'Follow the staff. Look at the glowing note, then tap that key!', voice: 'narrator', game: 'bunny_piano', level: 3 },
+
     color_red: { vi: 'Đỏ', en: 'Red', voice: 'bunnine' },
     color_orange: { vi: 'Cam', en: 'Orange', voice: 'bunnine' },
     color_yellow: { vi: 'Vàng', en: 'Yellow', voice: 'bunnine' },
@@ -120,6 +128,8 @@ const GAME_AUDIO = {
     candy_garden: { theme: { key: 'bgm_candy_garden', url: 'screens/candy_garden/assets/audio/bgm/bgm.mp3', volume: 0.35 }, ambience: 'candy' },
     forest_adventure: { theme: { key: 'bgm_forest_adventure', url: 'screens/forest_adventure/assets/audio/bgm/bgm.mp3', volume: 0.35 }, ambience: 'forest' },
     color_magic: { theme: { key: 'bgm_candy_garden', url: 'screens/candy_garden/assets/audio/bgm/bgm.mp3', volume: 0.35 }, ambience: 'candy' },
+    bunny_maze: { theme: { key: 'bgm_forest_adventure', url: 'screens/forest_adventure/assets/audio/bgm/bgm.mp3', volume: 0.35 }, ambience: 'forest' },
+    bunny_piano: { theme: { key: 'bgm_candy_garden', url: 'screens/candy_garden/assets/audio/bgm/bgm.mp3', volume: 0.22 }, ambience: 'candy' },
 };
 
 const AREA_AUDIO = {

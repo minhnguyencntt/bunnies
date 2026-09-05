@@ -34,6 +34,8 @@ class MenuScreen extends Phaser.Scene {
             ['voice_city_2', 'screens/menu/assets/audio/voice/city_2_thanh_pho_guong.mp3'],
             ['voice_city_4', 'screens/menu/assets/audio/voice/city_4_doi_phep_tru.mp3'],
             ['voice_city_26', 'screens/menu/assets/audio/voice/city_26_khu_rung_dinh_huong.mp3'],
+            ['voice_city_7', 'screens/menu/assets/audio/voice/city_7_me_cung_ca_rot.mp3'],
+            ['voice_city_8', 'screens/menu/assets/audio/voice/city_8_vuon_nhac_bunnine.mp3'],
             ['voice_city_click', 'screens/menu/assets/audio/voice/city_click.mp3'],
         ];
         let queued = 0;
@@ -142,13 +144,14 @@ class MenuScreen extends Phaser.Scene {
         const wp = ProgressionEngine.worldProgress(profile);
 
         const y = DesignTokens.layout.chromeY;
-        const levelChip = UISystem.chip(this, 78, y, `Cấp ${wp.knowledgeLevel.level}`, {
+        const y2 = y + 46;
+        const levelChip = UISystem.chip(this, 70, y, `Cấp ${wp.knowledgeLevel.level}`, {
             minWidth: 88, height: 42, fontSize: 16,
         });
         levelChip.setDepth(401);
 
         const xpW = 110;
-        const xp = this.add.container(178, y).setDepth(401);
+        const xp = this.add.container(172, y).setDepth(401);
         const xpG = this.add.graphics();
         xpG.fillStyle(DesignTokens.shadow.color, 0.16);
         xpG.fillRoundedRect(-xpW / 2, -8, xpW, 16, 8);
@@ -159,10 +162,10 @@ class MenuScreen extends Phaser.Scene {
         xpG.fillRoundedRect(-xpW / 2, -8, Math.max(12, xpW * ratio), 16, 8);
         xp.add(xpG);
 
-        UISystem.chip(this, 292, y, `⭐ ${wp.stars}/${wp.maxStars}`, {
+        UISystem.chip(this, 70, y2, `⭐ ${wp.stars}/${wp.maxStars}`, {
             minWidth: 96, height: 42, fontSize: 16,
         }).setDepth(401);
-        UISystem.chip(this, 412, y, `💎 ${wp.gems}`, {
+        UISystem.chip(this, 178, y2, `💎 ${wp.gems}`, {
             minWidth: 84, height: 42, fontSize: 16,
         }).setDepth(401);
 

@@ -2,6 +2,67 @@
 
 Meaningful architectural/design decisions only — not trivial code changes.
 
+## 2026-09-06 (Vườn Nhạc Bunnine — song practice)
+
+### Changed
+- Free Play is split: **Học bài hát** (50 PD/traditional songs on the staff,
+  random + anti-repeat, speed / show-me / rewind) and **Piano tự do**
+  (open toy piano, no score)
+
+### Reason
+Children should learn songs by reading notation, not by doodling on keys
+or memorizing after one listen.
+
+## 2026-09-06 (Vườn Nhạc Bunnine — staff notation)
+
+### Changed
+- Melody UI is a five-line treble staff (`piano_staff.js`), not letter dots.
+  Piano keys are unlabeled. Children read pitch position, then press a key
+- Melodies carry duration (quarter / eighth / half / rest). L1 is C–G
+  quarters; L2 C–A with mixed rhythm; L3 C–C5 up to 12 notes
+
+### Reason
+The core skill is staff reading: see the note, find the key, hear the sound.
+Letter names on the melody were a shortcut that skipped that skill.
+
+## 2026-09-06 (Vườn Nhạc Bunnine — visual follow)
+
+### Changed
+- Default piano loop is Listen → See the notes → Follow the notes.
+  The melody strip stays visible; wrong keys do not reset the sequence.
+  Memory hide is an optional chip, never required for progression
+- Level pools: Màn 1 C–E (2–4), Màn 2 C–G (4–6), Màn 3 C–C5 (6–10).
+  Falling-note play is removed
+
+### Reason
+Young children should connect sound, visual notes, and keys — not be
+blocked by memorizing a melody after one listen.
+
+## 2026-09-06 (Vườn Nhạc Bunnine)
+
+### Changed
+- New standalone game `bunny_piano` / `BunnyPianoScreen` on GameShell: 50
+  prepared melodies, seeded pick + anti-repeat
+- City 8 on the world map is **Vườn Nhạc Bunnine**; awards/stickers persist
+  through RewardEngine / album / ResultScreen
+
+### Reason
+Early-music play must live in the same engine as the other Knowledge
+World games.
+
+## 2026-09-06 (Mê Cung Cà Rốt)
+
+### Changed
+- New standalone game `bunny_maze` / `BunnyMazeScreen` on GameShell: 50
+  prepared dirt-path layouts, seeded pick + anti-repeat, key/door (Màn 2),
+  strolling friends (Màn 3)
+- City 7 on the world map is **Mê Cung Cà Rốt**; awards/stickers are
+  game-local and persist through RewardEngine / album / totals
+
+### Reason
+Spatial path-finding is a core early-learning loop (explore → plan → move)
+and must live in the same engine as the other Knowledge World games.
+
 ## 2026-08-29 (clickable = visual + history Back)
 
 ### Changed

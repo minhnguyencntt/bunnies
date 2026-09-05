@@ -55,6 +55,12 @@ MENU_VOICE: dict[str, str] = {
     "city_26_khu_rung_dinh_huong.mp3": (
         "Khu Rừng Định Hướng. Nhận biết trái phải trước sau. Chủ đề: Định hướng."
     ),
+    "city_7_me_cung_ca_rot.mp3": (
+        "Mê Cung Cà Rốt. Bunnine đói cà rốt rồi! Dẫn Bunnine đi theo lối đất, tìm cà rốt ở cuối đường. Chủ đề: Tìm đường."
+    ),
+    "city_8_vuon_nhac_bunnine.mp3": (
+        "Vườn Nhạc Bunnine. Nghe giai điệu của Bunnine, rồi chơi lại trên piano màu. Chủ đề: Âm nhạc."
+    ),
     "city_click.mp3": "Bắt đầu!",
 }
 

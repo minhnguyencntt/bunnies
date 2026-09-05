@@ -28,15 +28,15 @@ Mô tả câu đố: “Nhận biết hình vuông, hình tròn, tam giác và g
 Tọa độ: (880, 340)
 Mô tả câu đố: “Phân loại các vật theo màu sắc rực rỡ.”
 
-7. Sa mạc Chữ Cái
+7. Mê Cung Cà Rốt
 
 Tọa độ: (1030, 380)
-Mô tả câu đố: “Tìm chữ cái đúng để giúp chú thỏ vượt qua sa mạc.”
+Mô tả câu đố: “Bunnine đói cà rốt rồi! Dẫn Bunnine đi theo lối đất, tìm cà rốt ở cuối đường.”
 
-8. Núi Âm Thanh
+8. Vườn Nhạc Bunnine
 
 Tọa độ: (1180, 420)
-Mô tả câu đố: “Nghe âm thanh và chọn hình ảnh phù hợp.”
+Mô tả câu đố: “Nghe giai điệu của Bunnine, rồi chơi lại trên piano màu.”
 
 9. Thảo nguyên Từ Vựng
 

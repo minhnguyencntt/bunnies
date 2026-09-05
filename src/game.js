@@ -55,6 +55,14 @@
         console.error('ColorMagicScreen not defined!');
         return;
     }
+    if (typeof BunnyMazeScreen === 'undefined') {
+        console.error('BunnyMazeScreen not defined!');
+        return;
+    }
+    if (typeof BunnyPianoScreen === 'undefined') {
+        console.error('BunnyPianoScreen not defined!');
+        return;
+    }
     
     // Game Configuration
     const config = {
@@ -97,7 +105,9 @@
             OrientationForestScreen,
             CandyGardenScreen,
             ForestAdventureScreen,
-            ColorMagicScreen
+            ColorMagicScreen,
+            BunnyMazeScreen,
+            BunnyPianoScreen
         ],
         input: {
             activePointers: 3 // Support multiple touch points

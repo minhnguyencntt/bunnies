@@ -53,3 +53,26 @@ const c = BunnyMazeEngine.pick(playable, { difficulty: 2, history: [], seed: 99 
 assert(c.maze.id !== a.maze.id || playable.filter((m) => m.difficulty === 2).length === 1, 'different seed usually differs');
 
 console.log('PASS bunny maze library');
+
+const fs = require('fs');
+const path = require('path');
+const vm = require('vm');
+const ctx = { console, require };
+vm.createContext(ctx);
+const srcRoot = path.join(__dirname, '../src/screens');
+const runWorld = (rel) => {
+    const src = fs.readFileSync(path.join(srcRoot, rel), 'utf8');
+    vm.runInContext(`${src}
+if (typeof BunnyMazeLib !== 'undefined') this.BunnyMazeLib = BunnyMazeLib;
+if (typeof BunnyMazeEngine !== 'undefined') this.BunnyMazeEngine = BunnyMazeEngine;
+if (typeof BunnyPianoStaff !== 'undefined') this.BunnyPianoStaff = BunnyPianoStaff;
+if (typeof BunnyPianoEngine !== 'undefined') this.BunnyPianoEngine = BunnyPianoEngine;
+`, ctx);
+};
+runWorld('bunny_maze/maze_lib.js');
+runWorld('bunny_maze/maze_engine.js');
+runWorld('bunny_piano/piano_staff.js');
+runWorld('bunny_piano/piano_engine.js');
+const collided = ctx.BunnyMazeEngine.loadLibrary(ctx.BunnyMazeLib.all());
+assert(collided.playable.length === 50, `script-tag isolation: playable ${collided.playable.length} rejected ${JSON.stringify(collided.rejected.slice(0, 3))}`);
+console.log('PASS maze/piano script-tag isolation');

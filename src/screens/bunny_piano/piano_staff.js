@@ -1,7 +1,9 @@
 /**
  * piano_staff.js — treble-staff pitch map + Phaser notation draw.
  * Node-testable helpers. No letter names on the staff.
+ * Helpers live in this IIFE so generic names (draw/layout) stay local.
  */
+const BunnyPianoStaff = (function () {
 const STEPS = { C: 0, D: 1, E: 2, F: 3, G: 4, A: 5, B: 6, C5: 7 };
 const DUR_BEATS = { q: 1, e: 0.5, h: 2, w: 4, qr: 1, er: 0.5, hr: 2 };
 const RESTS = { qr: 1, er: 1, hr: 1 };
@@ -228,7 +230,7 @@ function draw(scene, container, challenge, state, opts) {
     return { slots, layout: lay };
 }
 
-const BunnyPianoStaff = {
+return {
     STEPS,
     LINE_GAP,
     INK,
@@ -240,5 +242,6 @@ const BunnyPianoStaff = {
     layout,
     draw,
 };
+})();
 
 if (typeof module !== 'undefined') module.exports = { BunnyPianoStaff };

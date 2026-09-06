@@ -1,7 +1,9 @@
 /**
  * piano_engine.js — validate, seeded pick, anti-repeat, next expected note.
  * Node-testable. A challenge that fails validation is never playable.
+ * Helpers live in this IIFE so script-tag load order cannot overwrite other worlds.
  */
+const BunnyPianoEngine = (function () {
 const ALLOWED = ['C', 'D', 'E', 'F', 'G', 'A', 'B', 'C5'];
 const L1_NOTES = ['C', 'D', 'E', 'F', 'G'];
 const L2_NOTES = ['C', 'D', 'E', 'F', 'G', 'A'];
@@ -220,7 +222,7 @@ function barAfterIndices(events, beatsPerBar) {
     return out;
 }
 
-const BunnyPianoEngine = {
+return {
     ALLOWED,
     L1_NOTES,
     L2_NOTES,
@@ -241,5 +243,6 @@ const BunnyPianoEngine = {
     speedFactor,
     barAfterIndices,
 };
+})();
 
 if (typeof module !== 'undefined') module.exports = { BunnyPianoEngine };

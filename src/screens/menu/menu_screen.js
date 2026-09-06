@@ -1242,7 +1242,9 @@ class MenuScreen extends Phaser.Scene {
             'Năng lượng': '⚡',
             'Hình học': '📐',
             'Sáng tạo': '✨',
-            'Khủng long': '🦕'
+            'Khủng long': '🦕',
+            'Tìm đường': '🥕',
+            'Tô theo hình mẫu': '🎨',
         };
         return iconMap[city.puzzleTheme] || '⭐';
     }

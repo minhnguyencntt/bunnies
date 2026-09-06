@@ -1,7 +1,9 @@
 /**
  * maze_engine.js — parse, BFS-validate, seeded pick, anti-repeat.
  * Node-testable. A maze that fails validation is never playable.
+ * Helpers live in this IIFE so later script tags cannot overwrite validate/pick.
  */
+const BunnyMazeEngine = (function () {
 const DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
 
 function mulberry32(seed) {
@@ -194,7 +196,7 @@ function pick(playable, opts) {
     return { maze, history, reset };
 }
 
-const BunnyMazeEngine = {
+return {
     mulberry32,
     parseMaze,
     bfs,
@@ -207,5 +209,6 @@ const BunnyMazeEngine = {
     pick,
     DIRS,
 };
+})();
 
 if (typeof module !== 'undefined') module.exports = { BunnyMazeEngine };

@@ -2,6 +2,18 @@
 
 Meaningful architectural/design decisions only — not trivial code changes.
 
+## 2026-09-06 (World script isolation)
+
+### Changed
+- Maze / piano engine helpers (`validate`, `pick`, `loadLibrary`, `draw`)
+  stay inside an IIFE. Only `BunnyMazeEngine` / `BunnyPianoEngine` /
+  `BunnyPianoStaff` are page globals.
+
+### Reason
+Classic script tags share one global function table. Piano loaded after
+maze and overwrote `validate`, so every maze failed as `missing_notes`
+and the board never appeared.
+
 ## 2026-09-06 (Vườn Nhạc Bunnine — song practice)
 
 ### Changed

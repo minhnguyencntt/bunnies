@@ -16,6 +16,8 @@ entry + map city + audio profile.
 - [ ] `AudioConfig.GAME_AUDIO` entry (theme + ambience profile)
 - [ ] Map city in `world_map_data.js` (visible, screenKey)
 - [ ] Register in `index.html`, `game.js`, `sw.js`
+- [ ] Engine helpers (`validate`, `pick`, `loadLibrary`, `draw`) stay inside
+      an IIFE — script tags share one global function table
 - [ ] E2E: all 3 levels complete to Result Screen, zero console errors
 
 Existing worlds: see `candy-garden.md`, `magical-forest.md`, `color-magic.md`,

@@ -38,10 +38,10 @@ Mô tả câu đố: “Bunnine đói cà rốt rồi! Dẫn Bunnine đi theo l�
 Tọa độ: (1180, 420)
 Mô tả câu đố: “Nghe giai điệu của Bunnine, rồi chơi lại trên piano màu.”
 
-9. Thảo nguyên Từ Vựng
+9. Bunny Khám Phá Thế Giới
 
-Tọa độ: (1330, 350)
-Mô tả câu đố: “Học từ mới thông qua hình ảnh và âm thanh.”
+Tọa độ: (650, 195)
+Mô tả câu đố: “Cùng Bunny bay quanh thế giới: nhìn quốc kỳ, tìm thủ đô, khám phá điều thú vị.”
 
 10. Thành phố Thời Gian
 

@@ -93,6 +93,7 @@ class AnalyticsEngine {
             perfectRounds: this.perfectRounds,
             explorationFound: this.explorationFound,
             explorationTotal: this.explorationTotal,
+            exploreCount: this.exploreCount || 0,
             durationMs: Date.now() - this.startedAt,
         };
     }

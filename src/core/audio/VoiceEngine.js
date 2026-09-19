@@ -111,6 +111,9 @@ const VoiceEngine = {
     /** Speak arbitrary Vietnamese text (award / sticker announcements). */
     speakRaw(text, { voice = 'bunnine' } = {}) {
         if (!text) return false;
+        const s = AudioEngine.settings || AudioEngine.DEFAULT_SETTINGS;
+        if (s.soundEnabled === false) return false;
+        if (typeof s.voice === 'number' && s.voice <= 0.02) return false;
         return this._speak({ vi: text, en: text, voice });
     },
 

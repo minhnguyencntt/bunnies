@@ -21,5 +21,5 @@ entry + map city + audio profile.
 - [ ] E2E: all 3 levels complete to Result Screen, zero console errors
 
 Existing worlds: see `candy-garden.md`, `magical-forest.md`, `color-magic.md`,
-`bunny-maze.md`, `bunny-piano.md`
+`bunny-maze.md`, `bunny-piano.md`, `world-explorer.md`
 (newest reference implementations) and the four original games in `docs/GAME_REDESIGN.md`.

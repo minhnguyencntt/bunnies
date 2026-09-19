@@ -55,6 +55,10 @@ const AwardEngine = {
                 return GameConfig.allGames().every(g => (profile.games[g.gameId]?.plays || 0) > 0);
             case 'all_masters':
                 return GameConfig.allGames().every(g => (profile.games[g.gameId]?.levels?.[3]?.stars || 0) >= 3);
+            case 'plays':
+                return gp.plays >= cond.count;
+            case 'explore_count':
+                return (session.metrics.exploreCount || 0) >= cond.count;
             default:
                 return false;
         }

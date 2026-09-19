@@ -2,6 +2,26 @@
 
 Meaningful architectural/design decisions only — not trivial code changes.
 
+## 2026-09-19 (Bunny Khám Phá Thế Giới)
+
+### Changed
+- New world `world_explorer`: 195-country dataset + travel loop
+  Flag → Country → Capital → Discovery fact → knowledge question.
+  Progress/atlas live in the game module; awards stay on RewardEngine.
+- Pre-reader support (3–10): every question + answer choice is narrated
+  via `VoiceEngine.speakRaw` (fire-and-forget, tap cancels); 🔊 replay
+  button per phase; Level 1 answers are big flag cards (visual matching,
+  no reading). `speakRaw` now respects global sound/voice settings.
+- Background is a layered storybook travel scene drawn with Graphics:
+  giant globe + continents, dotted flight path with looping plane,
+  balloon-bunny, horizon landmarks, gulls, parallax clouds. Biome
+  discovery scenes tint over it per country landscape.
+
+### Reason
+Geography should feel like flying with Bunny, not a quiz booklet.
+Country content stays out of the scene class so the set can grow.
+Pre-readers play by ear and by picture; narration never blocks input.
+
 ## 2026-09-06 (World script isolation)
 
 ### Changed

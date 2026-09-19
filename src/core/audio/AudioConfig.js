@@ -98,6 +98,10 @@ const VOICE_LIBRARY = {
     instr_bunny_piano_2: { vi: 'Đọc nốt trên khuông nhạc rồi tìm phím piano tương ứng nhé!', en: 'Read the notes on the staff, then find the matching piano key!', voice: 'narrator', game: 'bunny_piano', level: 2 },
     instr_bunny_piano_3: { vi: 'Theo cả khuông nhạc. Nhìn nốt đang sáng rồi bấm phím đó nhé!', en: 'Follow the staff. Look at the glowing note, then tap that key!', voice: 'narrator', game: 'bunny_piano', level: 3 },
 
+    instr_world_explorer_1: { vi: 'Cùng Bunny bay đi! Nhìn quốc kỳ, rồi tìm tên đất nước nhé!', en: 'Fly with Bunny! Look at the flag, then find the country name!', voice: 'narrator', game: 'world_explorer', level: 1 },
+    instr_world_explorer_2: { vi: 'Tìm tên nước, rồi tìm thủ đô. Bunny đang đợi bạn trên máy bay!', en: 'Find the country, then find the capital. Bunny is waiting on the plane!', voice: 'narrator', game: 'world_explorer', level: 2 },
+    instr_world_explorer_3: { vi: 'Khám phá châu lục, thủ đô và một điều thú vị cùng Bunny nào!', en: 'Discover the continent, capital, and a fun fact with Bunny!', voice: 'narrator', game: 'world_explorer', level: 3 },
+
     color_red: { vi: 'Đỏ', en: 'Red', voice: 'bunnine' },
     color_orange: { vi: 'Cam', en: 'Orange', voice: 'bunnine' },
     color_yellow: { vi: 'Vàng', en: 'Yellow', voice: 'bunnine' },
@@ -130,6 +134,7 @@ const GAME_AUDIO = {
     color_magic: { theme: { key: 'bgm_candy_garden', url: 'screens/candy_garden/assets/audio/bgm/bgm.mp3', volume: 0.35 }, ambience: 'candy' },
     bunny_maze: { theme: { key: 'bgm_forest_adventure', url: 'screens/forest_adventure/assets/audio/bgm/bgm.mp3', volume: 0.35 }, ambience: 'forest' },
     bunny_piano: { theme: { key: 'bgm_candy_garden', url: 'screens/candy_garden/assets/audio/bgm/bgm.mp3', volume: 0.22 }, ambience: 'candy' },
+    world_explorer: { theme: { key: 'bgm_mirror_city', url: 'screens/mirror_city/assets/audio/bgm/bgm.mp3', volume: 0.32 }, ambience: 'mystery' },
 };
 
 const AREA_AUDIO = {

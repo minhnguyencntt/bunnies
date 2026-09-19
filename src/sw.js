@@ -5,7 +5,7 @@
  *   sau lần tải đầu → chơi xong 1 lần là offline hoàn toàn.
  */
 
-const CACHE_VERSION = 'bunnies-pwa-v31';
+const CACHE_VERSION = 'bunnies-pwa-v33';
 const PRECACHE = `${CACHE_VERSION}-core`;
 const RUNTIME = `${CACHE_VERSION}-runtime`;
 
@@ -114,6 +114,10 @@ const CORE_ASSETS = [
     './screens/bunny_piano/piano_audio.js',
     './screens/bunny_piano/puzzle.js',
     './screens/bunny_piano/screen.js',
+    './screens/world_explorer/country_lib.js',
+    './screens/world_explorer/explorer_engine.js',
+    './screens/world_explorer/puzzle.js',
+    './screens/world_explorer/screen.js',
     './screens/ScreenLevelBackground.js',
 
     // Config + main

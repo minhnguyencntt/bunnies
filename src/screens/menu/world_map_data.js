@@ -87,12 +87,13 @@ const WORLD_MAP_CITIES = [
     },
     {
         id: 9,
-        name: 'Thảo nguyên Từ Vựng',
-        x: 1330,
-        y: 350,
-        description: 'Học từ mới thông qua hình ảnh và âm thanh.',
-        puzzleTheme: 'Từ vựng',
-        visible: false
+        name: 'Bunny Khám Phá Thế Giới',
+        x: 650,
+        y: 195,
+        description: 'Cùng Bunny bay quanh thế giới: nhìn quốc kỳ, tìm thủ đô, khám phá điều thú vị.',
+        puzzleTheme: 'Địa lý',
+        screenKey: 'WorldExplorerScreen',
+        visible: true
     },
     {
         id: 10,

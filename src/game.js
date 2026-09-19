@@ -63,6 +63,10 @@
         console.error('BunnyPianoScreen not defined!');
         return;
     }
+    if (typeof WorldExplorerScreen === 'undefined') {
+        console.error('WorldExplorerScreen not defined!');
+        return;
+    }
     
     // Game Configuration
     const config = {
@@ -107,7 +111,8 @@
             ForestAdventureScreen,
             ColorMagicScreen,
             BunnyMazeScreen,
-            BunnyPianoScreen
+            BunnyPianoScreen,
+            WorldExplorerScreen
         ],
         input: {
             activePointers: 3 // Support multiple touch points
